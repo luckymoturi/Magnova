@@ -89,6 +89,38 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/logistics"
+            element={
+              <ProtectedRoute>
+                <LogisticsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/invoices"
+            element={
+              <ProtectedRoute>
+                <InvoicesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sales-orders"
+            element={
+              <ProtectedRoute>
+                <SalesOrdersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute>
+                <UsersPage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/" element={<Navigate to="/dashboard" />} />
         </Routes>
       </BrowserRouter>
