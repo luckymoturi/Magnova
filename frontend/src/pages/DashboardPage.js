@@ -120,7 +120,7 @@ export const DashboardPage = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="shadow-sm">
+          <Card className="shadow-sm bg-white">
             <CardHeader>
               <CardTitle className="text-lg font-bold">Quick Actions</CardTitle>
             </CardHeader>
@@ -130,9 +130,9 @@ export const DashboardPage = () => {
                   <Link
                     to="/purchase-orders"
                     data-testid="quick-action-po"
-                    className="block p-3 hover:bg-slate-50 rounded-md border border-slate-200 transition-colors duration-200"
+                    className="block p-3 hover:bg-slate-50 rounded-md border border-slate-200 transition-colors duration-200 group"
                   >
-                    <p className="font-medium text-slate-900">Create Purchase Order</p>
+                    <p className="font-medium text-magnova-orange group-hover:text-magnova-blue">Create Purchase Order</p>
                     <p className="text-sm text-slate-600">Start a new procurement request</p>
                   </Link>
                 )}
@@ -140,33 +140,33 @@ export const DashboardPage = () => {
                   <Link
                     to="/procurement"
                     data-testid="quick-action-procurement"
-                    className="block p-3 hover:bg-slate-50 rounded-md border border-slate-200 transition-colors duration-200"
+                    className="block p-3 hover:bg-slate-50 rounded-md border border-slate-200 transition-colors duration-200 group"
                   >
-                    <p className="font-medium text-slate-900">Add Procurement</p>
+                    <p className="font-medium text-magnova-orange group-hover:text-magnova-blue">Add Procurement</p>
                     <p className="text-sm text-slate-600">Record new device procurement</p>
                   </Link>
                 )}
                 <Link
                   to="/inventory"
                   data-testid="quick-action-inventory"
-                  className="block p-3 hover:bg-slate-50 rounded-md border border-slate-200 transition-colors duration-200"
+                  className="block p-3 hover:bg-slate-50 rounded-md border border-slate-200 transition-colors duration-200 group"
                 >
-                  <p className="font-medium text-slate-900">View Inventory</p>
+                  <p className="font-medium text-magnova-orange group-hover:text-magnova-blue">View Inventory</p>
                   <p className="text-sm text-slate-600">Check current stock levels</p>
                 </Link>
                 <Link
                   to="/reports"
                   data-testid="quick-action-reports"
-                  className="block p-3 hover:bg-slate-50 rounded-md border border-slate-200 transition-colors duration-200"
+                  className="block p-3 hover:bg-slate-50 rounded-md border border-slate-200 transition-colors duration-200 group"
                 >
-                  <p className="font-medium text-slate-900">Generate Reports</p>
+                  <p className="font-medium text-magnova-orange group-hover:text-magnova-blue">Generate Reports</p>
                   <p className="text-sm text-slate-600">Export data and analytics</p>
                 </Link>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm">
+          <Card className="shadow-sm bg-white">
             <CardHeader>
               <CardTitle className="text-lg font-bold">System Overview</CardTitle>
             </CardHeader>
