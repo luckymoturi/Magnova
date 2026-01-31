@@ -37,11 +37,11 @@ export const LoginPage = () => {
           backgroundImage: 'url(https://images.unsplash.com/photo-1614571272828-2d8289ff8fc0?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzV8MHwxfHNlYXJjaHwyfHxtb2Rlcm4lMjB3YXJlaG91c2UlMjBsb2dpc3RpY3MlMjBhYnN0cmFjdHxlbnwwfHx8fDE3Njk4NzAzOTF8MA&ixlib=rb-4.1.0&q=85)',
         }}
       >
-        <div className="absolute inset-0 bg-slate-900/80"></div>
+        <div className="absolute inset-0 bg-magnova-blue/90"></div>
         <div className="relative z-10 p-12 flex flex-col justify-center text-white">
           <h1 className="text-5xl font-black tracking-tight mb-4">MAGNOVA-NOVA</h1>
-          <p className="text-xl text-slate-300">Procurement & Sales Management System</p>
-          <p className="text-slate-400 mt-4">End-to-end visibility for your supply chain</p>
+          <p className="text-xl text-slate-100">Procurement & Sales Management System</p>
+          <p className="text-slate-200 mt-4">End-to-end visibility for your supply chain</p>
         </div>
       </div>
 
