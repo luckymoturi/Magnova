@@ -102,7 +102,7 @@ export const DashboardPage = () => {
           {statCards.map((stat, index) => {
             const Icon = stat.icon;
             return (
-              <Card key={index} className="card-hover shadow-sm" data-testid={`stat-card-${index}`}>
+              <Card key={index} className="card-hover shadow-sm bg-white" data-testid={`stat-card-${index}`}>
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div>
