@@ -36,8 +36,8 @@
 }
 
 .nav-item.active {
-  background-color: rgba(37, 99, 235, 0.2);
-  border-left: 3px solid #2563EB;
+  background-color: rgba(245, 129, 32, 0.2);
+  border-left: 3px solid #F58120;
 }
 
 .card-hover {
