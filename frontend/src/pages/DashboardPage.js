@@ -57,8 +57,8 @@ export const DashboardPage = () => {
       title: 'Pending Approvals',
       value: stats?.pending_pos || 0,
       icon: Clock,
-      color: 'text-amber-600',
-      bgColor: 'bg-amber-50',
+      color: 'text-magnova-orange',
+      bgColor: 'bg-orange-50',
     },
     {
       title: 'Total Procurement',
