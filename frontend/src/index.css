@@ -33,19 +33,19 @@ h1, h2, h3, h4, h5, h6 {
         --card-foreground: 15 23 42;
         --popover: 255 255 255;
         --popover-foreground: 15 23 42;
-        --primary: 15 23 42;
-        --primary-foreground: 248 250 252;
+        --primary: 0 65 143;
+        --primary-foreground: 255 255 255;
         --secondary: 241 245 249;
         --secondary-foreground: 15 23 42;
         --muted: 241 245 249;
         --muted-foreground: 100 116 139;
-        --accent: 37 99 235;
+        --accent: 245 129 32;
         --accent-foreground: 255 255 255;
         --destructive: 239 68 68;
         --destructive-foreground: 255 255 255;
         --border: 226 232 240;
         --input: 226 232 240;
-        --ring: 37 99 235;
+        --ring: 0 65 143;
         --radius: 0.5rem;
     }
 }
