@@ -482,12 +482,11 @@ async def approve_purchase_order(po_number: str, approval: POApproval, current_u
 @api_router.post("/procurement", response_model=ProcurementRecord)
 async def create_procurement(proc_data: ProcurementCreate, current_user: User = Depends(get_current_user)):
     from uuid import uuid4
-    if current_user.organization != "Nova":
-        raise HTTPException(status_code=403, detail="Only Nova can create procurement records")
+    # Remove organization restriction - everyone can create procurement
     
     po = await db.purchase_orders.find_one({"po_number": proc_data.po_number})
-    if not po or po["approval_status"] != "Approved":
-        raise HTTPException(status_code=400, detail="PO must be approved")
+    if not po:
+        raise HTTPException(status_code=400, detail="PO not found")
     
     existing_imei = await db.procurement.find_one({"imei": proc_data.imei})
     if existing_imei:
@@ -502,6 +501,7 @@ async def create_procurement(proc_data: ProcurementCreate, current_user: User = 
         "imei": proc_data.imei,
         "serial_number": proc_data.serial_number,
         "device_model": proc_data.device_model,
+        "quantity": proc_data.quantity or 1,
         "purchase_price": proc_data.purchase_price,
         "procurement_date": datetime.now(timezone.utc).isoformat(),
         "created_by": current_user.user_id,
@@ -516,7 +516,7 @@ async def create_procurement(proc_data: ProcurementCreate, current_user: User = 
         "device_model": proc_data.device_model,
         "status": "Procured",
         "current_location": proc_data.store_location,
-        "organization": "Nova",
+        "organization": current_user.organization,
         "inward_nova_date": None,
         "inward_magnova_date": None,
         "dispatched_date": None,
