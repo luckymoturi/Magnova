@@ -729,6 +729,43 @@ async def get_payments(po_number: Optional[str] = None, payment_type: Optional[s
     return [Payment(**payment) for payment in payments]
 
 # IMEI Inventory Endpoints
+@api_router.get("/inventory/lookup/{imei}")
+async def lookup_imei(imei: str, current_user: User = Depends(get_current_user)):
+    """Lookup IMEI details from procurement records and existing inventory"""
+    # First check if IMEI exists in inventory
+    inventory_record = await db.imei_inventory.find_one({"imei": imei}, {"_id": 0})
+    
+    # Then check procurement records for this IMEI
+    procurement_record = await db.procurement.find_one({"imei": imei}, {"_id": 0})
+    
+    if not inventory_record and not procurement_record:
+        return {"found": False, "message": "IMEI not found in procurement or inventory"}
+    
+    result = {
+        "found": True,
+        "in_inventory": inventory_record is not None,
+        "in_procurement": procurement_record is not None,
+    }
+    
+    # If in procurement, get vendor details
+    if procurement_record:
+        result["vendor"] = procurement_record.get("vendor_name")
+        result["device_model"] = procurement_record.get("device_model")
+        result["po_number"] = procurement_record.get("po_number")
+        result["store_location"] = procurement_record.get("store_location")
+        result["purchase_price"] = procurement_record.get("purchase_price")
+        result["procurement_date"] = procurement_record.get("procurement_date")
+    
+    # If in inventory, get current status
+    if inventory_record:
+        result["status"] = inventory_record.get("status")
+        result["current_location"] = inventory_record.get("current_location")
+        result["organization"] = inventory_record.get("organization")
+        result["device_model"] = inventory_record.get("device_model")
+        result["vendor"] = inventory_record.get("vendor")
+    
+    return result
+
 @api_router.post("/inventory/scan")
 async def scan_imei(scan_data: IMEIScan, current_user: User = Depends(get_current_user)):
     imei_record = await db.imei_inventory.find_one({"imei": scan_data.imei})
