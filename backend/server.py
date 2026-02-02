@@ -176,7 +176,7 @@ class IMEIScan(BaseModel):
     action: str
     location: str
     organization: str
-    customer_organization: Optional[str] = None
+    vendor: Optional[str] = None
 
 class LogisticsShipment(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -195,6 +195,7 @@ class LogisticsShipment(BaseModel):
     pickup_quantity: Optional[int] = 0
     brand: Optional[str] = None
     model: Optional[str] = None
+    vendor: Optional[str] = None
     created_by: str
     created_at: datetime
     updated_at: datetime
@@ -211,6 +212,7 @@ class ShipmentCreate(BaseModel):
     pickup_quantity: Optional[int] = 0
     brand: Optional[str] = None
     model: Optional[str] = None
+    vendor: Optional[str] = None
 
 class ShipmentStatusUpdate(BaseModel):
     status: str
