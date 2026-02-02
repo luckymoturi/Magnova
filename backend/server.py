@@ -736,6 +736,8 @@ async def get_shipments(current_user: User = Depends(get_current_user)):
             shipment['brand'] = None
         if 'model' not in shipment:
             shipment['model'] = None
+        if 'vendor' not in shipment:
+            shipment['vendor'] = None
     return [LogisticsShipment(**shipment) for shipment in shipments]
 
 # Invoice Endpoints
