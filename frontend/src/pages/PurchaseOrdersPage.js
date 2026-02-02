@@ -199,39 +199,62 @@ export const PurchaseOrdersPage = () => {
           <div className="overflow-x-auto">
             <table className="w-full" data-testid="po-table">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-100">
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">PO Number</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">PO Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Purchase Office</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Created By</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Qty</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Total Value</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+                <tr className="bg-magnova-blue text-white">
+                  <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">SL No</th>
+                  <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">PO_ID</th>
+                  <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">P.O Date</th>
+                  <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Purchase Office</th>
+                  <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Vendor</th>
+                  <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Location</th>
+                  <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Brand</th>
+                  <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Model</th>
+                  <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Storage</th>
+                  <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Colour</th>
+                  <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">IMEI</th>
+                  <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Qty</th>
+                  <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Rate</th>
+                  <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">PO Value</th>
+                  <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
+                  <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={8} className="px-4 py-8 text-center text-slate-500">Loading...</td></tr>
+                  <tr><td colSpan={16} className="px-4 py-8 text-center text-slate-500">Loading...</td></tr>
                 ) : pos.length === 0 ? (
-                  <tr><td colSpan={8} className="px-4 py-8 text-center text-slate-500">No purchase orders found</td></tr>
-                ) : pos.map((po) => (
-                  <tr key={po.po_number} className="table-row border-b border-slate-100" data-testid="po-row">
-                    <td className="px-4 py-3 text-sm font-mono font-medium text-slate-900">{po.po_number}</td>
-                    <td className="px-4 py-3 text-sm text-slate-900">{po.po_date ? new Date(po.po_date).toLocaleDateString() : '-'}</td>
-                    <td className="px-4 py-3 text-sm text-slate-900">{po.purchase_office || '-'}</td>
-                    <td className="px-4 py-3 text-sm text-slate-900">{po.created_by_name}</td>
-                    <td className="px-4 py-3 text-sm text-slate-900">{po.total_quantity}</td>
-                    <td className="px-4 py-3 text-sm font-medium text-slate-900">₹{(po.total_value || 0).toFixed(2)}</td>
-                    <td className="px-4 py-3 text-sm">{getStatusBadge(po.approval_status)}</td>
-                    <td className="px-4 py-3 text-sm space-x-2">
-                      <Button size="sm" variant="ghost" onClick={() => setViewDialog({ open: true, po })} className="text-magnova-blue" data-testid="view-po-button"><Eye className="w-4 h-4" /></Button>
-                      {po.approval_status === 'Pending' && (user?.role === 'Approver' || user?.role === 'Admin') && (
-                        <Button size="sm" variant="outline" onClick={() => setApprovalDialog({ open: true, po })} data-testid="approve-po-button">Review</Button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                  <tr><td colSpan={16} className="px-4 py-8 text-center text-slate-500">No purchase orders found</td></tr>
+                ) : pos.flatMap((po, poIndex) => {
+                  const items = po.items && po.items.length > 0 ? po.items : [{}];
+                  return items.map((item, itemIndex) => (
+                    <tr key={`${po.po_number}-${itemIndex}`} className={`border-b border-slate-100 ${itemIndex === 0 ? 'bg-slate-50' : 'bg-white'} hover:bg-blue-50`} data-testid="po-row">
+                      <td className="px-3 py-2 text-sm text-slate-900">{item.sl_no || itemIndex + 1}</td>
+                      <td className="px-3 py-2 text-sm font-mono font-medium text-magnova-blue">{itemIndex === 0 ? po.po_number : ''}</td>
+                      <td className="px-3 py-2 text-sm text-slate-900">{itemIndex === 0 ? (po.po_date ? new Date(po.po_date).toLocaleDateString() : '-') : ''}</td>
+                      <td className="px-3 py-2 text-sm text-slate-900">{itemIndex === 0 ? (po.purchase_office || '-') : ''}</td>
+                      <td className="px-3 py-2 text-sm text-slate-900">{item.vendor || '-'}</td>
+                      <td className="px-3 py-2 text-sm text-slate-900">{item.location || '-'}</td>
+                      <td className="px-3 py-2 text-sm text-slate-900">{item.brand || '-'}</td>
+                      <td className="px-3 py-2 text-sm text-slate-900">{item.model || '-'}</td>
+                      <td className="px-3 py-2 text-sm text-slate-900">{item.storage || '-'}</td>
+                      <td className="px-3 py-2 text-sm text-slate-900">{item.colour || '-'}</td>
+                      <td className="px-3 py-2 text-sm text-slate-900 font-mono text-xs">{item.imei || '-'}</td>
+                      <td className="px-3 py-2 text-sm text-slate-900">{item.qty || '-'}</td>
+                      <td className="px-3 py-2 text-sm text-slate-900">{item.rate ? `₹${item.rate.toFixed(2)}` : '-'}</td>
+                      <td className="px-3 py-2 text-sm font-medium text-slate-900">{item.po_value ? `₹${item.po_value.toFixed(2)}` : '-'}</td>
+                      <td className="px-3 py-2 text-sm">{itemIndex === 0 ? getStatusBadge(po.approval_status) : ''}</td>
+                      <td className="px-3 py-2 text-sm space-x-1">
+                        {itemIndex === 0 && (
+                          <>
+                            <Button size="sm" variant="ghost" onClick={() => setViewDialog({ open: true, po })} className="text-magnova-blue h-7 w-7 p-0" data-testid="view-po-button"><Eye className="w-4 h-4" /></Button>
+                            {po.approval_status === 'Pending' && (user?.role === 'Approver' || user?.role === 'Admin') && (
+                              <Button size="sm" variant="outline" onClick={() => setApprovalDialog({ open: true, po })} className="h-7 text-xs" data-testid="approve-po-button">Review</Button>
+                            )}
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  ));
+                })}
               </tbody>
             </table>
           </div>
