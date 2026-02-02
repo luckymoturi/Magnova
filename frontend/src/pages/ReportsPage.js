@@ -365,6 +365,7 @@ export const ReportsPage = () => {
                   <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Rcvd Qty</th>
                   <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Warehouse</th>
                   <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Status</th>
+                  {isAdmin && <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Delete</th>}
                 </tr>
               </thead>
               <tbody>
