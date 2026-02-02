@@ -20,6 +20,8 @@ export const LogisticsPage = () => {
   const [poItems, setPOItems] = useState([]);
   const [selectedItemIndex, setSelectedItemIndex] = useState('');
   const [availableQty, setAvailableQty] = useState({});
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'Admin';
   const [formData, setFormData] = useState({
     po_number: '',
     transporter_name: '',
@@ -201,6 +203,17 @@ export const LogisticsPage = () => {
     setSelectedShipment(shipment);
     setNewStatus(shipment.status);
     setStatusDialogOpen(true);
+  };
+
+  const handleDelete = async (shipmentId) => {
+    if (!window.confirm('Are you sure you want to delete this shipment?')) return;
+    try {
+      await api.delete(`/logistics/shipments/${shipmentId}`);
+      toast.success('Shipment deleted successfully');
+      fetchShipments();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to delete shipment');
+    }
   };
 
   const getStatusColor = (status) => {
@@ -502,6 +515,17 @@ export const LogisticsPage = () => {
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
+                        {isAdmin && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDelete(shipment.shipment_id)}
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                            data-testid="delete-shipment-button"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   ))
