@@ -55,17 +55,72 @@ export const PurchaseOrdersPage = () => {
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
+      // Calculate total quantity from line items
+      const totalQty = lineItems.reduce((sum, item) => sum + parseInt(item.qty || 0), 0);
+      
       await api.post('/purchase-orders', {
-        total_quantity: parseInt(formData.total_quantity),
-        notes: formData.notes,
+        total_quantity: totalQty,
+        notes: JSON.stringify(lineItems), // Store line items in notes for now
       });
       toast.success('Purchase order created successfully');
       setDialogOpen(false);
       setFormData({ total_quantity: '', notes: '' });
+      setLineItems([{
+        vendor: '',
+        location: '',
+        brand: '',
+        model: '',
+        storage: '',
+        colour: '',
+        imei: '',
+        qty: '1',
+        rate: '',
+      }]);
       fetchPOs();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to create PO');
     }
+  };
+
+  const addLineItem = () => {
+    setLineItems([...lineItems, {
+      vendor: '',
+      location: '',
+      brand: '',
+      model: '',
+      storage: '',
+      colour: '',
+      imei: '',
+      qty: '1',
+      rate: '',
+    }]);
+  };
+
+  const removeLineItem = (index) => {
+    const updatedItems = lineItems.filter((_, i) => i !== index);
+    setLineItems(updatedItems.length > 0 ? updatedItems : [{
+      vendor: '',
+      location: '',
+      brand: '',
+      model: '',
+      storage: '',
+      colour: '',
+      imei: '',
+      qty: '1',
+      rate: '',
+    }]);
+  };
+
+  const updateLineItem = (index, field, value) => {
+    const updatedItems = [...lineItems];
+    updatedItems[index][field] = value;
+    setLineItems(updatedItems);
+  };
+
+  const calculatePOValue = (qty, rate) => {
+    const quantity = parseFloat(qty) || 0;
+    const price = parseFloat(rate) || 0;
+    return (quantity * price).toFixed(2);
   };
 
   const handleApproval = async (poNumber, action) => {
