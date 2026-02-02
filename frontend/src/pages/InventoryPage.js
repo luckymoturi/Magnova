@@ -18,6 +18,8 @@ export const InventoryPage = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [locations, setLocations] = useState([]);
   const [vendors, setVendors] = useState([]);
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'Admin';
   const [scanData, setScanData] = useState({
     imei: '',
     action: '',
@@ -96,6 +98,17 @@ export const InventoryPage = () => {
       fetchInventory();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to scan IMEI');
+    }
+  };
+
+  const handleDelete = async (imei) => {
+    if (!window.confirm(`Are you sure you want to delete IMEI ${imei}?`)) return;
+    try {
+      await api.delete(`/inventory/${imei}`);
+      toast.success('Inventory item deleted successfully');
+      fetchInventory();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to delete item');
     }
   };
 
@@ -268,12 +281,13 @@ export const InventoryPage = () => {
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Organization</th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Location</th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Updated</th>
+                  {isAdmin && <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Actions</th>}
                 </tr>
               </thead>
               <tbody>
                 {filteredInventory.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
+                    <td colSpan={isAdmin ? 7 : 6} className="px-4 py-8 text-center text-slate-500">
                       No inventory items found
                     </td>
                   </tr>
@@ -288,6 +302,19 @@ export const InventoryPage = () => {
                       <td className="px-4 py-3 text-sm text-slate-900">{item.organization}</td>
                       <td className="px-4 py-3 text-sm text-slate-600">{item.current_location}</td>
                       <td className="px-4 py-3 text-sm text-slate-600">{new Date(item.updated_at).toLocaleDateString()}</td>
+                      {isAdmin && (
+                        <td className="px-4 py-3 text-sm">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDelete(item.imei)}
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50 h-8 w-8 p-0"
+                            data-testid="delete-inventory-button"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </td>
+                      )}
                     </tr>
                   ))
                 )}
