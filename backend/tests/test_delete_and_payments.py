@@ -450,8 +450,9 @@ class TestDuplicatePOPrevention:
     
     def test_po_numbers_are_unique(self):
         """Test that PO numbers are unique across multiple creations"""
-        po_numbers = set()
+        po_numbers = []
         
+        # Create multiple POs first (without deleting in between)
         for i in range(3):
             po_data = {
                 "po_date": datetime.now().isoformat(),
@@ -467,10 +468,13 @@ class TestDuplicatePOPrevention:
             assert response.status_code == 200, f"Failed to create PO {i}: {response.text}"
             
             po_number = response.json()["po_number"]
-            assert po_number not in po_numbers, f"Duplicate PO number: {po_number}"
-            po_numbers.add(po_number)
-            
-            # Cleanup
+            po_numbers.append(po_number)
+        
+        # Check all PO numbers are unique
+        assert len(po_numbers) == len(set(po_numbers)), f"Duplicate PO numbers found: {po_numbers}"
+        
+        # Cleanup - delete all created POs
+        for po_number in po_numbers:
             requests.delete(f"{BASE_URL}/api/purchase-orders/{po_number}", headers=self.admin_headers)
 
 
