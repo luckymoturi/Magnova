@@ -7,7 +7,7 @@ import { Label } from '../components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner';
-import { Scan, Search, Trash2 } from 'lucide-react';
+import { Scan, Search, Trash2, CheckCircle, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const InventoryPage = () => {
@@ -18,6 +18,8 @@ export const InventoryPage = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [locations, setLocations] = useState([]);
   const [vendors, setVendors] = useState([]);
+  const [imeiLookup, setImeiLookup] = useState(null);
+  const [lookupLoading, setLookupLoading] = useState(false);
   const { user } = useAuth();
   const isAdmin = user?.role === 'Admin';
   const [scanData, setScanData] = useState({
@@ -26,6 +28,7 @@ export const InventoryPage = () => {
     location: '',
     organization: 'Nova',
     vendor: '',
+    device_model: '',
   });
 
   useEffect(() => {
@@ -82,6 +85,44 @@ export const InventoryPage = () => {
     setFilteredInventory(filtered);
   };
 
+  // Lookup IMEI when user enters IMEI number
+  const handleImeiChange = async (imei) => {
+    setScanData(prev => ({ ...prev, imei }));
+    setImeiLookup(null);
+    
+    if (imei.length >= 10) {
+      setLookupLoading(true);
+      try {
+        const response = await api.get(`/inventory/lookup/${imei}`);
+        setImeiLookup(response.data);
+        
+        if (response.data.found) {
+          // Auto-populate fields from lookup data
+          setScanData(prev => ({
+            ...prev,
+            vendor: response.data.vendor || prev.vendor,
+            device_model: response.data.device_model || prev.device_model,
+            location: response.data.store_location || response.data.current_location || prev.location,
+            organization: response.data.organization || prev.organization,
+          }));
+          
+          if (response.data.in_inventory) {
+            toast.success(`IMEI found in inventory - Status: ${response.data.status}`);
+          } else if (response.data.in_procurement) {
+            toast.success(`IMEI found in procurement - Vendor: ${response.data.vendor}`);
+          }
+        }
+      } catch (error) {
+        if (error.response?.status !== 404) {
+          console.error('Lookup error:', error);
+        }
+        setImeiLookup({ found: false });
+      } finally {
+        setLookupLoading(false);
+      }
+    }
+  };
+
   const handleScan = async (e) => {
     e.preventDefault();
     try {
@@ -94,7 +135,8 @@ export const InventoryPage = () => {
       });
       toast.success('IMEI scanned successfully');
       setDialogOpen(false);
-      setScanData({ imei: '', action: '', location: '', organization: 'Nova', vendor: '' });
+      setScanData({ imei: '', action: '', location: '', organization: 'Nova', vendor: '', device_model: '' });
+      setImeiLookup(null);
       fetchInventory();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to scan IMEI');
@@ -110,6 +152,11 @@ export const InventoryPage = () => {
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to delete item');
     }
+  };
+
+  const resetForm = () => {
+    setScanData({ imei: '', action: '', location: '', organization: 'Nova', vendor: '', device_model: '' });
+    setImeiLookup(null);
   };
 
   const getStatusColor = (status) => {
@@ -134,7 +181,7 @@ export const InventoryPage = () => {
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">IMEI Inventory</h1>
             <p className="text-slate-600 mt-1">Track device inventory with IMEI-level visibility</p>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
             <DialogTrigger asChild>
               <Button data-testid="scan-imei-button" className="bg-magnova-blue hover:bg-magnova-dark-blue">
                 <Scan className="w-4 h-4 mr-2" />
@@ -144,20 +191,85 @@ export const InventoryPage = () => {
             <DialogContent className="bg-white max-w-lg">
               <DialogHeader>
                 <DialogTitle className="text-magnova-orange">Scan IMEI</DialogTitle>
-                <DialogDescription className="text-slate-600">Update IMEI status and location</DialogDescription>
+                <DialogDescription className="text-slate-600">Enter IMEI to auto-populate details and update status</DialogDescription>
               </DialogHeader>
               <form onSubmit={handleScan} className="space-y-4" data-testid="scan-form">
+                {/* IMEI Input with Lookup */}
                 <div>
                   <Label className="text-slate-700">IMEI Number *</Label>
-                  <Input
-                    value={scanData.imei}
-                    onChange={(e) => setScanData({ ...scanData, imei: e.target.value })}
-                    required
-                    className="font-mono bg-white text-slate-900"
-                    data-testid="scan-imei-input"
-                    placeholder="Enter IMEI number"
-                  />
+                  <div className="relative">
+                    <Input
+                      value={scanData.imei}
+                      onChange={(e) => handleImeiChange(e.target.value)}
+                      required
+                      className="font-mono bg-white text-slate-900 pr-10"
+                      data-testid="scan-imei-input"
+                      placeholder="Enter IMEI number"
+                    />
+                    {lookupLoading && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <div className="animate-spin h-4 w-4 border-2 border-magnova-blue border-t-transparent rounded-full"></div>
+                      </div>
+                    )}
+                    {!lookupLoading && imeiLookup && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {imeiLookup.found ? (
+                          <CheckCircle className="h-4 w-4 text-emerald-500" />
+                        ) : (
+                          <AlertCircle className="h-4 w-4 text-orange-500" />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Lookup Result Info */}
+                  {imeiLookup && (
+                    <div className={`mt-2 p-3 rounded-lg text-sm ${
+                      imeiLookup.found 
+                        ? 'bg-emerald-50 border border-emerald-200' 
+                        : 'bg-orange-50 border border-orange-200'
+                    }`}>
+                      {imeiLookup.found ? (
+                        <div className="space-y-1">
+                          {imeiLookup.in_inventory && (
+                            <p className="text-emerald-700">
+                              <span className="font-medium">In Inventory:</span> Status - {imeiLookup.status}
+                            </p>
+                          )}
+                          {imeiLookup.in_procurement && (
+                            <>
+                              <p className="text-emerald-700">
+                                <span className="font-medium">From Procurement:</span> {imeiLookup.device_model}
+                              </p>
+                              <p className="text-emerald-600">
+                                <span className="font-medium">Vendor:</span> {imeiLookup.vendor} | 
+                                <span className="font-medium ml-2">PO:</span> {imeiLookup.po_number}
+                              </p>
+                            </>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-orange-700">
+                          <AlertCircle className="inline w-4 h-4 mr-1" />
+                          IMEI not found. Please add this IMEI through Procurement first.
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
+
+                {/* Device Model (Auto-populated) */}
+                {scanData.device_model && (
+                  <div>
+                    <Label className="text-slate-700">Device Model</Label>
+                    <Input
+                      value={scanData.device_model}
+                      readOnly
+                      className="font-mono bg-slate-100 text-slate-700"
+                    />
+                  </div>
+                )}
+
                 <div>
                   <Label className="text-slate-700">Action *</Label>
                   <Select value={scanData.action} onValueChange={(value) => setScanData({ ...scanData, action: value })} required>
@@ -174,10 +286,15 @@ export const InventoryPage = () => {
                     </SelectContent>
                   </Select>
                 </div>
+
                 <div>
-                  <Label className="text-slate-700">Vendor *</Label>
-                  <Select value={scanData.vendor} onValueChange={(value) => setScanData({ ...scanData, vendor: value })} required>
-                    <SelectTrigger className="bg-white text-slate-900">
+                  <Label className="text-slate-700">Vendor {imeiLookup?.found ? '(Auto-populated)' : '*'}</Label>
+                  <Select 
+                    value={scanData.vendor} 
+                    onValueChange={(value) => setScanData({ ...scanData, vendor: value })} 
+                    required={!imeiLookup?.found}
+                  >
+                    <SelectTrigger className={`text-slate-900 ${imeiLookup?.found && scanData.vendor ? 'bg-slate-100' : 'bg-white'}`}>
                       <SelectValue placeholder="Select vendor" />
                     </SelectTrigger>
                     <SelectContent className="bg-white">
@@ -197,10 +314,15 @@ export const InventoryPage = () => {
                     </SelectContent>
                   </Select>
                 </div>
+
                 <div>
-                  <Label className="text-slate-700">Location *</Label>
-                  <Select value={scanData.location} onValueChange={(value) => setScanData({ ...scanData, location: value })} required>
-                    <SelectTrigger className="bg-white text-slate-900" data-testid="scan-location-select">
+                  <Label className="text-slate-700">Location {imeiLookup?.found ? '(Auto-populated)' : '*'}</Label>
+                  <Select 
+                    value={scanData.location} 
+                    onValueChange={(value) => setScanData({ ...scanData, location: value })} 
+                    required={!imeiLookup?.found}
+                  >
+                    <SelectTrigger className={`text-slate-900 ${imeiLookup?.found && scanData.location ? 'bg-slate-100' : 'bg-white'}`} data-testid="scan-location-select">
                       <SelectValue placeholder="Select location" />
                     </SelectTrigger>
                     <SelectContent className="bg-white">
@@ -221,6 +343,7 @@ export const InventoryPage = () => {
                     </SelectContent>
                   </Select>
                 </div>
+
                 <div>
                   <Label className="text-slate-700">Organization *</Label>
                   <Select value={scanData.organization} onValueChange={(value) => setScanData({ ...scanData, organization: value })} required>
@@ -233,9 +356,21 @@ export const InventoryPage = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <Button type="submit" className="w-full bg-magnova-blue hover:bg-magnova-dark-blue" data-testid="submit-scan">
-                  Scan & Update
+
+                <Button 
+                  type="submit" 
+                  className="w-full bg-magnova-blue hover:bg-magnova-dark-blue" 
+                  data-testid="submit-scan"
+                  disabled={!imeiLookup?.found && scanData.imei.length >= 10}
+                >
+                  {imeiLookup?.found ? 'Scan & Update' : 'Add to Inventory & Update'}
                 </Button>
+                
+                {!imeiLookup?.found && scanData.imei.length >= 10 && (
+                  <p className="text-center text-sm text-orange-600">
+                    IMEI must be added through Procurement first
+                  </p>
+                )}
               </form>
             </DialogContent>
           </Dialog>
