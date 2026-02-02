@@ -7,15 +7,16 @@ import { Label } from '../components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner';
-import { Plus, Trash2, Building2, Users } from 'lucide-react';
+import { Plus, Trash2, Building2, Users, X, ExternalLink } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const PaymentsPage = () => {
   const [payments, setPayments] = useState([]);
   const [pos, setPOs] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [paymentType, setPaymentType] = useState(''); // 'internal' or 'external'
+  const [paymentType, setPaymentType] = useState('');
   const [paymentSummary, setPaymentSummary] = useState(null);
+  const [linkedPaymentsDialog, setLinkedPaymentsDialog] = useState({ open: false, poNumber: '', internalPayment: null });
   const { user } = useAuth();
   const isAdmin = user?.role === 'Admin';
 
@@ -76,8 +77,8 @@ export const PaymentsPage = () => {
         ...prev,
         po_number: poNumber,
         payee_name: 'Nova Enterprises',
-        payee_account: 'NOVA-ACC-001', // Auto-populated
-        payee_bank: 'HDFC Bank', // Auto-populated
+        payee_account: 'NOVA-ACC-001',
+        payee_bank: 'HDFC Bank',
         amount: po.total_value?.toString() || '',
       }));
     }
@@ -86,7 +87,6 @@ export const PaymentsPage = () => {
   // Auto-populate External Payment fields when PO is selected
   const handleExternalPOSelect = async (poNumber) => {
     setExternalForm(prev => ({ ...prev, po_number: poNumber }));
-    // Fetch payment summary to show available balance
     try {
       const response = await api.get(`/payments/summary/${poNumber}`);
       setPaymentSummary(response.data);
@@ -167,9 +167,29 @@ export const PaymentsPage = () => {
     });
   };
 
+  // Show linked external payments for a PO
+  const showLinkedExternalPayments = async (poNumber, internalPayment) => {
+    try {
+      const response = await api.get(`/payments/summary/${poNumber}`);
+      setLinkedPaymentsDialog({
+        open: true,
+        poNumber,
+        internalPayment,
+        summary: response.data
+      });
+    } catch (error) {
+      toast.error('Failed to fetch payment details');
+    }
+  };
+
   // Separate payments by type
-  const internalPayments = payments.filter(p => p.payment_type === 'internal');
+  const internalPayments = payments.filter(p => p.payment_type === 'internal' || !p.payment_type);
   const externalPayments = payments.filter(p => p.payment_type === 'external');
+
+  // Get external payments for a specific PO
+  const getExternalPaymentsForPO = (poNumber) => {
+    return externalPayments.filter(p => p.po_number === poNumber);
+  };
 
   return (
     <Layout>
@@ -540,7 +560,16 @@ export const PaymentsPage = () => {
                   ) : (
                     internalPayments.map((payment) => (
                       <tr key={payment.payment_id} className="border-b border-slate-100 hover:bg-slate-50" data-testid="internal-payment-row">
-                        <td className="px-4 py-3 text-sm font-mono font-medium text-magnova-blue">{payment.po_number}</td>
+                        <td className="px-4 py-3 text-sm">
+                          <button
+                            onClick={() => showLinkedExternalPayments(payment.po_number, payment)}
+                            className="font-mono font-medium text-magnova-blue hover:text-magnova-dark-blue hover:underline flex items-center gap-1"
+                            data-testid="view-linked-payments"
+                          >
+                            {payment.po_number}
+                            <ExternalLink className="w-3 h-3" />
+                          </button>
+                        </td>
                         <td className="px-4 py-3 text-sm text-slate-900">{payment.payee_name}</td>
                         <td className="px-4 py-3 text-sm font-mono text-slate-600">{payment.payee_account || '-'}</td>
                         <td className="px-4 py-3 text-sm text-slate-600">{payment.payee_bank || '-'}</td>
@@ -639,6 +668,122 @@ export const PaymentsPage = () => {
             </div>
           </div>
         </div>
+
+        {/* Linked External Payments Dialog */}
+        <Dialog open={linkedPaymentsDialog.open} onOpenChange={(open) => setLinkedPaymentsDialog({ ...linkedPaymentsDialog, open })}>
+          <DialogContent className="max-w-3xl bg-white">
+            <DialogHeader>
+              <DialogTitle className="text-magnova-blue flex items-center gap-2">
+                <Building2 className="w-5 h-5" />
+                Payment Details - {linkedPaymentsDialog.poNumber}
+              </DialogTitle>
+              <DialogDescription className="text-slate-600">
+                Internal payment and linked external payments for this PO
+              </DialogDescription>
+            </DialogHeader>
+
+            {/* Internal Payment Info */}
+            {linkedPaymentsDialog.internalPayment && (
+              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200 mb-4">
+                <h4 className="font-bold text-magnova-blue mb-3 flex items-center gap-2">
+                  <Building2 className="w-4 h-4" /> Internal Payment (Magnova → Nova)
+                </h4>
+                <div className="grid grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <span className="text-slate-500">Payee:</span>
+                    <span className="ml-1 font-medium">{linkedPaymentsDialog.internalPayment.payee_name}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Amount:</span>
+                    <span className="ml-1 font-bold text-magnova-blue">₹{linkedPaymentsDialog.internalPayment.amount?.toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Mode:</span>
+                    <span className="ml-1 font-medium">{linkedPaymentsDialog.internalPayment.payment_mode}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Date:</span>
+                    <span className="ml-1 font-medium">{new Date(linkedPaymentsDialog.internalPayment.payment_date).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Payment Summary */}
+            {linkedPaymentsDialog.summary && (
+              <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 mb-4">
+                <h4 className="font-bold text-slate-700 mb-3">Payment Summary</h4>
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div className="p-3 bg-white rounded-lg border">
+                    <span className="text-slate-500 block text-xs uppercase">Internal Paid</span>
+                    <span className="font-bold text-lg text-magnova-blue">₹{linkedPaymentsDialog.summary.internal_paid?.toLocaleString()}</span>
+                  </div>
+                  <div className="p-3 bg-white rounded-lg border">
+                    <span className="text-slate-500 block text-xs uppercase">External Paid</span>
+                    <span className="font-bold text-lg text-magnova-orange">₹{linkedPaymentsDialog.summary.external_paid?.toLocaleString()}</span>
+                  </div>
+                  <div className="p-3 bg-white rounded-lg border">
+                    <span className="text-slate-500 block text-xs uppercase">Remaining</span>
+                    <span className="font-bold text-lg text-emerald-600">₹{linkedPaymentsDialog.summary.external_remaining?.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Linked External Payments */}
+            <div>
+              <h4 className="font-bold text-magnova-orange mb-3 flex items-center gap-2">
+                <Users className="w-4 h-4" /> External Payments (Nova → Vendor/CC)
+              </h4>
+              {getExternalPaymentsForPO(linkedPaymentsDialog.poNumber).length === 0 ? (
+                <div className="p-6 bg-slate-50 rounded-lg text-center text-slate-500">
+                  No external payments found for this PO
+                </div>
+              ) : (
+                <div className="border border-slate-200 rounded-lg overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-magnova-orange text-white">
+                        <th className="px-3 py-2 text-left text-xs">Payee Type</th>
+                        <th className="px-3 py-2 text-left text-xs">Payee Name</th>
+                        <th className="px-3 py-2 text-left text-xs">Account</th>
+                        <th className="px-3 py-2 text-left text-xs">Location</th>
+                        <th className="px-3 py-2 text-right text-xs">Amount</th>
+                        <th className="px-3 py-2 text-left text-xs">UTR</th>
+                        <th className="px-3 py-2 text-left text-xs">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {getExternalPaymentsForPO(linkedPaymentsDialog.poNumber).map((payment) => (
+                        <tr key={payment.payment_id} className="border-b border-slate-100 hover:bg-slate-50">
+                          <td className="px-3 py-2">
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              payment.payee_type === 'vendor' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+                            }`}>
+                              {payment.payee_type?.toUpperCase()}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-slate-900">{payment.payee_name}</td>
+                          <td className="px-3 py-2 font-mono text-slate-600">{payment.account_number}</td>
+                          <td className="px-3 py-2 text-slate-600">{payment.location}</td>
+                          <td className="px-3 py-2 text-right font-medium">₹{payment.amount?.toLocaleString()}</td>
+                          <td className="px-3 py-2 font-mono text-slate-600">{payment.utr_number}</td>
+                          <td className="px-3 py-2 text-slate-600">{new Date(payment.payment_date).toLocaleDateString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end mt-4">
+              <Button variant="outline" onClick={() => setLinkedPaymentsDialog({ ...linkedPaymentsDialog, open: false })}>
+                Close
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );
