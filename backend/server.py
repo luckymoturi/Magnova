@@ -594,9 +594,9 @@ async def scan_imei(scan_data: IMEIScan, current_user: User = Depends(get_curren
         "organization": scan_data.organization
     }
     
-    # Add customer_organization if provided
-    if scan_data.customer_organization:
-        update_data["customer_organization"] = scan_data.customer_organization
+    # Add vendor if provided
+    if scan_data.vendor:
+        update_data["vendor"] = scan_data.vendor
     
     if scan_data.action == "inward_nova":
         update_data["status"] = "Inward Nova"
@@ -618,7 +618,7 @@ async def scan_imei(scan_data: IMEIScan, current_user: User = Depends(get_curren
         update_data["status"] = "Available"
     
     await db.imei_inventory.update_one({"imei": scan_data.imei}, {"$set": update_data})
-    await create_audit_log("SCAN", "IMEI", scan_data.imei, current_user, {"action": scan_data.action, "location": scan_data.location})
+    await create_audit_log("SCAN", "IMEI", scan_data.imei, current_user, {"action": scan_data.action, "location": scan_data.location, "vendor": scan_data.vendor})
     
     return {"message": "IMEI scanned successfully", "status": update_data.get("status", imei_record["status"])}
 
