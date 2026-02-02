@@ -5,7 +5,8 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner';
-import { Download, Search, RefreshCw } from 'lucide-react';
+import { Download, Search, RefreshCw, Trash2 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export const ReportsPage = () => {
   const [stats, setStats] = useState(null);
@@ -15,6 +16,8 @@ export const ReportsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [poFilter, setPOFilter] = useState('all');
   const [uniquePOs, setUniquePOs] = useState([]);
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'Admin';
 
   useEffect(() => {
     fetchStats();
