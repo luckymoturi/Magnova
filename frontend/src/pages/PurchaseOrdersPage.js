@@ -25,7 +25,7 @@ import { Plus, CheckCircle, XCircle, Eye } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { POLineItemRow } from '../components/POLineItemRow';
 
-const emptyItem = { vendor: '', location: '', brand: '', model: '', storage: '', colour: '', imei: '', qty: '1', rate: '' };
+const emptyItem = { vendor: '', location: '', brand: '', model: '', storage: '', colour: '', qty: '1', rate: '' };
 
 export const PurchaseOrdersPage = () => {
   const [pos, setPos] = useState([]);
