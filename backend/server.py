@@ -1040,6 +1040,96 @@ async def get_audit_logs(entity_type: Optional[str] = None, current_user: User =
     logs = await db.audit_logs.find(query, {"_id": 0}).sort("timestamp", -1).limit(500).to_list(500)
     return logs
 
+# DELETE ENDPOINTS - Admin Only
+@api_router.delete("/purchase-orders/{po_number}")
+async def delete_purchase_order(po_number: str, current_user: User = Depends(get_current_user)):
+    if current_user.role != "Admin":
+        raise HTTPException(status_code=403, detail="Only Admin can delete records")
+    
+    result = await db.purchase_orders.delete_one({"po_number": po_number})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="PO not found")
+    
+    await create_audit_log("DELETE", "PurchaseOrder", po_number, current_user, {})
+    return {"message": "Purchase order deleted successfully"}
+
+@api_router.delete("/procurement/{procurement_id}")
+async def delete_procurement(procurement_id: str, current_user: User = Depends(get_current_user)):
+    if current_user.role != "Admin":
+        raise HTTPException(status_code=403, detail="Only Admin can delete records")
+    
+    # Also delete related IMEI inventory
+    proc = await db.procurement.find_one({"procurement_id": procurement_id})
+    if proc:
+        await db.imei_inventory.delete_one({"imei": proc.get("imei")})
+    
+    result = await db.procurement.delete_one({"procurement_id": procurement_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Procurement record not found")
+    
+    await create_audit_log("DELETE", "Procurement", procurement_id, current_user, {})
+    return {"message": "Procurement record deleted successfully"}
+
+@api_router.delete("/inventory/{imei}")
+async def delete_inventory(imei: str, current_user: User = Depends(get_current_user)):
+    if current_user.role != "Admin":
+        raise HTTPException(status_code=403, detail="Only Admin can delete records")
+    
+    result = await db.imei_inventory.delete_one({"imei": imei})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="IMEI not found")
+    
+    await create_audit_log("DELETE", "IMEI", imei, current_user, {})
+    return {"message": "Inventory item deleted successfully"}
+
+@api_router.delete("/logistics/shipments/{shipment_id}")
+async def delete_shipment(shipment_id: str, current_user: User = Depends(get_current_user)):
+    if current_user.role != "Admin":
+        raise HTTPException(status_code=403, detail="Only Admin can delete records")
+    
+    result = await db.logistics_shipments.delete_one({"shipment_id": shipment_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Shipment not found")
+    
+    await create_audit_log("DELETE", "Shipment", shipment_id, current_user, {})
+    return {"message": "Shipment deleted successfully"}
+
+@api_router.delete("/payments/{payment_id}")
+async def delete_payment(payment_id: str, current_user: User = Depends(get_current_user)):
+    if current_user.role != "Admin":
+        raise HTTPException(status_code=403, detail="Only Admin can delete records")
+    
+    result = await db.payments.delete_one({"payment_id": payment_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    
+    await create_audit_log("DELETE", "Payment", payment_id, current_user, {})
+    return {"message": "Payment deleted successfully"}
+
+@api_router.delete("/invoices/{invoice_id}")
+async def delete_invoice(invoice_id: str, current_user: User = Depends(get_current_user)):
+    if current_user.role != "Admin":
+        raise HTTPException(status_code=403, detail="Only Admin can delete records")
+    
+    result = await db.invoices.delete_one({"invoice_id": invoice_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    
+    await create_audit_log("DELETE", "Invoice", invoice_id, current_user, {})
+    return {"message": "Invoice deleted successfully"}
+
+@api_router.delete("/sales-orders/{so_number}")
+async def delete_sales_order(so_number: str, current_user: User = Depends(get_current_user)):
+    if current_user.role != "Admin":
+        raise HTTPException(status_code=403, detail="Only Admin can delete records")
+    
+    result = await db.sales_orders.delete_one({"so_number": so_number})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Sales order not found")
+    
+    await create_audit_log("DELETE", "SalesOrder", so_number, current_user, {})
+    return {"message": "Sales order deleted successfully"}
+
 app.include_router(api_router)
 
 app.add_middleware(
