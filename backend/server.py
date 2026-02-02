@@ -388,8 +388,18 @@ async def create_purchase_order(po_data: POCreate, current_user: User = Depends(
     if current_user.organization != "Magnova":
         raise HTTPException(status_code=403, detail="Only Magnova can create POs")
     
+    # Generate unique PO number and check for duplicates
     po_count = await db.purchase_orders.count_documents({}) + 1
     po_number = f"PO-MAG-{po_count:05d}"
+    
+    # Check if PO number already exists (shouldn't happen but safety check)
+    existing_po = await db.purchase_orders.find_one({"po_number": po_number})
+    if existing_po:
+        # Find next available number
+        while existing_po:
+            po_count += 1
+            po_number = f"PO-MAG-{po_count:05d}"
+            existing_po = await db.purchase_orders.find_one({"po_number": po_number})
     
     # Calculate totals from items
     total_quantity = sum(item.qty for item in po_data.items)
