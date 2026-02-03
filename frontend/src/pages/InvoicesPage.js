@@ -77,7 +77,7 @@ export const InvoicesPage = () => {
       toast.success('Invoice created successfully');
       setDialogOpen(false);
       resetForm();
-      fetchInvoices();
+      refreshAfterInvoiceChange(); // Trigger refresh
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to create invoice');
     }
@@ -88,7 +88,7 @@ export const InvoicesPage = () => {
     try {
       await api.delete(`/invoices/${invoiceId}`);
       toast.success('Invoice deleted successfully');
-      fetchInvoices();
+      refreshAfterInvoiceChange(); // Trigger refresh
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to delete invoice');
     }
