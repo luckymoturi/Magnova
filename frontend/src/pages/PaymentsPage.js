@@ -269,24 +269,131 @@ export const PaymentsPage = () => {
   return (
     <Layout>
       <div data-testid="payments-page">
+        {/* Internal Payment Notifications Banner */}
+        {pendingInternalPayments.length > 0 && (
+          <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4" data-testid="internal-payment-notifications">
+            <div className="flex items-center gap-2 mb-3">
+              <Bell className="w-5 h-5 text-blue-600 animate-pulse" />
+              <h3 className="font-semibold text-blue-800">New PO Created - Internal Payment Required</h3>
+              <span className="bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">{pendingInternalPayments.length}</span>
+            </div>
+            <div className="space-y-2">
+              {pendingInternalPayments.map((notif, index) => (
+                <div 
+                  key={`internal-${notif.po_number}-${index}`}
+                  className="flex items-center justify-between bg-white rounded-lg p-3 border border-blue-100 hover:border-blue-300 transition-colors cursor-pointer"
+                  onClick={() => handleInternalNotificationClick(notif)}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="bg-blue-100 p-2 rounded-lg">
+                      <Banknote className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-slate-900">
+                        <span className="font-mono text-magnova-blue">{notif.po_number}</span>
+                        <span className="mx-2 text-slate-400">|</span>
+                        <span>{notif.brand} {notif.model}</span>
+                      </div>
+                      <div className="text-sm text-slate-500">
+                        Vendor: {notif.vendor} • Total: ₹{notif.total_value?.toLocaleString() || '0'} • Qty: {notif.total_qty}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      className="bg-blue-600 hover:bg-blue-700"
+                      onClick={(e) => { e.stopPropagation(); handleInternalNotificationClick(notif); }}
+                    >
+                      <Banknote className="w-4 h-4 mr-1" />
+                      Record Internal Payment
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-slate-400 hover:text-slate-600"
+                      onClick={(e) => { e.stopPropagation(); clearInternalPaymentNotification(notif.po_number); }}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* External Payment Notifications Banner */}
+        {pendingExternalPayments.length > 0 && (
+          <div className="mb-6 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-lg p-4" data-testid="external-payment-notifications">
+            <div className="flex items-center gap-2 mb-3">
+              <Bell className="w-5 h-5 text-orange-600 animate-pulse" />
+              <h3 className="font-semibold text-orange-800">Internal Payment Complete - External Payment Required</h3>
+              <span className="bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full">{pendingExternalPayments.length}</span>
+            </div>
+            <div className="space-y-2">
+              {pendingExternalPayments.map((notif, index) => (
+                <div 
+                  key={`external-${notif.po_number}-${index}`}
+                  className="flex items-center justify-between bg-white rounded-lg p-3 border border-orange-100 hover:border-orange-300 transition-colors cursor-pointer"
+                  onClick={() => handleExternalNotificationClick(notif)}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="bg-orange-100 p-2 rounded-lg">
+                      <CreditCard className="w-5 h-5 text-orange-600" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-slate-900">
+                        <span className="font-mono text-magnova-blue">{notif.po_number}</span>
+                        <span className="mx-2 text-slate-400">|</span>
+                        <span>Pay to: {notif.vendor}</span>
+                      </div>
+                      <div className="text-sm text-slate-500">
+                        Internal Paid: ₹{notif.internal_amount?.toLocaleString() || '0'} • Location: {notif.location}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      className="bg-orange-600 hover:bg-orange-700"
+                      onClick={(e) => { e.stopPropagation(); handleExternalNotificationClick(notif); }}
+                    >
+                      <CreditCard className="w-4 h-4 mr-1" />
+                      Record External Payment
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-slate-400 hover:text-slate-600"
+                      onClick={(e) => { e.stopPropagation(); clearExternalPaymentNotification(notif.po_number); }}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">Payments</h1>
-            <p className="text-slate-600 mt-1">Track internal and external payment transactions</p>
+            <p className="text-slate-600 mt-1">Track internal and external payment transactions (Admin Only)</p>
           </div>
-          {isAdmin && (
-            <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForms(); }}>
-              <DialogTrigger asChild>
-                <Button data-testid="create-payment-button" className="bg-magnova-blue hover:bg-magnova-dark-blue">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Record Payment
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl bg-white">
-                <DialogHeader>
-                  <DialogTitle className="text-magnova-orange">Record Payment</DialogTitle>
-                  <DialogDescription className="text-slate-600">Select payment type to record transaction</DialogDescription>
-                </DialogHeader>
+          <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForms(); }}>
+            <DialogTrigger asChild>
+              <Button data-testid="create-payment-button" className="bg-magnova-blue hover:bg-magnova-dark-blue">
+                <Plus className="w-4 h-4 mr-2" />
+                Record Payment
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl bg-white">
+              <DialogHeader>
+                <DialogTitle className="text-magnova-orange">Record Payment</DialogTitle>
+                <DialogDescription className="text-slate-600">Select payment type to record transaction</DialogDescription>
+              </DialogHeader>
                 
                 {/* Payment Type Selection */}
                 {!paymentType && (
