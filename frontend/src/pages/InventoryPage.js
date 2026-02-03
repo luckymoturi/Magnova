@@ -220,6 +220,61 @@ export const InventoryPage = () => {
   return (
     <Layout>
       <div data-testid="inventory-page">
+        {/* Inventory Notifications Banner - Shipment Complete, Ready for Inventory */}
+        {pendingInventory.length > 0 && (
+          <div className="mb-6 bg-gradient-to-r from-cyan-50 to-teal-50 border border-cyan-200 rounded-lg p-4" data-testid="inventory-notifications">
+            <div className="flex items-center gap-2 mb-3">
+              <Bell className="w-5 h-5 text-cyan-600 animate-pulse" />
+              <h3 className="font-semibold text-cyan-800">Shipment Complete - Ready for Inventory Scan</h3>
+              <span className="bg-cyan-500 text-white text-xs px-2 py-0.5 rounded-full">{pendingInventory.length}</span>
+            </div>
+            <div className="space-y-2">
+              {pendingInventory.map((notif, index) => (
+                <div 
+                  key={`inv-${notif.po_number}-${notif.shipment_id}-${index}`}
+                  className="flex items-center justify-between bg-white rounded-lg p-3 border border-cyan-100 hover:border-cyan-300 transition-colors cursor-pointer"
+                  onClick={() => handleNotificationClick(notif)}
+                  data-testid="inventory-notification-item"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="bg-cyan-100 p-2 rounded-lg">
+                      <Package className="w-5 h-5 text-cyan-600" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-slate-900">
+                        <span className="font-mono text-magnova-blue">{notif.po_number}</span>
+                        <span className="mx-2 text-slate-400">|</span>
+                        <span>{notif.brand} {notif.model}</span>
+                      </div>
+                      <div className="text-sm text-slate-500">
+                        From: {notif.from_location} → To: {notif.to_location} • Qty: {notif.pickup_quantity} • {notif.transporter}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      className="bg-cyan-600 hover:bg-cyan-700"
+                      onClick={(e) => { e.stopPropagation(); handleNotificationClick(notif); }}
+                    >
+                      <Scan className="w-4 h-4 mr-1" />
+                      Scan IMEI
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-slate-400 hover:text-slate-600"
+                      onClick={(e) => { e.stopPropagation(); clearInventoryNotification(notif.po_number, notif.shipment_id); }}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">IMEI Inventory</h1>
