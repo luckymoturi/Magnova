@@ -91,7 +91,7 @@ Logistics → Invoicing → Sales Orders (Export)
 
 ### Accessing the System
 
-**URL**: https://mobinventory-3.preview.emergentagent.com
+**URL**: https://exim-flow.preview.emergentagent.com
 
 ### Registration Process
 

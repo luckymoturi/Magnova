@@ -18,163 +18,167 @@ You are a senior enterprise software architect and full-stack engineer building 
 **User's preferred language**: English
 
 **what currently exists?**
-A full-stack application (FastAPI backend, React frontend, MongoDB) with a functional structure for all core modules. It includes JWT authentication and basic role stubs. The UI has been branded to company colors.
+A full-stack application (FastAPI backend, React frontend, MongoDB) with a highly functional set of interconnected modules. The system supports a complete workflow from Purchase Order creation to Invoicing.
 
-Recent work includes:
-- A detailed multi-line item Purchase Order creation form.
-- CRM-style enhancements linking data across Procurement, Inventory, and Logistics pages (e.g., auto-populating PO data).
-- A comprehensive Master Report page that consolidates data from multiple modules.
-- Backend models and endpoints have been updated to support these features.
-- A critical frontend build issue related to a babel plugin was resolved by disabling the plugin.
+Key features implemented in the last session include:
+- **Admin-Only Deletion:** A Delete button (trash icon) is present on every data table (, , , , , , ) and is only visible to admin users.
+- **Overhauled Payments Module:**
+    - Supports Internal (Magnova -> Nova) and External (Nova -> Vendor/CC) payment types.
+    - The External payment form dynamically changes fields based on payee type (Vendor or Credit Card).
+    - Logic is in place to prevent external payment totals from exceeding the internal payment for a given PO.
+    - Clicking a PO number in the Internal payments table opens a modal showing all linked external payments for that PO.
+- **Intelligent IMEI Inventory:**
+    - Entering an IMEI number on the Inventory page triggers a lookup.
+    - If the IMEI exists in procurement, vendor details, location, brand, model, and color are all auto-populated.
+- **Revamped Invoicing:**
+    - The invoice creation form is now fully manual, with auto-calculation for GST based on selectable percentages (5%, 12%, 18%).
+    - Clicking on a created invoice number displays a professional, printable invoice template with all necessary details.
+- **UI/UX Improvements:** The sidebar navigation has been reordered, Sales Orders has been removed, and various UI elements have been restyled to use orange/black instead of yellow/amber.
+- **Data Integrity (In Progress):** Logic to cascade-delete related records when a Purchase Order is deleted has been added to the backend. The frontend now shows a confirmation dialog detailing what will be deleted.
 
 **Last working item**:
-- **Last item agent was working:** Implementing a three-part feature request:
-    1.  Preventing duplicate Purchase Order number entries.
-    2.  Overhauling the Payments module to support Internal and External payment types with specific fields and validation logic.
-    3.  Adding an admin-only Delete option for every data row on every page.
-    The agent implemented the backend changes for all three tasks (duplicate check, new payment models/endpoints, and all DELETE endpoints in ). The next step was to implement the corresponding frontend changes.
+- **Last item agent was working:** The agent was implementing a critical user request for data integrity and a more real-time feel. It successfully added cascade-delete logic to the  backend endpoint and updated the frontend to show a confirmation dialog with counts of related records. The agent was about to modify the  to add auto-refreshing statistics to provide real-time updates on key metrics.
 - **Status:** IN PROGRESS
-- **Agent Testing Done:** N
-- **Which testing method agent to use?** both
+- **Agent Testing Done:** N (The cascade delete feature has not been fully tested)
+- **Which testing method agent to use?** both (Backend for cascade logic, Frontend for UI updates and confirmation dialog)
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1:** Complete frontend implementation for new Payments module and admin-only Delete functionality. (Priority: P0)
--   **Issue 2:** The functionality of , , and  pages is unverified and they may only be placeholders. (Priority: P1)
--   **Issue 3:** The frontend application compiles with a non-critical  warning. (Priority: P2)
--   **Issue 4:** Backend DELETE endpoints lack role-based access control, allowing any authenticated user to delete data. (Priority: P1, Security)
+-   **Issue 1:** Complete the data integrity and real-time update feature. (Priority: P0)
+-   **Issue 2:** The monolithic  file is extremely large and complex, making maintenance difficult. (Priority: P1, Technical Debt)
+-   **Issue 3:** The frontend application compiles with non-critical  warnings. (Priority: P2)
 
 **Issues Detail:**
--   **Issue 1:** Complete New Features Frontend
-    -   **Attempted fixes:** All required backend changes (models, endpoints for payments and deletion, duplicate PO check) were implemented in .
+-   **Issue 1:** Complete Data Integrity & Real-Time Updates
+    -   **Attempted fixes:** The backend  endpoint was updated to delete linked documents in , , , and . The  frontend was updated to show a confirmation dialog before deletion.
     -   **Next debug checklist:**
-        1.  Restart the backend service: backend: stopped
-backend: started.
-        2.  Modify  to create the new UI for Internal/External payments, accessible only by admins.
-        3.  Implement frontend validation to ensure the sum of  for a PO does not exceed the  amount.
-        4.  On all relevant pages (, , etc.), add a Delete button to each row's action column, visible only to users with the 'admin' role.
-        5.  Connect the delete buttons to their respective  endpoints.
-        6.  Thoroughly test duplicate PO rejection, the entire new payment flow, and admin delete functionality on all pages.
+        1.  Modify  to fetch and display key application stats (e.g., total POs, total payments) and set it to auto-refresh periodically (e.g., every 30 seconds).
+        2.  Verify that after a PO is deleted, the data is removed from all related pages (, , etc.) upon page refresh.
+        3.  Ensure that all dropdowns that list POs are updated across the application after a PO is deleted to prevent selection of non-existent data.
+        4.  Perform an end-to-end test: create a PO, add procurement, payments, and logistics for it, then delete the PO and confirm all related data is gone and the dashboard/dropdowns are updated.
+    -   **Why fix this issue and what will be achieved with the fix?** To make the application reliable and behave like a real-time system, ensuring data consistency across all modules and preventing orphaned records.
     -   **Status:** IN PROGRESS
     -   **Is recurring issue?** N
     -   **Should Test frontend/backend/both after fix?** both
     -   **Blocked on other issue:** None
 
--   **Issue 4:** Secure DELETE Endpoints
-    -   **Attempted fixes:** None. The issue was introduced in the last set of changes.
+-   **Issue 2:** Refactor 
+    -   **Attempted fixes:** None.
     -   **Next debug checklist:**
-        1.  In , modify each of the newly created DELETE endpoints (e.g., , , etc.).
-        2.  Add a dependency on  and check if .
-        3.  If the user is not an admin, raise an .
-    -   **Why fix this issue and what will be achieved with the fix?** This is a critical security vulnerability. The fix will ensure only administrators can perform destructive delete actions, adhering to the principle of least privilege.
+        1.  Create a new directory structure: , , .
+        2.  Move Pydantic models from  to files within .
+        3.  Move API endpoint definitions from  into separate files in  using .
+        4.  Refactor the main  to import and include the new routers.
+    -   **Why fix this issue and what will be achieved with the fix?** To improve maintainability, readability, and scalability of the backend codebase. This is a critical technical debt item.
     -   **Status:** NOT STARTED
-    -   **Is recurring issue?** N
+    -   **Is recurring issue?** Y
     -   **Should Test frontend/backend/both after fix?** backend
     -   **Blocked on other issue:** None
 
 **In progress Task List**:
--   **Task 1:** Complete the implementation of the three-part user request (Delete buttons, duplicate PO check, new Payments module).
-    -   **Where to resume:** Frontend implementation, starting with restarting the backend, then updating  and adding delete buttons to all other data table pages.
-    -   **What will be achieved with this?** Admins will gain delete capabilities, data integrity for POs will improve, and the payment module will accurately reflect the business's financial flows.
+-   **Task 1:** Complete Data Integrity & Real-time Update Feature
+    -   **Where to resume:** Modify  to add auto-refreshing statistics.
+    -   **What will be achieved with this?** The application will feel more responsive and reliable, with data consistency maintained across all modules, especially after delete operations.
     -   **Status:** IN PROGRESS
     -   **Should Test frontend/backend/both after fix?** both
     -   **Blocked on something:** None
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-  - **(P1)** Implement detailed IMEI Lifecycle Tracking: Enhance the UI and backend logic for scanning and updating IMEI statuses at different stages.
+  - **(P0)** Refactor the monolithic  into a modular structure.
+  - **(P1)** Implement detailed IMEI Lifecycle Tracking: Enhance the UI and backend logic for scanning and updating IMEI statuses at different stages (e.g., Inward Nova, Outward Nova, Inward Magnova).
   - **(P1)** Implement Logistics Document Uploads: Add functionality to upload and link E-way bills and PODs to shipments.
 - **Future Tasks:**
   - Implement configurable PO approval workflows.
   - Build out more specific, granular reports in the Reporting module.
   - Implement a full, immutable audit trail for all critical transactions.
-  - **Refactor the monolithic  into a modular structure (e.g., using FastAPI ).** This is a high-priority technical debt item.
 
 **Completed work in this session**
-- **Detailed Purchase Order Form:** Implemented a complex, multi-line item PO creation and viewing experience, and later removed the IMEI field from the creation form per user request.
-- **CRM-Style Data Linking:** Enhanced the Procurement, Inventory, and Logistics pages to be interconnected, allowing data from a selected PO to auto-populate forms, including a dropdown for POs with multiple line items.
-- **Procurement Page Enhancements:** Removed role restrictions, fixed a no approved POs bug, and changed 'Quantity' and 'Purchase Price' fields to be manually editable while still being pre-filled from the PO.
-- **Master Report Page:** Created a new comprehensive report at  that combines data from Procurement, Finance, Logistics, and Stores into a single, wide table, matching a user-provided Excel layout.
-- **Critical Frontend Bug Fix:** Resolved a Maximum call stack size exceeded build error by disabling a problematic  in .
-- **Backend Testing:** The testing agent was used to create and run a test file for the Purchase Order functionalities ().
+- **Admin-Only Deletion:** Implemented and tested admin-only delete buttons on all data pages.
+- **Payments Module Overhaul:**
+    - Implemented Internal/External payment types with conditional forms for Vendor vs. CC payments.
+    - Fixed a critical bug in payment balance calculation for legacy data.
+    - Added a feature to view all external payments linked to an internal payment PO.
+- **IMEI Inventory Enhancements:**
+    - Fixed IMEI not found bug by adding a lookup from procurement records.
+    - Implemented auto-population of vendor, location, brand, model, and colour when an IMEI is entered.
+    - Redesigned the form to remove the 'Organization' field and add the new auto-populated fields.
+- **Invoice Module Revamp:**
+    - Redesigned the Create Invoice form to be manual, removing PO dependency.
+    - Added dynamic GST calculation with selectable slabs (5%, 12%, 18%).
+    - Created a professional, printable invoice template accessible by clicking the invoice number.
+- **Reports Page Deletion:** Added functionality to delete the source Purchase Order directly from the Master Report page.
+- **UI/UX:** Reordered the sidebar navigation as per user request and removed the Sales Orders link.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
 -   **Backend:** FastAPI
--   **Frontend:** React, Tailwind CSS, craco
+-   **Frontend:** React, Tailwind CSS, Shadcn UI
 -   **Database:** MongoDB
--   **UI Components:** Shadcn UI
 -   **Authentication:** JWT (JSON Web Tokens)
+-   **State Management:** React Hooks (, , )
+-   **Frontend Logic:** Conditional rendering for dynamic forms, client-side data fetching and state updates.
 
 **key DB schema**
--   **users**: {username, email, hashed_password, organization, role}
--   **purchase_orders**: {po_number, purchase_office, po_date, status, items: [{brand, model, qty, rate, ...}]}
--   **procurement**: {po_number, imei, vendor_name, quantity, purchase_price}
--   **imei_inventory**: {imei, status, vendor, location, organization}
--   **logistics_shipments**: {po_number, vendor, pickup_quantity, status}
--   **payments**: Conceptual model now includes  ('internal' or 'external'), , , , etc.
--   **audit_logs**: {action, entity_type, entity_id, user_id, timestamp, details}
+-   **invoices**: Schema updated to include , , , .
+-   **imei_inventory**: Schema updated to include , , .
+-   **purchase_orders**, **procurement**, **logistics_shipments**, **payments**: Schemas remain largely the same but are now interlinked via cascade delete logic originating from .
 
 **All files of reference**
--   : Heavily modified with new endpoints (DELETEs, new payment routes), updated models, and business logic (duplicate PO check).
--   : , , , , and  were all significantly updated or created.
--   : New file created to refactor the PO form.
--   : Modified to disable a babel plugin to fix a critical build error.
+-   : Heavily modified with new endpoints (, ), cascade-delete logic, and updates to models and create/read endpoints for Payments and Invoices.
+-   : Completely rewritten to support the new payment flow, dynamic forms, and linked-payment modal.
+-   : Completely rewritten to support IMEI lookup and auto-population of fields.
+-   : Completely rewritten to support the new manual invoice form, GST calculation, and printable invoice template.
+-   : Modified to add the cascade-delete confirmation dialog.
+-   : Modified to add delete functionality.
+-   : Modified to reorder navigation links and remove Sales Orders.
 
 **Areas that need refactoring**
--   ****: This single file has grown excessively large and complex. It urgently needs to be broken down into a modular structure (e.g., , , ) to ensure future maintainability.
--   **Frontend Pages:** Several pages like  and  handle complex state and logic, and could be refactored into smaller, more manageable components.
+-   ****: This is the highest priority. The file is now dangerously large and contains all models, business logic, and endpoints. It must be broken down into a modular structure (, , ) for maintainability.
 
 **key api endpoints**
--    (Now with duplicate  check)
--    (New)
--    (New)
--    (Updated to return both types)
--    (New)
--    (New)
--    (New)
--    (New)
--    (New)
--   ...and other DELETE endpoints for remaining entities.
+-   : **(Updated)** Now triggers a cascade delete of related procurement, payment, logistics, and inventory records.
+-   : **(Updated)** Modified to accept new fields like  and no longer requires a .
+-   : **(Updated)** Logic improved to correctly handle legacy internal payments during validation.
+-   : **(Updated)** Logic improved to correctly calculate sums for legacy internal payments.
+-   : **(Updated)** Now creates an inventory record if the IMEI exists in procurement but not yet in inventory.
+-   : **(New)** Looks up an IMEI in procurement and POs to return vendor, brand, model, and color details.
+-   : **(New)** Returns counts of records linked to a specific PO.
 
 **Critical Info for New Agent**
--   The  is disabled in . Re-enabling it without significant JSX refactoring will likely break the development server with a Maximum call stack size exceeded error.
--   The next task is primarily frontend work: implementing the new Payments page UI and adding admin-only delete buttons across all relevant data pages.
--   A critical security flaw was introduced: the new DELETE endpoints in  are not role-protected. This should be fixed by adding an admin role check to each endpoint before proceeding with frontend work.
--   The payment logic requires validation to ensure that the sum of external payments for a PO does not exceed the internal payment made for it. This logic needs to be implemented.
+-   The most critical task is to complete and thoroughly test the data integrity feature. This involves not just the cascade delete but ensuring the entire UI (dashboards, dropdowns) reflects these changes in real-time or upon refresh.
+-   The backend  is a major source of technical debt. Any significant new backend feature should be preceded by or bundled with the refactoring of this file.
+-   The user is focused on making the application behave like a reliable, real-world system. Emphasize data consistency and accurate reflections of state in all future work.
 
 **documents and test reports created in this job**
 -   
--   
--   
--   
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User Request (IN PROGRESS):** Implement three features: admin-only delete on every page, prevent duplicate PO numbers, and overhaul the Payments page with Internal/External payment types.
-2.  **User Request (Completed):** On the Procurement page, make 'Quantity' and 'Purchase Price' manually editable.
-3.  **User Request (Completed):** Fix Procurement page access issues (allow all users, show all POs) and remove the IMEI field from the PO creation form.
-4.  **User Question (Answered):** Asked where the application data is stored.
-5.  **User Request (Completed):** Rename Customer Organization to Vendor on the Inventory page and add a line-item dropdown on the Logistics page for POs with multiple entries.
-6.  **User Request (Completed):** Asked for CRM-style data linking across Procurement, Inventory, and Logistics pages.
-7.  **User Confirmation (Acknowledged):** Confirmed details for the CRM enhancements.
-8.  **User Request (Completed):** Asked for all PO line item details to be visible on the main Purchase Orders list page.
-9.  **User Request (Completed):** Asked to add Purchase_Office, PO_ID, and P.O Date to the Purchase Order form.
-10. **User Request (Completed):** Asked for a comprehensive Master Report page that combines data from all modules, mimicking an Excel sheet.
+1.  **Request (In Progress):** Make the application data-aware and reliable with cascade deletes and real-time updates.
+2.  **Request (Completed):** Overhaul the Invoices page: remove PO dependency, add manual fields, implement GST calculation with percentage slabs, and create a printable invoice template.
+3.  **Request (Completed):** Update the Invoices page to auto-populate billing organization based on PO and change button colors.
+4.  **Request (Completed):** Reorder the sidebar navigation and remove Sales Orders.
+5.  **Request (Completed):** Update the Inventory page: remove 'Organization', add and auto-populate 'Brand', 'Model', and 'Colour'.
+6.  **Request (Completed):** Update the Payments page: dynamically change External Payment fields for Credit Card payee type.
+7.  **Request (Completed):** Fix the IMEI not found error on the Inventory page and auto-populate vendor details on IMEI entry.
+8.  **Request (Completed):** Remove test data, add a clickable PO link in Payments to show related external payments, and add a delete option to the Reports page.
+9.  **Bug Report (Fixed):** The payment balance calculation was incorrect. The agent debugged and fixed the issue related to legacy data.
+10. **Initial Request (Completed):** The initial multi-part task (admin delete, duplicate PO check, Payments overhaul) was fully implemented and tested.
 
 **Project Health Check:**
--   **Broken:** The Payments page is out of sync with the backend. The delete functionality is unimplemented on the frontend.
--   **Mocked:** The functionality of the , , and  pages remains largely unverified.
+-   **Broken:** The real-time update aspect of the latest user request is incomplete. The Dashboard is static, and it's unconfirmed if all UI elements (like dropdowns) update correctly after a cascade delete.
+-   **Mocked:** The  page functionality is still likely a placeholder.
 
 **3rd Party Integrations**
 -   None implemented.
 
 **Testing status**
--   **Testing agent used after significant changes:** YES. Two iterations of reports were generated for the PO form and CRM linking features.
+-   **Testing agent used after significant changes:** YES, at the beginning of the session for the initial feature set.
 -   **Troubleshoot agent used after agent stuck in loop:** NO
--   **Test files created:** 
--   **Known regressions:** A frontend build configuration () was altered as a workaround for a babel plugin issue, which may have unintended side effects.
+-   **Test files created:** None in this session.
+-   **Known regressions:** The  warning persists.
 
 **Credentials to test flow:**
 Available at .
@@ -182,5 +186,4 @@ Available at .
 -   **Nova Stores (Procurement/Inventory):**  / 
 
 **What agent forgot to execute**
-- The agent did not add role-based access control to the newly created DELETE endpoints in , creating a security vulnerability.
-- The agent did not restart the backend service after making the latest batch of changes to .</analysis>
+The agent is in the middle of implementing the user's request for data integrity and real-time updates. It has implemented the backend cascade-delete and frontend confirmation but has not yet implemented the dashboard auto-refresh or verified that all UI elements (especially dropdowns) update correctly after a deletion.</analysis>

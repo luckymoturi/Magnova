@@ -2,7 +2,7 @@
 
 ## All credentials are now verified and working ✓
 
-**Login URL**: https://mobinventory-3.preview.emergentagent.com/login
+**Login URL**: https://exim-flow.preview.emergentagent.com/login
 
 ---
 
@@ -220,7 +220,7 @@
 
 3. **Verify Backend is Running**:
    ```bash
-   curl -s https://mobinventory-3.preview.emergentagent.com/api/auth/me
+   curl -s https://exim-flow.preview.emergentagent.com/api/auth/me
    # Should return {"detail":"Not Found"} which means API is running
    ```
 
@@ -252,7 +252,7 @@
 
 ### Via Registration Page:
 
-1. Go to https://mobinventory-3.preview.emergentagent.com/register
+1. Go to https://exim-flow.preview.emergentagent.com/register
 2. Fill in the form:
    - Full Name
    - Email (must be unique)
