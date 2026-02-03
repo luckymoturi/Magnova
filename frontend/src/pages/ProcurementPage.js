@@ -122,33 +122,46 @@ export const ProcurementPage = () => {
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
-      const procurementData = {
-        po_number: formData.po_number,
-        vendor_name: formData.vendor_name,
-        store_location: formData.store_location,
-        imei: formData.imei,
-        serial_number: formData.serial_number,
-        device_model: `${formData.brand} ${formData.device_model}`,
-        quantity: parseInt(formData.quantity) || 1,
-        purchase_price: parseFloat(formData.purchase_price),
-      };
+      // Split IMEI numbers by comma and create separate records for each
+      const imeiList = formData.imei.split(',').map(imei => imei.trim()).filter(imei => imei);
       
-      await api.post('/procurement', procurementData);
+      if (imeiList.length === 0) {
+        toast.error('Please enter at least one IMEI number');
+        return;
+      }
+      
+      // Create a procurement record for each IMEI
+      const createdRecords = [];
+      for (const imei of imeiList) {
+        const procurementData = {
+          po_number: formData.po_number,
+          vendor_name: formData.vendor_name,
+          store_location: formData.store_location,
+          imei: imei,
+          serial_number: formData.serial_number,
+          device_model: `${formData.brand} ${formData.device_model}`,
+          quantity: 1, // Each IMEI represents 1 quantity
+          purchase_price: parseFloat(formData.purchase_price),
+        };
+        
+        await api.post('/procurement', procurementData);
+        createdRecords.push(imei);
+        
+        // Add notification for logistics page for each IMEI
+        addLogisticsNotification({
+          po_number: formData.po_number,
+          imei: imei,
+          vendor_name: formData.vendor_name,
+          brand: formData.brand,
+          model: formData.device_model,
+          store_location: formData.store_location,
+        });
+      }
       
       // Clear procurement notification if it exists
       clearProcurementNotification(formData.po_number);
       
-      // Add notification for logistics page
-      addLogisticsNotification({
-        po_number: formData.po_number,
-        imei: formData.imei,
-        vendor_name: formData.vendor_name,
-        brand: formData.brand,
-        model: formData.device_model,
-        store_location: formData.store_location,
-      });
-      
-      toast.success('Procurement created - Logistics notification sent');
+      toast.success(`${createdRecords.length} IMEI(s) recorded - Logistics notifications sent`);
       setDialogOpen(false);
       resetForm();
       refreshAfterProcurementChange();
