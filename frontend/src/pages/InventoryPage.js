@@ -142,7 +142,7 @@ export const InventoryPage = () => {
       setDialogOpen(false);
       setScanData({ imei: '', action: '', location: '', vendor: '', brand: '', model: '', colour: '' });
       setImeiLookup(null);
-      fetchInventory();
+      refreshAfterInventoryChange(); // Trigger refresh
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to scan IMEI');
     }
@@ -153,7 +153,7 @@ export const InventoryPage = () => {
     try {
       await api.delete(`/inventory/${imei}`);
       toast.success('Inventory item deleted successfully');
-      fetchInventory();
+      refreshAfterInventoryChange(); // Trigger refresh
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to delete item');
     }
