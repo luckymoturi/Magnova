@@ -51,7 +51,7 @@ export const PaymentsPage = () => {
   useEffect(() => {
     fetchPayments();
     fetchPOs();
-  }, []);
+  }, [refreshTimestamps.payments, refreshTimestamps.purchaseOrders]);
 
   const fetchPayments = async () => {
     try {
