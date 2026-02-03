@@ -195,7 +195,7 @@ export const LogisticsPage = () => {
       setStatusDialogOpen(false);
       setSelectedShipment(null);
       setNewStatus('');
-      fetchShipments();
+      refreshAfterLogisticsChange(); // Trigger refresh
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to update status');
     }
