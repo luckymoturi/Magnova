@@ -5,7 +5,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner';
-import { Download, Search, RefreshCw, Trash2 } from 'lucide-react';
+import { Download, Search, RefreshCw, Trash2, FileSpreadsheet } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useDataRefresh } from '../context/DataRefreshContext';
 
