@@ -22,8 +22,10 @@ The system must provide end-to-end visibility from Purchase Order to Sales, with
 - Role-based access control (Admin, Purchase, Approver, Stores, etc.)
 - Organization-based data segregation (Magnova vs Nova)
 
-### ✅ Dashboard (Complete)
-- Overview statistics
+### ✅ Dashboard (Complete - Updated Feb 3, 2025)
+- Overview statistics with auto-refresh every 30 seconds
+- Manual refresh button with "Last updated" timestamp
+- Real-time stats update when data changes across modules
 - Quick links to all modules
 - User profile display
 
@@ -32,6 +34,7 @@ The system must provide end-to-end visibility from Purchase Order to Sales, with
 - **Create PO Dialog**: Full line item support with all device details
 - **View PO Details**: Dialog showing header info and line items table
 - **PO Approval Workflow**: Review, Approve, Reject with reason
+- **Cascade Delete**: Deleting PO removes all related procurement, payments, logistics, inventory records
 
 ### ✅ Procurement Page (Complete - Updated Feb 2, 2025)
 - **PO Auto-Populate**: Selecting PO auto-populates vendor, location, brand, model, storage, colour, rate
@@ -67,36 +70,67 @@ The system must provide end-to-end visibility from Purchase Order to Sales, with
 
 ---
 
+## Real-Time Data Synchronization (Complete - Feb 3, 2025)
+
+### ✅ DataRefreshContext Implementation
+- Global state management for cross-page data synchronization
+- All pages respond to refresh triggers when data changes
+- Timestamps tracked for: purchaseOrders, procurement, payments, logistics, inventory, invoices, dashboard, reports
+
+### ✅ Cascade Delete with UI Updates
+- When PO is deleted, all related records are removed (procurement, payments, logistics, inventory, invoices)
+- Confirmation dialog shows counts of records to be deleted
+- All pages and dropdowns update automatically after deletion
+
+### ✅ Real-Time Dropdown Updates
+- PO dropdowns in Procurement, Payments, Logistics pages auto-refresh
+- Deleted POs are immediately removed from all selection lists
+
+---
+
+## Reports Page (Complete - Updated Feb 3, 2025)
+
+### ✅ Master Report with 5 Linked Sections:
+
+1. **PROCUREMENT (Magnova → Nova PO)** - Green header
+   - SL No, PO ID, PO Date, Purchase Office, Vendor, Location, Brand, Model, Storage, Colour, IMEI, Qty, Rate, PO Value, GRN No
+
+2. **PAYMENT (Magnova → Nova)** - Orange header (Internal payments)
+   - Payment#, Bank Acc#, IFSC, Payment Dt, UTR No, Amount
+
+3. **PAYMENTS (Nova → Vendors)** - Purple header (External payments) - NEW
+   - Payment#, Payee Name, Payee Type, Bank Acc#, Payment Dt, UTR No, Amount
+
+4. **LOGISTICS** - Blue header
+   - Courier, Dispatch Dt, POD No, Status
+
+5. **STORES** - Pink header
+   - Received Dt, Rcvd Qty, Warehouse, Status
+
+### ✅ Report Features
+- Search by PO, Vendor, Brand, Model, IMEI, Location
+- Filter by specific PO
+- Export to CSV
+- Real-time refresh
+- Admin delete action
+
+---
+
 ## CRM-Style Data Linking (Complete)
 All pages are now linked via PO Number:
 1. **Purchase Orders** → Source of truth for all data
 2. **Procurement** → Auto-populates from PO line items
 3. **Inventory** → Location dropdown populated from POs
 4. **Logistics** → Auto-populates brand/model, tracks shipped vs available quantity
+5. **Reports** → Aggregates data from all modules with internal/external payment separation
 
 ---
 
-## Recently Completed (Feb 2, 2025)
-
-### ✅ Admin Delete Functionality (Complete)
+## Admin Delete Functionality (Complete)
 - Delete button added to every row on all data pages
 - Delete button only visible to Admin role users
 - DELETE endpoints protected with admin role check (returns 403 for non-admin)
-- Affected pages: Purchase Orders, Procurement, Inventory, Logistics, Payments, Invoices, Sales Orders
-
-### ✅ Enhanced Payment Management (Complete)
-- **Two Payment Types**: Internal (Magnova → Nova) and External (Nova → Vendor/CC)
-- **Internal Payment Fields**: PO Number, Payee Name (Nova), Payee Account, Payee Bank, Amount (auto-populated from PO), Payment Mode, Transaction Ref, Payment Date
-- **External Payment Fields**: PO Number, Payee Type (Vendor/CC), Payee Name, Account Number, IFSC Code, Location, Amount, Payment Mode, UTR Number, Payment Date
-- **Payment Balance Tracking**: External payments cannot exceed internal payment amount for same PO
-- **Payment Summary**: Shows Internal Paid, External Paid, Remaining balance when creating external payments
-- Payments page shows two separate sections with different column headers
-
-### ✅ Duplicate PO Prevention (Backend)
-- PO numbers are unique - backend prevents duplicates automatically
-
-### ✅ Color Scheme Update
-- Changed amber/yellow text colors to orange (text-orange-600, text-orange-700)
+- Affected pages: Purchase Orders, Procurement, Inventory, Logistics, Payments, Invoices, Reports
 
 ---
 
@@ -107,21 +141,18 @@ All pages are now linked via PO Number:
    - E-way bill attachment
    - POD (Proof of Delivery) uploads
 
-2. **Verify Other Module Functionality**
-   - Test Invoices, Sales Orders pages
-
-3. **IMEI Lifecycle Tracking Enhancement**
-   - Enhanced UI for scanning and status updates
+2. **IMEI Lifecycle Tracking Enhancement**
+   - Enhanced UI for scanning and status updates at different stages
 
 ### 🟡 P2 - Medium Priority
-4. **Configurable Approval Workflows**
-5. **Reporting Module Build-out**
-6. **Full Immutable Audit Trail**
+3. **Configurable Approval Workflows**
+4. **Granular Reporting Build-out**
+5. **Full Immutable Audit Trail**
 
 ### 🔵 P3 - Technical Debt
-7. **Backend Refactoring**
+6. **Backend Refactoring**
    - Break monolithic `server.py` into modular structure
-   - Separate routers and models
+   - Separate routers, models, services directories
 
 ---
 
@@ -142,7 +173,8 @@ All pages are now linked via PO Number:
 | `/api/purchase-orders` | GET, POST | List/Create POs |
 | `/api/purchase-orders/{po_number}` | GET | Get single PO with items |
 | `/api/purchase-orders/{po_number}/approve` | POST | Approve/Reject PO |
-| `/api/purchase-orders/{po_number}` | DELETE | Delete PO (Admin only) |
+| `/api/purchase-orders/{po_number}` | DELETE | Delete PO with cascade (Admin only) |
+| `/api/purchase-orders/{po_number}/related-counts` | GET | Get counts of related records |
 | `/api/procurement` | GET, POST | Procurement records |
 | `/api/procurement/{procurement_id}` | DELETE | Delete procurement (Admin only) |
 | `/api/payments` | GET | List all payments |
@@ -157,7 +189,7 @@ All pages are now linked via PO Number:
 | `/api/logistics/shipments/{id}/status` | PATCH | Update shipment status |
 | `/api/logistics/shipments/{id}` | DELETE | Delete shipment (Admin only) |
 | `/api/invoices/{invoice_id}` | DELETE | Delete invoice (Admin only) |
-| `/api/sales-orders/{so_number}` | DELETE | Delete sales order (Admin only) |
+| `/api/reports/dashboard` | GET | Dashboard statistics |
 
 ---
 
@@ -172,11 +204,18 @@ All pages are now linked via PO Number:
 │       └── test_crm_features.py
 ├── frontend/
 │   └── src/
+│       ├── context/
+│       │   ├── AuthContext.js
+│       │   └── DataRefreshContext.js    # NEW - Global refresh state
 │       ├── pages/
-│       │   ├── PurchaseOrdersPage.js
-│       │   ├── ProcurementPage.js    # With PO auto-populate
-│       │   ├── InventoryPage.js      # With new scan fields
-│       │   └── LogisticsPage.js      # With status update
+│       │   ├── DashboardPage.js         # Auto-refresh, manual refresh
+│       │   ├── PurchaseOrdersPage.js    # Cascade delete confirmation
+│       │   ├── ProcurementPage.js       # Real-time PO dropdown
+│       │   ├── PaymentsPage.js          # Internal/External payments
+│       │   ├── InventoryPage.js         # IMEI lookup & auto-populate
+│       │   ├── LogisticsPage.js         # Status updates
+│       │   ├── InvoicesPage.js          # Manual form, GST calc
+│       │   └── ReportsPage.js           # 5 sections with ext payments
 │       └── components/
 │           └── POLineItemRow.js
 └── memory/
@@ -185,4 +224,4 @@ All pages are now linked via PO Number:
 
 ---
 
-Last Updated: February 2, 2025
+Last Updated: February 3, 2025
