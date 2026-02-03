@@ -66,7 +66,7 @@ export const PurchaseOrdersPage = () => {
     try {
       const items = lineItems.map((item, index) => ({
         sl_no: index + 1, vendor: item.vendor, location: item.location, brand: item.brand, model: item.model,
-        storage: item.storage || null, colour: item.colour || null, imei: item.imei || null,
+        storage: item.storage || null,
         qty: parseInt(item.qty) || 1, rate: parseFloat(item.rate) || 0,
         po_value: (parseInt(item.qty) || 1) * (parseFloat(item.rate) || 0)
       }));
