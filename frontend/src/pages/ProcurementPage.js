@@ -19,6 +19,7 @@ export const ProcurementPage = () => {
   const [poItems, setPOItems] = useState([]);
   const [selectedItemIndex, setSelectedItemIndex] = useState('');
   const { user } = useAuth();
+  const { refreshTimestamps, refreshAfterProcurementChange } = useDataRefresh();
   const isAdmin = user?.role === 'Admin';
   const [formData, setFormData] = useState({
     po_number: '',
@@ -37,7 +38,7 @@ export const ProcurementPage = () => {
   useEffect(() => {
     fetchRecords();
     fetchPOs();
-  }, []);
+  }, [refreshTimestamps.procurement, refreshTimestamps.purchaseOrders]);
 
   const fetchRecords = async () => {
     try {
