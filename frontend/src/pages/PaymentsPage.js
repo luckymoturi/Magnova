@@ -32,11 +32,6 @@ export const PaymentsPage = () => {
   } = useDataRefresh();
   const isAdmin = user?.role === 'Admin';
 
-  // Redirect non-admin users
-  if (!isAdmin) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
   // Internal Payment Form
   const [internalForm, setInternalForm] = useState({
     po_number: '',
@@ -64,9 +59,16 @@ export const PaymentsPage = () => {
   });
 
   useEffect(() => {
-    fetchPayments();
-    fetchPOs();
-  }, [refreshTimestamps.payments, refreshTimestamps.purchaseOrders]);
+    if (isAdmin) {
+      fetchPayments();
+      fetchPOs();
+    }
+  }, [refreshTimestamps.payments, refreshTimestamps.purchaseOrders, isAdmin]);
+
+  // Redirect non-admin users after all hooks
+  if (!isAdmin) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const fetchPayments = async () => {
     try {
