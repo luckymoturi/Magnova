@@ -58,6 +58,7 @@ export const ProcurementPage = () => {
     try {
       const response = await api.get('/procurement');
       setRecords(response.data);
+      setFilteredRecords(response.data);
     } catch (error) {
       toast.error('Failed to fetch procurement records');
     }
