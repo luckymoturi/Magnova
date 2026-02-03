@@ -26,9 +26,10 @@ export const InventoryPage = () => {
     imei: '',
     action: '',
     location: '',
-    organization: 'Nova',
     vendor: '',
-    device_model: '',
+    brand: '',
+    model: '',
+    colour: '',
   });
 
   useEffect(() => {
@@ -76,7 +77,8 @@ export const InventoryPage = () => {
       filtered = filtered.filter(
         (item) =>
           item.imei.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.device_model.toLowerCase().includes(searchTerm.toLowerCase())
+          item.device_model?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.brand?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
     if (statusFilter !== 'all') {
@@ -101,9 +103,10 @@ export const InventoryPage = () => {
           setScanData(prev => ({
             ...prev,
             vendor: response.data.vendor || prev.vendor,
-            device_model: response.data.device_model || prev.device_model,
             location: response.data.store_location || response.data.current_location || prev.location,
-            organization: response.data.organization || prev.organization,
+            brand: response.data.brand || prev.brand,
+            model: response.data.model || prev.model,
+            colour: response.data.colour || prev.colour,
           }));
           
           if (response.data.in_inventory) {
@@ -130,12 +133,12 @@ export const InventoryPage = () => {
         imei: scanData.imei,
         action: scanData.action,
         location: scanData.location,
-        organization: scanData.organization,
+        organization: 'Nova',
         vendor: scanData.vendor,
       });
       toast.success('IMEI scanned successfully');
       setDialogOpen(false);
-      setScanData({ imei: '', action: '', location: '', organization: 'Nova', vendor: '', device_model: '' });
+      setScanData({ imei: '', action: '', location: '', vendor: '', brand: '', model: '', colour: '' });
       setImeiLookup(null);
       fetchInventory();
     } catch (error) {
@@ -155,7 +158,7 @@ export const InventoryPage = () => {
   };
 
   const resetForm = () => {
-    setScanData({ imei: '', action: '', location: '', organization: 'Nova', vendor: '', device_model: '' });
+    setScanData({ imei: '', action: '', location: '', vendor: '', brand: '', model: '', colour: '' });
     setImeiLookup(null);
   };
 
@@ -239,12 +242,17 @@ export const InventoryPage = () => {
                           {imeiLookup.in_procurement && (
                             <>
                               <p className="text-emerald-700">
-                                <span className="font-medium">From Procurement:</span> {imeiLookup.device_model}
+                                <span className="font-medium">From Procurement:</span> {imeiLookup.brand} {imeiLookup.model}
                               </p>
                               <p className="text-emerald-600">
                                 <span className="font-medium">Vendor:</span> {imeiLookup.vendor} | 
                                 <span className="font-medium ml-2">PO:</span> {imeiLookup.po_number}
                               </p>
+                              {imeiLookup.colour && (
+                                <p className="text-emerald-600">
+                                  <span className="font-medium">Colour:</span> {imeiLookup.colour}
+                                </p>
+                              )}
                             </>
                           )}
                         </div>
@@ -258,15 +266,33 @@ export const InventoryPage = () => {
                   )}
                 </div>
 
-                {/* Device Model (Auto-populated) */}
-                {scanData.device_model && (
-                  <div>
-                    <Label className="text-slate-700">Device Model</Label>
-                    <Input
-                      value={scanData.device_model}
-                      readOnly
-                      className="font-mono bg-slate-100 text-slate-700"
-                    />
+                {/* Auto-populated fields - Brand, Model, Colour */}
+                {imeiLookup?.found && (
+                  <div className="grid grid-cols-3 gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <div>
+                      <Label className="text-slate-500 text-xs">Brand</Label>
+                      <Input
+                        value={scanData.brand || '-'}
+                        readOnly
+                        className="font-medium bg-white text-slate-900 h-9"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-slate-500 text-xs">Model</Label>
+                      <Input
+                        value={scanData.model || '-'}
+                        readOnly
+                        className="font-medium bg-white text-slate-900 h-9"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-slate-500 text-xs">Colour</Label>
+                      <Input
+                        value={scanData.colour || '-'}
+                        readOnly
+                        className="font-medium bg-white text-slate-900 h-9"
+                      />
+                    </div>
                   </div>
                 )}
 
@@ -287,74 +313,63 @@ export const InventoryPage = () => {
                   </Select>
                 </div>
 
-                <div>
-                  <Label className="text-slate-700">Vendor {imeiLookup?.found ? '(Auto-populated)' : '*'}</Label>
-                  <Select 
-                    value={scanData.vendor} 
-                    onValueChange={(value) => setScanData({ ...scanData, vendor: value })} 
-                    required={!imeiLookup?.found}
-                  >
-                    <SelectTrigger className={`text-slate-900 ${imeiLookup?.found && scanData.vendor ? 'bg-slate-100' : 'bg-white'}`}>
-                      <SelectValue placeholder="Select vendor" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      {vendors.length > 0 ? (
-                        vendors.map((vendor) => (
-                          <SelectItem key={vendor} value={vendor}>{vendor}</SelectItem>
-                        ))
-                      ) : (
-                        <>
-                          <SelectItem value="Croma">Croma</SelectItem>
-                          <SelectItem value="Reliance Digital">Reliance Digital</SelectItem>
-                          <SelectItem value="Vijay Sales">Vijay Sales</SelectItem>
-                          <SelectItem value="Amazon">Amazon</SelectItem>
-                          <SelectItem value="Flipkart">Flipkart</SelectItem>
-                        </>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-slate-700">Vendor {imeiLookup?.found ? '(Auto-populated)' : '*'}</Label>
+                    <Select 
+                      value={scanData.vendor} 
+                      onValueChange={(value) => setScanData({ ...scanData, vendor: value })} 
+                      required={!imeiLookup?.found}
+                    >
+                      <SelectTrigger className={`text-slate-900 ${imeiLookup?.found && scanData.vendor ? 'bg-slate-100' : 'bg-white'}`}>
+                        <SelectValue placeholder="Select vendor" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        {vendors.length > 0 ? (
+                          vendors.map((vendor) => (
+                            <SelectItem key={vendor} value={vendor}>{vendor}</SelectItem>
+                          ))
+                        ) : (
+                          <>
+                            <SelectItem value="Croma">Croma</SelectItem>
+                            <SelectItem value="Reliance Digital">Reliance Digital</SelectItem>
+                            <SelectItem value="Vijay Sales">Vijay Sales</SelectItem>
+                            <SelectItem value="Amazon">Amazon</SelectItem>
+                            <SelectItem value="Flipkart">Flipkart</SelectItem>
+                          </>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div>
-                  <Label className="text-slate-700">Location {imeiLookup?.found ? '(Auto-populated)' : '*'}</Label>
-                  <Select 
-                    value={scanData.location} 
-                    onValueChange={(value) => setScanData({ ...scanData, location: value })} 
-                    required={!imeiLookup?.found}
-                  >
-                    <SelectTrigger className={`text-slate-900 ${imeiLookup?.found && scanData.location ? 'bg-slate-100' : 'bg-white'}`} data-testid="scan-location-select">
-                      <SelectValue placeholder="Select location" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      {locations.length > 0 ? (
-                        locations.map((loc) => (
-                          <SelectItem key={loc} value={loc}>{loc}</SelectItem>
-                        ))
-                      ) : (
-                        <>
-                          <SelectItem value="Mumbai">Mumbai</SelectItem>
-                          <SelectItem value="Delhi">Delhi</SelectItem>
-                          <SelectItem value="Bangalore">Bangalore</SelectItem>
-                          <SelectItem value="Chennai">Chennai</SelectItem>
-                          <SelectItem value="Hyderabad">Hyderabad</SelectItem>
-                          <SelectItem value="Pune">Pune</SelectItem>
-                        </>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label className="text-slate-700">Organization *</Label>
-                  <Select value={scanData.organization} onValueChange={(value) => setScanData({ ...scanData, organization: value })} required>
-                    <SelectTrigger data-testid="scan-org-select" className="bg-white text-slate-900">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="Nova">Nova</SelectItem>
-                      <SelectItem value="Magnova">Magnova</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div>
+                    <Label className="text-slate-700">Location {imeiLookup?.found ? '(Auto-populated)' : '*'}</Label>
+                    <Select 
+                      value={scanData.location} 
+                      onValueChange={(value) => setScanData({ ...scanData, location: value })} 
+                      required={!imeiLookup?.found}
+                    >
+                      <SelectTrigger className={`text-slate-900 ${imeiLookup?.found && scanData.location ? 'bg-slate-100' : 'bg-white'}`} data-testid="scan-location-select">
+                        <SelectValue placeholder="Select location" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        {locations.length > 0 ? (
+                          locations.map((loc) => (
+                            <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                          ))
+                        ) : (
+                          <>
+                            <SelectItem value="Mumbai">Mumbai</SelectItem>
+                            <SelectItem value="Delhi">Delhi</SelectItem>
+                            <SelectItem value="Bangalore">Bangalore</SelectItem>
+                            <SelectItem value="Chennai">Chennai</SelectItem>
+                            <SelectItem value="Hyderabad">Hyderabad</SelectItem>
+                            <SelectItem value="Pune">Pune</SelectItem>
+                          </>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 <Button 
@@ -380,7 +395,7 @@ export const InventoryPage = () => {
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
             <Input
-              placeholder="Search by IMEI or model..."
+              placeholder="Search by IMEI, model or brand..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 bg-white"
@@ -411,9 +426,10 @@ export const InventoryPage = () => {
               <thead>
                 <tr className="bg-magnova-blue text-white">
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">IMEI</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Device Model</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Brand</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Model</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Colour</th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Organization</th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Location</th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Updated</th>
                   {isAdmin && <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Actions</th>}
@@ -422,7 +438,7 @@ export const InventoryPage = () => {
               <tbody>
                 {filteredInventory.length === 0 ? (
                   <tr>
-                    <td colSpan={isAdmin ? 7 : 6} className="px-4 py-8 text-center text-slate-500">
+                    <td colSpan={isAdmin ? 8 : 7} className="px-4 py-8 text-center text-slate-500">
                       No inventory items found
                     </td>
                   </tr>
@@ -430,11 +446,12 @@ export const InventoryPage = () => {
                   filteredInventory.map((item) => (
                     <tr key={item.imei} className="table-row border-b border-slate-100 hover:bg-slate-50" data-testid="inventory-row">
                       <td className="px-4 py-3 text-sm font-mono font-medium text-slate-900">{item.imei}</td>
-                      <td className="px-4 py-3 text-sm text-slate-900">{item.device_model}</td>
+                      <td className="px-4 py-3 text-sm text-slate-900">{item.brand || '-'}</td>
+                      <td className="px-4 py-3 text-sm text-slate-900">{item.model || item.device_model || '-'}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{item.colour || '-'}</td>
                       <td className="px-4 py-3 text-sm">
                         <span className={`status-badge ${getStatusColor(item.status)}`}>{item.status}</span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-900">{item.organization}</td>
                       <td className="px-4 py-3 text-sm text-slate-600">{item.current_location}</td>
                       <td className="px-4 py-3 text-sm text-slate-600">{new Date(item.updated_at).toLocaleDateString()}</td>
                       {isAdmin && (
