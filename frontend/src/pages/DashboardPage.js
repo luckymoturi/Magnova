@@ -12,8 +12,10 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useDataRefresh } from '../context/DataRefreshContext';
 
 export const DashboardPage = () => {
   const [stats, setStats] = useState(null);
