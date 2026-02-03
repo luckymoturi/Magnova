@@ -38,6 +38,7 @@ const ProtectedRoute = ({ children }) => {
 function App() {
   return (
     <AuthProvider>
+      <DataRefreshProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
