@@ -144,7 +144,7 @@ export const ProcurementPage = () => {
     try {
       await api.delete(`/procurement/${procurementId}`);
       toast.success('Procurement record deleted successfully');
-      fetchRecords();
+      refreshAfterProcurementChange(); // Trigger refresh
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to delete record');
     }
