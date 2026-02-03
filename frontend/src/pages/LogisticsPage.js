@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { toast } from 'sonner';
 import { Plus, Package, Edit, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useDataRefresh } from '../context/DataRefreshContext';
 
 export const LogisticsPage = () => {
   const [shipments, setShipments] = useState([]);
