@@ -22,6 +22,7 @@ export const InventoryPage = () => {
   const [imeiLookup, setImeiLookup] = useState(null);
   const [lookupLoading, setLookupLoading] = useState(false);
   const { user } = useAuth();
+  const { refreshTimestamps, refreshAfterInventoryChange } = useDataRefresh();
   const isAdmin = user?.role === 'Admin';
   const [scanData, setScanData] = useState({
     imei: '',
@@ -36,7 +37,7 @@ export const InventoryPage = () => {
   useEffect(() => {
     fetchInventory();
     fetchPOData();
-  }, []);
+  }, [refreshTimestamps.inventory, refreshTimestamps.purchaseOrders]);
 
   useEffect(() => {
     filterInventory();
