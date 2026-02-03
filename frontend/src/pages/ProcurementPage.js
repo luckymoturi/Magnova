@@ -7,7 +7,7 @@ import { Label } from '../components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Bell, Package, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useDataRefresh } from '../context/DataRefreshContext';
 
@@ -21,7 +21,13 @@ export const ProcurementPage = () => {
   const [poItems, setPOItems] = useState([]);
   const [selectedItemIndex, setSelectedItemIndex] = useState('');
   const { user } = useAuth();
-  const { refreshTimestamps, refreshAfterProcurementChange, addProcurementNotification } = useDataRefresh();
+  const { 
+    refreshTimestamps, 
+    refreshAfterProcurementChange, 
+    pendingProcurements, 
+    clearProcurementNotification,
+    addLogisticsNotification,
+  } = useDataRefresh();
   const isAdmin = user?.role === 'Admin';
   const [formData, setFormData] = useState({
     po_number: '',
