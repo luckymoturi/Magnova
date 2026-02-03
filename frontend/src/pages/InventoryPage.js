@@ -22,7 +22,13 @@ export const InventoryPage = () => {
   const [imeiLookup, setImeiLookup] = useState(null);
   const [lookupLoading, setLookupLoading] = useState(false);
   const { user } = useAuth();
-  const { refreshTimestamps, refreshAfterInventoryChange } = useDataRefresh();
+  const { 
+    refreshTimestamps, 
+    refreshAfterInventoryChange,
+    pendingInventory,
+    clearInventoryNotification,
+    addInvoiceNotification,
+  } = useDataRefresh();
   const isAdmin = user?.role === 'Admin';
   const [scanData, setScanData] = useState({
     imei: '',
