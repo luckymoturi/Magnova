@@ -284,6 +284,61 @@ export const LogisticsPage = () => {
   return (
     <Layout>
       <div data-testid="logistics-page">
+        {/* Procurement Notifications Banner */}
+        {pendingProcurements.length > 0 && (
+          <div className="mb-6 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-lg p-4" data-testid="procurement-notifications">
+            <div className="flex items-center gap-2 mb-3">
+              <Bell className="w-5 h-5 text-orange-600 animate-pulse" />
+              <h3 className="font-semibold text-orange-800">New Procurement Added - Ready for Shipment</h3>
+              <span className="bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full">{pendingProcurements.length}</span>
+            </div>
+            <div className="space-y-2">
+              {pendingProcurements.map((proc, index) => (
+                <div 
+                  key={`${proc.po_number}-${proc.imei}-${index}`}
+                  className="flex items-center justify-between bg-white rounded-lg p-3 border border-orange-100 hover:border-orange-300 transition-colors cursor-pointer"
+                  onClick={() => handleNotificationClick(proc)}
+                  data-testid="procurement-notification-item"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="bg-orange-100 p-2 rounded-lg">
+                      <Truck className="w-5 h-5 text-orange-600" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-slate-900">
+                        <span className="font-mono text-magnova-blue">{proc.po_number}</span>
+                        <span className="mx-2 text-slate-400">|</span>
+                        <span>{proc.brand} {proc.model}</span>
+                      </div>
+                      <div className="text-sm text-slate-500">
+                        Vendor: {proc.vendor_name} • Location: {proc.store_location} • IMEI: {proc.imei}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      className="bg-magnova-blue hover:bg-magnova-dark-blue"
+                      onClick={(e) => { e.stopPropagation(); handleNotificationClick(proc); }}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Create Shipment
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-slate-400 hover:text-slate-600"
+                      onClick={(e) => { e.stopPropagation(); clearProcurementNotification(proc.po_number, proc.imei); }}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">Logistics & Shipments</h1>
