@@ -299,9 +299,13 @@ export const ReportsPage = () => {
               <RefreshCw className="w-4 h-4 mr-2" />
               Refresh
             </Button>
-            <Button onClick={handleExportCSV} className="bg-magnova-blue hover:bg-magnova-dark-blue">
+            <Button onClick={handleExportCSV} variant="outline" className="border-slate-300 text-slate-700">
               <Download className="w-4 h-4 mr-2" />
-              Export CSV
+              CSV
+            </Button>
+            <Button onClick={handleExportExcel} className="bg-emerald-600 hover:bg-emerald-700">
+              <FileSpreadsheet className="w-4 h-4 mr-2" />
+              Export Excel
             </Button>
           </div>
         </div>
