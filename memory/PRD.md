@@ -36,10 +36,12 @@ The system must provide end-to-end visibility from Purchase Order to Sales, with
 - **PO Approval Workflow**: Review, Approve, Reject with reason
 - **Cascade Delete**: Deleting PO removes all related procurement, payments, logistics, inventory records
 
-### ✅ Procurement Page (Complete - Updated Feb 2, 2025)
+### ✅ Procurement Page (Complete - Updated Feb 3, 2025)
 - **PO Auto-Populate**: Selecting PO auto-populates vendor, location, brand, model, storage, colour, rate
 - **Line Item Selection**: Dropdown to select specific line item from PO
 - **IMEI Recording**: Record individual IMEI against PO line items
+- **IMEI Search Filter**: Search box to filter procurement records by IMEI - only matching records displayed
+- **Cross-Page Notification**: Adding procurement triggers notification in Logistics page for shipment creation
 
 ### ✅ IMEI Inventory Page (Complete - Updated Feb 2, 2025)
 - **Scan IMEI Dialog** with fields:
