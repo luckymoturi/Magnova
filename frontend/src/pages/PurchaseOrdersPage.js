@@ -39,7 +39,7 @@ export const PurchaseOrdersPage = () => {
   const [purchaseOffice, setPurchaseOffice] = useState('Magnova Head Office');
   const [lineItems, setLineItems] = useState([{ ...emptyItem }]);
   const { user } = useAuth();
-  const { refreshTimestamps, triggerGlobalRefresh, refreshAfterPOChange } = useDataRefresh();
+  const { refreshTimestamps, triggerGlobalRefresh, refreshAfterPOChange, addInternalPaymentNotification } = useDataRefresh();
   const isAdmin = user?.role === 'Admin';
 
   useEffect(() => { fetchPOs(); }, [refreshTimestamps.purchaseOrders]);
