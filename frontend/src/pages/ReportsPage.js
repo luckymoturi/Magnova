@@ -228,8 +228,7 @@ export const ReportsPage = () => {
       // Delete the PO (this is the source record)
       await api.delete(`/purchase-orders/${row.po_id}`);
       toast.success(`Record for ${row.po_id} deleted successfully`);
-      fetchMasterReport();
-      fetchStats();
+      triggerGlobalRefresh(); // Trigger global refresh for cascade delete
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to delete record');
     }
