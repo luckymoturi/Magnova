@@ -399,16 +399,16 @@ export const ReportsPage = () => {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={isAdmin ? 30 : 29} className="px-4 py-8 text-center text-slate-500">Loading report data...</td>
+                    <td colSpan={isAdmin ? 37 : 36} className="px-4 py-8 text-center text-slate-500">Loading report data...</td>
                   </tr>
                 ) : filteredReport.length === 0 ? (
                   <tr>
-                    <td colSpan={isAdmin ? 30 : 29} className="px-4 py-8 text-center text-slate-500">No data found</td>
+                    <td colSpan={isAdmin ? 37 : 36} className="px-4 py-8 text-center text-slate-500">No data found</td>
                   </tr>
                 ) : (
                   filteredReport.map((row, index) => (
                     <tr key={index} className={`border-b border-slate-100 hover:bg-slate-50 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
-                      {/* PROCUREMENT */}
+                      {/* PROCUREMENT (Magnova → Nova) */}
                       <td className="px-2 py-2 text-slate-900">{row.sl_no}</td>
                       <td className="px-2 py-2 font-mono text-magnova-blue font-medium">{row.po_id}</td>
                       <td className="px-2 py-2 text-slate-900">{formatDate(row.po_date)}</td>
@@ -424,13 +424,29 @@ export const ReportsPage = () => {
                       <td className="px-2 py-2 text-slate-900">{formatCurrency(row.rate)}</td>
                       <td className="px-2 py-2 font-medium text-slate-900">{formatCurrency(row.po_value)}</td>
                       <td className="px-2 py-2 text-slate-700 border-r border-slate-200">{row.grn_no}</td>
-                      {/* FINANCE */}
+                      {/* PAYMENT (Magnova → Nova) - Internal */}
                       <td className="px-2 py-2 text-slate-700">{row.payment_no}</td>
                       <td className="px-2 py-2 text-slate-700">{row.bank_account}</td>
                       <td className="px-2 py-2 text-slate-700">{row.ifsc_code}</td>
                       <td className="px-2 py-2 text-slate-700">{formatDate(row.payment_date)}</td>
                       <td className="px-2 py-2 font-mono text-slate-700">{row.utr_no}</td>
                       <td className="px-2 py-2 font-medium text-orange-600 border-r border-slate-200">{formatCurrency(row.payment_amount)}</td>
+                      {/* PAYMENTS (Nova → Vendors) - External */}
+                      <td className="px-2 py-2 text-slate-700">{row.ext_payment_no}</td>
+                      <td className="px-2 py-2 text-slate-700">{row.ext_payee_name}</td>
+                      <td className="px-2 py-2 text-slate-700">
+                        <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+                          row.ext_payee_type === 'Vendor' ? 'bg-green-100 text-green-700' :
+                          row.ext_payee_type === 'Credit Card' ? 'bg-blue-100 text-blue-700' :
+                          'bg-slate-100 text-slate-600'
+                        }`}>
+                          {row.ext_payee_type}
+                        </span>
+                      </td>
+                      <td className="px-2 py-2 text-slate-700">{row.ext_bank_account}</td>
+                      <td className="px-2 py-2 text-slate-700">{formatDate(row.ext_payment_date)}</td>
+                      <td className="px-2 py-2 font-mono text-slate-700">{row.ext_utr_no}</td>
+                      <td className="px-2 py-2 font-medium text-purple-600 border-r border-slate-200">{formatCurrency(row.ext_payment_amount)}</td>
                       {/* LOGISTICS */}
                       <td className="px-2 py-2 text-slate-700">{row.courier_name}</td>
                       <td className="px-2 py-2 text-slate-700">{formatDate(row.dispatch_date)}</td>
