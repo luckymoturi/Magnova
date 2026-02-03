@@ -7,9 +7,10 @@ import { Label } from '../components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner';
-import { Plus, Trash2, Building2, Users, X, ExternalLink } from 'lucide-react';
+import { Plus, Trash2, Building2, Users, X, ExternalLink, Bell, CreditCard, Banknote, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useDataRefresh } from '../context/DataRefreshContext';
+import { Navigate } from 'react-router-dom';
 
 export const PaymentsPage = () => {
   const [payments, setPayments] = useState([]);
@@ -19,8 +20,22 @@ export const PaymentsPage = () => {
   const [paymentSummary, setPaymentSummary] = useState(null);
   const [linkedPaymentsDialog, setLinkedPaymentsDialog] = useState({ open: false, poNumber: '', internalPayment: null });
   const { user } = useAuth();
-  const { refreshTimestamps, refreshAfterPaymentChange } = useDataRefresh();
+  const { 
+    refreshTimestamps, 
+    refreshAfterPaymentChange,
+    pendingInternalPayments,
+    clearInternalPaymentNotification,
+    addExternalPaymentNotification,
+    pendingExternalPayments,
+    clearExternalPaymentNotification,
+    addProcurementNotification,
+  } = useDataRefresh();
   const isAdmin = user?.role === 'Admin';
+
+  // Redirect non-admin users
+  if (!isAdmin) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   // Internal Payment Form
   const [internalForm, setInternalForm] = useState({
