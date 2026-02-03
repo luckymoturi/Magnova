@@ -262,7 +262,7 @@ export const LogisticsPage = () => {
     }));
     
     // Clear this notification
-    clearProcurementNotification(procurement.po_number, procurement.imei);
+    clearLogisticsNotification(procurement.po_number, procurement.imei);
     
     // Open dialog
     setDialogOpen(true);
