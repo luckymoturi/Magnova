@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { toast } from 'sonner';
 import { Download, Search, RefreshCw, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useDataRefresh } from '../context/DataRefreshContext';
 
 export const ReportsPage = () => {
   const [stats, setStats] = useState(null);
