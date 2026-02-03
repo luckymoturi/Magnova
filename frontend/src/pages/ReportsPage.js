@@ -330,12 +330,15 @@ export const ReportsPage = () => {
                 {/* Section Headers */}
                 <tr>
                   <th colSpan="15" className="bg-green-600 text-white px-2 py-2 text-left text-sm font-bold border-r border-green-500">
-                    PROCUREMENT (Nova to Magnova PO)
+                    PROCUREMENT (Magnova → Nova PO)
                   </th>
                   <th colSpan="6" className="bg-orange-500 text-white px-2 py-2 text-left text-sm font-bold border-r border-orange-400">
-                    FINANCE (Magnova to Nova)
+                    PAYMENT (Magnova → Nova)
                   </th>
-                  <th colSpan="4" className="bg-orange-600 text-white px-2 py-2 text-left text-sm font-bold border-r border-orange-500">
+                  <th colSpan="7" className="bg-purple-600 text-white px-2 py-2 text-left text-sm font-bold border-r border-purple-500">
+                    PAYMENTS (Nova → Vendors)
+                  </th>
+                  <th colSpan="4" className="bg-blue-600 text-white px-2 py-2 text-left text-sm font-bold border-r border-blue-500">
                     LOGISTICS
                   </th>
                   <th colSpan="4" className="bg-pink-500 text-white px-2 py-2 text-left text-sm font-bold border-r border-pink-400">
@@ -349,7 +352,7 @@ export const ReportsPage = () => {
                 </tr>
                 {/* Column Headers */}
                 <tr className="bg-slate-100">
-                  {/* PROCUREMENT */}
+                  {/* PROCUREMENT (Magnova → Nova) */}
                   <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">SL No</th>
                   <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">PO ID</th>
                   <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">PO Date</th>
@@ -365,10 +368,18 @@ export const ReportsPage = () => {
                   <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Rate</th>
                   <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">PO Value</th>
                   <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200 border-r border-slate-300">GRN No</th>
-                  {/* FINANCE */}
+                  {/* PAYMENT (Magnova → Nova) - Internal */}
                   <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Payment#</th>
                   <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Bank Acc#</th>
                   <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">IFSC</th>
+                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Payment Dt</th>
+                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">UTR No</th>
+                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200 border-r border-slate-300">Amount</th>
+                  {/* PAYMENTS (Nova → Vendors) - External */}
+                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Payment#</th>
+                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Payee Name</th>
+                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Payee Type</th>
+                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Bank Acc#</th>
                   <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Payment Dt</th>
                   <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">UTR No</th>
                   <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200 border-r border-slate-300">Amount</th>
