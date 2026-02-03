@@ -18,7 +18,12 @@ export const InvoicesPage = () => {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const printRef = useRef(null);
   const { user } = useAuth();
-  const { refreshTimestamps, refreshAfterInvoiceChange } = useDataRefresh();
+  const { 
+    refreshTimestamps, 
+    refreshAfterInvoiceChange,
+    pendingInvoices,
+    clearInvoiceNotification,
+  } = useDataRefresh();
   const isAdmin = user?.role === 'Admin';
   const [formData, setFormData] = useState({
     from_organization: 'Nova Enterprises',
