@@ -407,7 +407,7 @@ export const PaymentsPage = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label className="text-slate-700">Payee Type *</Label>
-                        <Select value={externalForm.payee_type} onValueChange={(v) => setExternalForm({ ...externalForm, payee_type: v })} required>
+                        <Select value={externalForm.payee_type} onValueChange={(v) => setExternalForm({ ...externalForm, payee_type: v, account_number: '', ifsc_code: '' })} required>
                           <SelectTrigger className="bg-white" data-testid="payee-type-select">
                             <SelectValue placeholder="Select type" />
                           </SelectTrigger>
@@ -424,32 +424,65 @@ export const PaymentsPage = () => {
                           onChange={(e) => setExternalForm({ ...externalForm, payee_name: e.target.value })}
                           required
                           className="bg-white"
-                          placeholder="Vendor or CC holder name"
+                          placeholder={externalForm.payee_type === 'cc' ? "Credit card holder name" : "Vendor name"}
                           data-testid="external-payee-name-input"
                         />
                       </div>
-                      <div>
-                        <Label className="text-slate-700">Account Number *</Label>
-                        <Input
-                          value={externalForm.account_number}
-                          onChange={(e) => setExternalForm({ ...externalForm, account_number: e.target.value })}
-                          required
-                          className="bg-white font-mono"
-                          placeholder="Bank account number"
-                          data-testid="account-number-input"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-slate-700">IFSC Code *</Label>
-                        <Input
-                          value={externalForm.ifsc_code}
-                          onChange={(e) => setExternalForm({ ...externalForm, ifsc_code: e.target.value.toUpperCase() })}
-                          required
-                          className="bg-white font-mono uppercase"
-                          placeholder="HDFC0001234"
-                          data-testid="ifsc-code-input"
-                        />
-                      </div>
+                      
+                      {/* Conditional fields based on Payee Type */}
+                      {externalForm.payee_type === 'cc' ? (
+                        <>
+                          {/* Credit Card fields */}
+                          <div>
+                            <Label className="text-slate-700">Credit Card Number *</Label>
+                            <Input
+                              value={externalForm.account_number}
+                              onChange={(e) => setExternalForm({ ...externalForm, account_number: e.target.value })}
+                              required
+                              className="bg-white font-mono"
+                              placeholder="XXXX-XXXX-XXXX-XXXX"
+                              data-testid="credit-card-number-input"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-slate-700">Bank Name *</Label>
+                            <Input
+                              value={externalForm.ifsc_code}
+                              onChange={(e) => setExternalForm({ ...externalForm, ifsc_code: e.target.value })}
+                              required
+                              className="bg-white"
+                              placeholder="HDFC Bank, ICICI Bank, etc."
+                              data-testid="bank-name-input"
+                            />
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          {/* Vendor fields */}
+                          <div>
+                            <Label className="text-slate-700">Account Number *</Label>
+                            <Input
+                              value={externalForm.account_number}
+                              onChange={(e) => setExternalForm({ ...externalForm, account_number: e.target.value })}
+                              required
+                              className="bg-white font-mono"
+                              placeholder="Bank account number"
+                              data-testid="account-number-input"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-slate-700">IFSC Code *</Label>
+                            <Input
+                              value={externalForm.ifsc_code}
+                              onChange={(e) => setExternalForm({ ...externalForm, ifsc_code: e.target.value.toUpperCase() })}
+                              required
+                              className="bg-white font-mono uppercase"
+                              placeholder="HDFC0001234"
+                              data-testid="ifsc-code-input"
+                            />
+                          </div>
+                        </>
+                      )}
                       <div>
                         <Label className="text-slate-700">Location *</Label>
                         <Input
