@@ -158,7 +158,7 @@ export const LogisticsPage = () => {
       toast.success('Shipment created successfully');
       setDialogOpen(false);
       resetForm();
-      fetchShipments();
+      refreshAfterLogisticsChange(); // Trigger refresh
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to create shipment');
     }
