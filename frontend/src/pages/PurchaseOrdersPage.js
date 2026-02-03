@@ -106,10 +106,26 @@ export const PurchaseOrdersPage = () => {
   };
 
   const handleDelete = async (poNumber) => {
-    if (!window.confirm(`Are you sure you want to delete PO ${poNumber}?`)) return;
     try {
-      await api.delete(`/purchase-orders/${poNumber}`);
-      toast.success('Purchase order deleted successfully');
+      // First get related counts
+      const countsResponse = await api.get(`/purchase-orders/${poNumber}/related-counts`);
+      const counts = countsResponse.data;
+      
+      // Build confirmation message with related counts
+      let confirmMsg = `Are you sure you want to delete PO ${poNumber}?\n\n`;
+      confirmMsg += `This will also DELETE all related records:\n`;
+      confirmMsg += `• Procurement Records: ${counts.procurement_records}\n`;
+      confirmMsg += `• Payments: ${counts.payments}\n`;
+      confirmMsg += `• Logistics Shipments: ${counts.logistics_shipments}\n`;
+      confirmMsg += `• Inventory Items: ${counts.inventory_items}\n`;
+      confirmMsg += `• Invoices: ${counts.invoices}\n`;
+      confirmMsg += `\nTotal related records: ${counts.total_related}\n\n`;
+      confirmMsg += `This action cannot be undone!`;
+      
+      if (!window.confirm(confirmMsg)) return;
+      
+      const response = await api.delete(`/purchase-orders/${poNumber}`);
+      toast.success(response.data.message || 'Purchase order and all related data deleted');
       fetchPOs();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to delete PO');
