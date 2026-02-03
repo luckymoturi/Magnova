@@ -135,8 +135,11 @@ export const ProcurementPage = () => {
       
       await api.post('/procurement', procurementData);
       
+      // Clear procurement notification if it exists
+      clearProcurementNotification(formData.po_number);
+      
       // Add notification for logistics page
-      addProcurementNotification({
+      addLogisticsNotification({
         po_number: formData.po_number,
         imei: formData.imei,
         vendor_name: formData.vendor_name,
@@ -145,13 +148,27 @@ export const ProcurementPage = () => {
         store_location: formData.store_location,
       });
       
-      toast.success('Procurement record created successfully');
+      toast.success('Procurement created - Logistics notification sent');
       setDialogOpen(false);
       resetForm();
-      refreshAfterProcurementChange(); // Trigger refresh
+      refreshAfterProcurementChange();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to create record');
     }
+  };
+
+  // Handle notification click - open dialog with pre-filled data
+  const handleNotificationClick = (notification) => {
+    const po = pos.find(p => p.po_number === notification.po_number);
+    if (po) {
+      handlePOSelect(notification.po_number);
+      if (po.items && po.items.length > 0) {
+        setPOItems(po.items);
+        setSelectedItemIndex('0');
+        handleItemSelect('0');
+      }
+    }
+    setDialogOpen(true);
   };
 
   const resetForm = () => {
