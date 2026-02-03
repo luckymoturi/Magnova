@@ -212,7 +212,7 @@ export const LogisticsPage = () => {
     try {
       await api.delete(`/logistics/shipments/${shipmentId}`);
       toast.success('Shipment deleted successfully');
-      fetchShipments();
+      refreshAfterLogisticsChange(); // Trigger refresh
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to delete shipment');
     }
