@@ -846,6 +846,7 @@ export const PaymentsPage = () => {
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">PO Number</th>
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Payee Type</th>
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Payee Name</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Phone</th>
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Account/Card #</th>
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">IFSC/Bank</th>
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Location</th>
@@ -858,7 +859,7 @@ export const PaymentsPage = () => {
                 <tbody>
                   {externalPayments.length === 0 ? (
                     <tr>
-                      <td colSpan={isAdmin ? 10 : 9} className="px-4 py-8 text-center text-slate-500">
+                      <td colSpan={isAdmin ? 11 : 10} className="px-4 py-8 text-center text-slate-500">
                         No external payments found
                       </td>
                     </tr>
@@ -874,6 +875,7 @@ export const PaymentsPage = () => {
                           </span>
                         </td>
                         <td className="px-4 py-3 text-sm text-slate-900">{payment.payee_name}</td>
+                        <td className="px-4 py-3 text-sm text-slate-600">{payment.payee_phone || '-'}</td>
                         <td className="px-4 py-3 text-sm font-mono text-slate-600">
                           {payment.payee_type === 'cc' ? (
                             <span title="Credit Card Number">{payment.account_number || '-'}</span>
