@@ -346,18 +346,18 @@ export const InvoicesPage = () => {
                     />
                   </div>
 
-                  {/* Amount */}
+                  {/* Selling Price (Including GST) */}
                   <div>
-                    <Label className="text-slate-700">Amount (Before GST) *</Label>
+                    <Label className="text-slate-700">Selling Price (Including GST) *</Label>
                     <Input
                       type="number"
                       step="0.01"
-                      value={formData.amount}
-                      onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                      value={formData.selling_price}
+                      onChange={(e) => setFormData({ ...formData, selling_price: e.target.value })}
                       required
-                      placeholder="Enter base amount"
+                      placeholder="Enter total selling price"
                       className="bg-white"
-                      data-testid="amount-input"
+                      data-testid="selling-price-input"
                     />
                   </div>
 
@@ -382,28 +382,37 @@ export const InvoicesPage = () => {
                     </Select>
                   </div>
 
-                  {/* GST Amount - Auto-calculated */}
-                  <div>
-                    <Label className="text-slate-700">GST Amount (Auto)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={formData.gst_amount}
-                      readOnly
-                      className="bg-slate-100 font-medium"
-                      data-testid="gst-input"
-                    />
-                  </div>
-
-                  {/* Total Display */}
-                  <div className="flex items-end">
-                    <div className="w-full p-3 bg-emerald-50 rounded-lg border border-emerald-200">
-                      <span className="text-slate-600 text-sm">Total Amount:</span>
-                      <span className="ml-2 text-xl font-bold text-emerald-700">
-                        ₹{(parseFloat(formData.amount || 0) + parseFloat(formData.gst_amount || 0)).toLocaleString()}
-                      </span>
+                  {/* Price Breakdown Section */}
+                  {formData.selling_price && formData.base_price && (
+                    <div className="col-span-2 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                      <h4 className="text-sm font-semibold text-slate-700 mb-3">Price Breakdown</h4>
+                      <div className="grid grid-cols-3 gap-4">
+                        {/* Base Price (Excluding GST) */}
+                        <div className="bg-white p-3 rounded-lg border border-slate-200">
+                          <Label className="text-slate-500 text-xs">Cost (Excl. GST)</Label>
+                          <p className="text-lg font-bold text-slate-900" data-testid="base-price-display">
+                            ₹{parseFloat(formData.base_price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                          </p>
+                        </div>
+                        
+                        {/* GST Amount */}
+                        <div className="bg-white p-3 rounded-lg border border-slate-200">
+                          <Label className="text-slate-500 text-xs">GST Amount ({formData.gst_percentage}%)</Label>
+                          <p className="text-lg font-bold text-magnova-orange" data-testid="gst-amount-display">
+                            + ₹{parseFloat(formData.gst_amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                          </p>
+                        </div>
+                        
+                        {/* Total (Selling Price) */}
+                        <div className="bg-emerald-50 p-3 rounded-lg border border-emerald-200">
+                          <Label className="text-emerald-600 text-xs">Total (Incl. GST)</Label>
+                          <p className="text-lg font-bold text-emerald-700" data-testid="total-price-display">
+                            ₹{parseFloat(formData.selling_price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Billing Address */}
                   <div className="col-span-2">
