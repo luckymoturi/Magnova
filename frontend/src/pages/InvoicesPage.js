@@ -28,9 +28,10 @@ export const InvoicesPage = () => {
   const [formData, setFormData] = useState({
     from_organization: 'Nova Enterprises',
     to_organization: '',
-    amount: '',
+    selling_price: '', // User enters selling price (inclusive of GST)
     gst_percentage: '18',
-    gst_amount: '',
+    base_price: '', // Calculated: price excluding GST
+    gst_amount: '', // Calculated: GST amount
     imei_list: '',
     invoice_date: new Date().toISOString().split('T')[0],
     description: '',
