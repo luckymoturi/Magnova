@@ -141,6 +141,7 @@ class Payment(BaseModel):
     procurement_id: Optional[str] = None
     payee_type: Optional[str] = None  # 'vendor' or 'cc' for external
     payee_name: str
+    payee_phone: Optional[str] = None
     payee_account: Optional[str] = None
     payee_bank: Optional[str] = None
     account_number: Optional[str] = None
