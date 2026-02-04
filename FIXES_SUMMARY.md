@@ -90,7 +90,7 @@ If the yellow background persists:
 4. Or use: Ctrl+Shift+Delete → Clear cache
 
 ### Test Quick Action Links
-1. Login at: https://exim-flow.preview.emergentagent.com
+1. Login at: https://novatrade.preview.emergentagent.com
 2. Navigate to Dashboard
 3. Verify links are orange
 4. Click "Create Purchase Order" (Magnova users)

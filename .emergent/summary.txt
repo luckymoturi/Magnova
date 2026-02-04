@@ -3,187 +3,248 @@ You are a senior enterprise software architect and full-stack engineer building 
 
 **PRODUCT REQUIREMENTS:**
 - **Architecture:** Modular, service-based with centralized IMEI master, RBAC, and full audit trails.
-- **Core Modules:**
-    1.  **PO Management:** Creation, approval workflows, status tracking.
-    2.  **Nova Procurement:** Procure against POs, capture vendor/IMEI details.
-    3.  **Payment Management:** Handle complex multi-party payments (Magnova -> Nova, Nova -> Vendor, Nova -> 3rd party) with split payment support.
-    4.  **Inventory & IMEI Tracking:** IMEI-level scanning (inward/outward) and status flow (Procured -> Inward Nova -> ... -> Sold).
-    5.  **Logistics:** E-way bill uploads, shipment tracking.
-    6.  **Invoicing:** Generate invoices for different transaction legs.
-    7.  **Sales Management:** Sales orders for export agencies, IMEI reservation.
-    8.  **Reporting & Audit:** Comprehensive reports and immutable logs.
-- **Security:** Role-based access, data segregation, Maker-Checker controls.
-- **Tech Stack:** Relational database (implemented with MongoDB), API-driven design, mobile-friendly UI.
+- **Core Modules:** PO Management, Procurement, Payment Management, Inventory & IMEI Tracking, Logistics, Invoicing, Sales, and Reporting.
+- **User Requests in this session:**
+    - The application must be fully interconnected and feel like a real-time system.
+    - Data entry or deletion in one module should instantly reflect across all other relevant modules and dropdowns.
+    - Implement a sequential notification workflow: PO Created → Internal Payment → External Payment → Procurement → Logistics → Inventory → Invoice.
+    - The Payments page should be accessible only by admin users.
+    - Update the Reports page columns and add an Excel export feature that mirrors the on-screen view.
+    - Remove the IMEI column and Colour field from the Purchase Order page and forms.
+    - Make Pickup Location and To Location in the Logistics shipment form manually editable.
+    - On the Procurement page, filter records based on a searched IMEI.
+    - Handle comma-separated IMEI numbers as individual items throughout the entire application lifecycle (Procurement, Inventory, Invoice, Reports).
+    - On the Payments page, when CC is selected for Payee Type, an additional Payee Phone Number field should appear.
+    - On the Logistics page, the default shipment status should be In Transit, and the Pending option should be removed.
 
 **User's preferred language**: English
 
 **what currently exists?**
-A full-stack application (FastAPI backend, React frontend, MongoDB) with a highly functional set of interconnected modules. The system supports a complete workflow from Purchase Order creation to Invoicing.
+A full-stack application (FastAPI backend, React frontend, MongoDB) with a comprehensive set of interconnected modules for managing procurement and sales. In the last session, the application was significantly enhanced to feel more real-time by implementing a complex, app-wide notification system using React Context. This system guides users through the entire workflow from Purchase Order creation to Invoicing.
 
-Key features implemented in the last session include:
-- **Admin-Only Deletion:** A Delete button (trash icon) is present on every data table (, , , , , , ) and is only visible to admin users.
-- **Overhauled Payments Module:**
-    - Supports Internal (Magnova -> Nova) and External (Nova -> Vendor/CC) payment types.
-    - The External payment form dynamically changes fields based on payee type (Vendor or Credit Card).
-    - Logic is in place to prevent external payment totals from exceeding the internal payment for a given PO.
-    - Clicking a PO number in the Internal payments table opens a modal showing all linked external payments for that PO.
-- **Intelligent IMEI Inventory:**
-    - Entering an IMEI number on the Inventory page triggers a lookup.
-    - If the IMEI exists in procurement, vendor details, location, brand, model, and color are all auto-populated.
-- **Revamped Invoicing:**
-    - The invoice creation form is now fully manual, with auto-calculation for GST based on selectable percentages (5%, 12%, 18%).
-    - Clicking on a created invoice number displays a professional, printable invoice template with all necessary details.
-- **UI/UX Improvements:** The sidebar navigation has been reordered, Sales Orders has been removed, and various UI elements have been restyled to use orange/black instead of yellow/amber.
-- **Data Integrity (In Progress):** Logic to cascade-delete related records when a Purchase Order is deleted has been added to the backend. The frontend now shows a confirmation dialog detailing what will be deleted.
+Numerous UI/UX and functionality updates were also completed based on specific user requests, including a major overhaul of the Reports page, changes to the Purchase Order, Logistics, and Procurement pages, and an initial implementation to handle multiple IMEIs from a single input. The database was also wiped clean multiple times at the user's request.
 
 **Last working item**:
-- **Last item agent was working:** The agent was implementing a critical user request for data integrity and a more real-time feel. It successfully added cascade-delete logic to the  backend endpoint and updated the frontend to show a confirmation dialog with counts of related records. The agent was about to modify the  to add auto-refreshing statistics to provide real-time updates on key metrics.
-- **Status:** IN PROGRESS
-- **Agent Testing Done:** N (The cascade delete feature has not been fully tested)
-- **Which testing method agent to use?** both (Backend for cascade logic, Frontend for UI updates and confirmation dialog)
+- **Last item agent was working:** The user provided a new set of requests. The agent was about to start implementing them.
+    1.  **Payments Page:** Add a Payee Phone Number field that appears conditionally when the Payee Type is CC.
+    2.  **Logistics Page:** Change the default shipment status to In Transit and remove the Pending status option.
+- **Status:** NOT STARTED
+- **Agent Testing Done:** N
+- **Which testing method agent to use?** both
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1:** Complete the data integrity and real-time update feature. (Priority: P0)
--   **Issue 2:** The monolithic  file is extremely large and complex, making maintenance difficult. (Priority: P1, Technical Debt)
--   **Issue 3:** The frontend application compiles with non-critical  warnings. (Priority: P2)
+-   **Issue 1:** Implement Payments and Logistics page changes (Priority: P0)
+-   **Issue 2:** Complete and verify the multi-IMEI handling feature (Priority: P1)
+-   **Issue 3:** Refactor the monolithic  file (Priority: P1, Technical Debt)
+-   **Issue 4:** The implemented notification system is not persistent (Priority: P2)
+-   **Issue 5:** Frontend compiles with  warnings (Priority: P2)
 
 **Issues Detail:**
--   **Issue 1:** Complete Data Integrity & Real-Time Updates
-    -   **Attempted fixes:** The backend  endpoint was updated to delete linked documents in , , , and . The  frontend was updated to show a confirmation dialog before deletion.
+-   **Issue 1:** Implement Payments and Logistics page changes
+    -   **Attempted fixes:** None.
     -   **Next debug checklist:**
-        1.  Modify  to fetch and display key application stats (e.g., total POs, total payments) and set it to auto-refresh periodically (e.g., every 30 seconds).
-        2.  Verify that after a PO is deleted, the data is removed from all related pages (, , etc.) upon page refresh.
-        3.  Ensure that all dropdowns that list POs are updated across the application after a PO is deleted to prevent selection of non-existent data.
-        4.  Perform an end-to-end test: create a PO, add procurement, payments, and logistics for it, then delete the PO and confirm all related data is gone and the dashboard/dropdowns are updated.
-    -   **Why fix this issue and what will be achieved with the fix?** To make the application reliable and behave like a real-time system, ensuring data consistency across all modules and preventing orphaned records.
+        1.  Modify  to add a Payee Phone Number input field.
+        2.  Use conditional rendering to show this new field only when the Payee Type dropdown is set to CC.
+        3.  Modify  to change the default status in the Create Shipment form to In Transit.
+        4.  Remove Pending from the status dropdown options in the same form.
+    -   **Why fix this issue and what will be achieved with the fix?** To fulfill the user's latest feature requests for improved data capture and workflow.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** frontend
+    -   **Blocked on other issue:** None
+
+-   **Issue 2:** Complete and verify the multi-IMEI handling feature
+    -   **Attempted fixes:** The  was updated to split comma-separated IMEIs from the input field and create a separate procurement record for each IMEI via a loop of API calls. The input label was updated.
+    -   **Next debug checklist:**
+        1.  Verify that when multiple IMEIs are entered in procurement, separate records are correctly created in the  collection.
+        2.  Ensure that each IMEI appears as a distinct line item on the Invoices page.
+        3.  Confirm that the Reports page and its Excel export show each IMEI as a separate record/row.
+        4.  Perform an end-to-end test: Procure with multiple IMEIs, check inventory, create an invoice, and verify the master report.
+    -   **Why fix this issue and what will be achieved with the fix?** This is a critical business requirement to track each device individually from procurement to sale.
     -   **Status:** IN PROGRESS
     -   **Is recurring issue?** N
     -   **Should Test frontend/backend/both after fix?** both
     -   **Blocked on other issue:** None
 
--   **Issue 2:** Refactor 
-    -   **Attempted fixes:** None.
+-   **Issue 3:** Refactor 
+    -   **Attempted fixes:** None in this session.
     -   **Next debug checklist:**
-        1.  Create a new directory structure: , , .
-        2.  Move Pydantic models from  to files within .
-        3.  Move API endpoint definitions from  into separate files in  using .
-        4.  Refactor the main  to import and include the new routers.
-    -   **Why fix this issue and what will be achieved with the fix?** To improve maintainability, readability, and scalability of the backend codebase. This is a critical technical debt item.
+        1.  Create directories: , .
+        2.  Move Pydantic models from  into files within .
+        3.  Move API endpoints into separate files in  using .
+        4.  Update the main  to import and include the new routers.
+    -   **Why fix this issue and what will be achieved with the fix?** To improve maintainability, readability, and scalability of the backend codebase.
     -   **Status:** NOT STARTED
     -   **Is recurring issue?** Y
     -   **Should Test frontend/backend/both after fix?** backend
     -   **Blocked on other issue:** None
 
+-   **Issue 4:** The implemented notification system is not persistent
+    -   **Attempted fixes:** A comprehensive notification system was built using React Context ().
+    -   **Next debug checklist:**
+        1.  Design a backend model for storing notifications (e.g., , , , , ).
+        2.  Create API endpoints to create, fetch, and mark notifications as read.
+        3.  Refactor the frontend to fetch notifications from the backend instead of relying solely on context.
+        4.  Update the  to manage notifications fetched from the server.
+    -   **Why fix this issue and what will be achieved with the fix?** The current implementation loses notifications on page reload, which undermines the reliable, real-time user requirement. A persistent system is needed.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** both
+    -   **Blocked on other issue:** None
+
+-   **Issue 5:** Frontend compiles with  warnings
+    -   **Attempted fixes:** None. The agent has noted the warnings but not addressed them.
+    -   **Next debug checklist:**
+        1.  Run yarn run v1.22.22
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command. and identify all  warnings.
+        2.  For each warning, analyze the  or  hook and add the missing dependencies to the dependency array.
+        3.  Ensure that adding the dependencies does not introduce infinite loops or unwanted side effects.
+    -   **Why fix this issue and what will be achieved with the fix?** To adhere to React best practices and prevent potential stale state bugs.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** frontend
+    -   **Blocked on other issue:** None
+
 **In progress Task List**:
--   **Task 1:** Complete Data Integrity & Real-time Update Feature
-    -   **Where to resume:** Modify  to add auto-refreshing statistics.
-    -   **What will be achieved with this?** The application will feel more responsive and reliable, with data consistency maintained across all modules, especially after delete operations.
+-   **Task 1:** Implement Payments and Logistics page changes
+    -   **Where to resume:** Start by modifying  and .
+    -   **What will be achieved with this?** The application will meet the user's latest requirements.
+    -   **Status:** NOT STARTED
+    -   **Should Test frontend/backend/both after fix?** frontend
+    -   **Blocked on something:** None
+
+-   **Task 2:** Complete and verify the multi-IMEI handling feature
+    -   **Where to resume:** Perform end-to-end testing of the multi-IMEI flow, starting from procurement. The frontend logic for splitting IMEIs is in .
+    -   **What will be achieved with this?** Core business logic for tracking individual items will be correctly implemented.
     -   **Status:** IN PROGRESS
     -   **Should Test frontend/backend/both after fix?** both
     -   **Blocked on something:** None
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-  - **(P0)** Refactor the monolithic  into a modular structure.
-  - **(P1)** Implement detailed IMEI Lifecycle Tracking: Enhance the UI and backend logic for scanning and updating IMEI statuses at different stages (e.g., Inward Nova, Outward Nova, Inward Magnova).
+  - **(P1)** Refactor the monolithic  into a modular structure.
+  - **(P1)** Implement detailed IMEI Lifecycle Tracking: Enhance the UI for scanning and updating IMEI statuses (e.g., Inward Nova, Outward Nova).
   - **(P1)** Implement Logistics Document Uploads: Add functionality to upload and link E-way bills and PODs to shipments.
 - **Future Tasks:**
   - Implement configurable PO approval workflows.
-  - Build out more specific, granular reports in the Reporting module.
+  - Build out more specific, granular reports.
   - Implement a full, immutable audit trail for all critical transactions.
+  - Make the notification system persistent by storing notifications in the database.
 
 **Completed work in this session**
-- **Admin-Only Deletion:** Implemented and tested admin-only delete buttons on all data pages.
-- **Payments Module Overhaul:**
-    - Implemented Internal/External payment types with conditional forms for Vendor vs. CC payments.
-    - Fixed a critical bug in payment balance calculation for legacy data.
-    - Added a feature to view all external payments linked to an internal payment PO.
-- **IMEI Inventory Enhancements:**
-    - Fixed IMEI not found bug by adding a lookup from procurement records.
-    - Implemented auto-population of vendor, location, brand, model, and colour when an IMEI is entered.
-    - Redesigned the form to remove the 'Organization' field and add the new auto-populated fields.
-- **Invoice Module Revamp:**
-    - Redesigned the Create Invoice form to be manual, removing PO dependency.
-    - Added dynamic GST calculation with selectable slabs (5%, 12%, 18%).
-    - Created a professional, printable invoice template accessible by clicking the invoice number.
-- **Reports Page Deletion:** Added functionality to delete the source Purchase Order directly from the Master Report page.
-- **UI/UX:** Reordered the sidebar navigation as per user request and removed the Sales Orders link.
+- **Full Notification Workflow:** Implemented an app-wide, sequential notification system using React Context that guides users from PO creation through to Invoicing.
+- **Role-Based Access:** Restricted the Payments page to  users only.
+- **Reports Page Overhaul:**
+    - Restructured columns and headers as per user's image (, ).
+    - Added a new  section.
+    - Implemented a new backend endpoint () and a frontend button to export the complete report view to an Excel () file.
+- **Inventory Page Fix:** Updated the backend model and frontend page to correctly display , , and  for inventory items.
+- **Purchase Order Page Updates:**
+    - Removed the IMEI column from the main table.
+    - Removed the Colour field and column from the create, view, and line-item components.
+- **Logistics Page Updates:** Changed the Pickup Location and To Location fields from dropdowns to editable text inputs in the 'Create Shipment' dialog.
+- **Procurement Page Updates:**
+    - Added an Search by IMEI input to filter the records table.
+    - Implemented logic to split comma-separated IMEIs into individual procurement records.
+- **Data Management:** Cleared all transactional data from the database multiple times as requested by the user, while preserving user accounts.
+
+**Earlier issues found/mentioned but not fixed**
+-   **Issue 1:** The notification system is not persistent.
+    -   **Debug checklist:** The agent noted this limitation, acknowledging that the React Context state resets on page reloads. The next step is to implement a backend persistence layer for notifications.
+    -   **Why to solve this issue and what will be achieved with this?** To create a truly reliable system where users don't lose important workflow notifications if they refresh the page.
+    -   **Should Test frontend/backend/both after fix:** both
+    -   **Is recurring issue?** N
+
+-   **Issue 2:** The frontend application compiles with  warnings.
+    -   **Debug checklist:** The agent noted the warnings but prioritized functional changes. These warnings should be addressed by adding the suggested dependencies to the dependency arrays in the respective hooks.
+    -   **Why to solve this issue and what will be achieved with this?** To eliminate potential bugs related to stale closures and follow React best practices.
+    -   **Should Test frontend/backend/both after fix:** frontend
+    -   **Is recurring issue?** Y
+
+**Known issue recurrence from previous fork**
+-   **Issue recurrence in previous fork:** The  file remains a monolith, and  warnings persist.
+-   **Recurrence count:** 2+
+-   **Status:** NOT STARTED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Backend:** FastAPI
+-   **Backend:** FastAPI, Pydantic
 -   **Frontend:** React, Tailwind CSS, Shadcn UI
 -   **Database:** MongoDB
--   **Authentication:** JWT (JSON Web Tokens)
--   **State Management:** React Hooks (, , )
--   **Frontend Logic:** Conditional rendering for dynamic forms, client-side data fetching and state updates.
+-   **State Management:** React Hooks (, ), React Context for global state and event-driven notifications ().
+-   **Data Handling:** Client-side filtering, conditional rendering, dynamic forms.
 
 **key DB schema**
--   **invoices**: Schema updated to include , , , .
--   **imei_inventory**: Schema updated to include , , .
--   **purchase_orders**, **procurement**, **logistics_shipments**, **payments**: Schemas remain largely the same but are now interlinked via cascade delete logic originating from .
+-   **IMEIInventory (Pydantic Model):** The response model in  was updated to include , , and  to ensure these fields are sent to the frontend.
+
+**changes in tech stack**
+- None.
 
 **All files of reference**
--   : Heavily modified with new endpoints (, ), cascade-delete logic, and updates to models and create/read endpoints for Payments and Invoices.
--   : Completely rewritten to support the new payment flow, dynamic forms, and linked-payment modal.
--   : Completely rewritten to support IMEI lookup and auto-population of fields.
--   : Completely rewritten to support the new manual invoice form, GST calculation, and printable invoice template.
--   : Modified to add the cascade-delete confirmation dialog.
--   : Modified to add delete functionality.
--   : Modified to reorder navigation links and remove Sales Orders.
+-   : Created and heavily modified to manage the app-wide notification and data refresh system.
+-   : Modified to wrap the application with .
+-   : Almost all page components were significantly modified to integrate with the  for receiving and triggering notifications.
+-   : Heavily modified to add the Excel export button, update column headers, and display new data sections.
+-   : Modified to handle multi-IMEI entry and add a search filter.
+-   : Modified to remove the Colour and IMEI fields.
+-   : Modified to make location fields editable.
+-   : Modified to be admin-only and integrate with the notification workflow.
+-   : Modified to update the  model and add the new  endpoint.
 
-**Areas that need refactoring**
--   ****: This is the highest priority. The file is now dangerously large and contains all models, business logic, and endpoints. It must be broken down into a modular structure (, , ) for maintainability.
+**Areas that need refactoring**:
+-   ****: This remains the highest priority for refactoring. It's a large monolith that hinders development and maintenance.
+-   ****: The notification logic should be refactored to use a persistent backend store instead of relying solely on in-memory React context state.
 
 **key api endpoints**
--   : **(Updated)** Now triggers a cascade delete of related procurement, payment, logistics, and inventory records.
--   : **(Updated)** Modified to accept new fields like  and no longer requires a .
--   : **(Updated)** Logic improved to correctly handle legacy internal payments during validation.
--   : **(Updated)** Logic improved to correctly calculate sums for legacy internal payments.
--   : **(Updated)** Now creates an inventory record if the IMEI exists in procurement but not yet in inventory.
--   : **(New)** Looks up an IMEI in procurement and POs to return vendor, brand, model, and color details.
--   : **(New)** Returns counts of records linked to a specific PO.
+-   : **(New)** Downloads a comprehensive Excel file of the master report, matching the on-screen view with all columns and data.
 
 **Critical Info for New Agent**
--   The most critical task is to complete and thoroughly test the data integrity feature. This involves not just the cascade delete but ensuring the entire UI (dashboards, dropdowns) reflects these changes in real-time or upon refresh.
--   The backend  is a major source of technical debt. Any significant new backend feature should be preceded by or bundled with the refactoring of this file.
--   The user is focused on making the application behave like a reliable, real-world system. Emphasize data consistency and accurate reflections of state in all future work.
+-   The user wants a highly reliable, interconnected application that behaves like a real-time system. Data consistency and workflow continuity are paramount.
+-   The notification system is central to the user's vision. However, its current implementation is **not persistent** and will lose state on page reloads. This is a major limitation that should be addressed soon.
+-   The multi-IMEI feature (splitting comma-separated values into individual records) has been started on the frontend () but requires **thorough end-to-end verification** across Inventory, Invoices, and Reports to be considered complete.
+-   The user provides very specific, frequent feedback. Pay close attention to their requests, including visual details from images.
+-   The next immediate tasks are the small but specific changes requested for the Payments and Logistics pages.
 
 **documents and test reports created in this job**
 -   
+-   
+-   
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **Request (In Progress):** Make the application data-aware and reliable with cascade deletes and real-time updates.
-2.  **Request (Completed):** Overhaul the Invoices page: remove PO dependency, add manual fields, implement GST calculation with percentage slabs, and create a printable invoice template.
-3.  **Request (Completed):** Update the Invoices page to auto-populate billing organization based on PO and change button colors.
-4.  **Request (Completed):** Reorder the sidebar navigation and remove Sales Orders.
-5.  **Request (Completed):** Update the Inventory page: remove 'Organization', add and auto-populate 'Brand', 'Model', and 'Colour'.
-6.  **Request (Completed):** Update the Payments page: dynamically change External Payment fields for Credit Card payee type.
-7.  **Request (Completed):** Fix the IMEI not found error on the Inventory page and auto-populate vendor details on IMEI entry.
-8.  **Request (Completed):** Remove test data, add a clickable PO link in Payments to show related external payments, and add a delete option to the Reports page.
-9.  **Bug Report (Fixed):** The payment balance calculation was incorrect. The agent debugged and fixed the issue related to legacy data.
-10. **Initial Request (Completed):** The initial multi-part task (admin delete, duplicate PO check, Payments overhaul) was fully implemented and tested.
+1.  **Request (New):** On the Payments page, add a Payee Phone Number field when CC is selected. On the Logistics page, default status to In Transit and remove Pending.
+2.  **Request (In Progress):** When entering multiple comma-separated IMEIs, treat each as a separate product throughout the system (Inventory, Invoice, Reports).
+3.  **Request (Completed):** Remove the Colour field completely from the Purchase Order page and related forms.
+4.  **Request (Action Taken):** Clear all data from the database.
+5.  **Request (Completed):** Implement a complete, sequential notification workflow across all modules (PO -> Payment -> Procurement -> Logistics -> Inventory -> Invoice) and make the Payments page admin-only.
+6.  **Question:** what is the error - Agent investigated and found no server/compiler errors.
+7.  **Request (Completed):** The Inventory page is missing brand and colour. The report export to Excel must contain all columns exactly as shown on the screen.
+8.  **Suggestion (From Agent):** Ask user if they want to add a feature to back-fill missing Brand/Model/Colour for existing inventory. (No user response).
+9.  **Request (Completed):** Implement four changes: Remove IMEI from PO page, make Logistics locations editable, create a notification from Procurement to Logistics, and add an IMEI search filter to the Procurement page.
+10. **Request (Action Taken):** Clear all data from the database.
 
 **Project Health Check:**
--   **Broken:** The real-time update aspect of the latest user request is incomplete. The Dashboard is static, and it's unconfirmed if all UI elements (like dropdowns) update correctly after a cascade delete.
--   **Mocked:** The  page functionality is still likely a placeholder.
+-   **Broken:**
+    -   The multi-IMEI feature is only partially implemented and not verified end-to-end.
+    -   The core notification system is not persistent across page reloads, which fails the user's reliability requirement.
+-   **Mocked:** The  page and its associated functionality are likely still placeholders.
 
 **3rd Party Integrations**
--   None implemented.
+-   None.
 
 **Testing status**
--   **Testing agent used after significant changes:** YES, at the beginning of the session for the initial feature set.
+-   **Testing agent used after significant changes:** YES. The agent ran the testing agent multiple times after major feature implementations, consistently achieving 100% pass rates on the tests performed.
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** None in this session.
--   **Known regressions:** The  warning persists.
+-   **Known regressions:** The  warning persists. The new notification system, while functional in-session, is a regression in reliability compared to a persistent solution.
 
 **Credentials to test flow:**
-Available at .
 -   **Magnova Admin (Full Access):**  / 
 -   **Nova Stores (Procurement/Inventory):**  / 
 
 **What agent forgot to execute**
-The agent is in the middle of implementing the user's request for data integrity and real-time updates. It has implemented the backend cascade-delete and frontend confirmation but has not yet implemented the dashboard auto-refresh or verified that all UI elements (especially dropdowns) update correctly after a deletion.</analysis>
+-   The agent has not yet started implementing the latest user request regarding the Payee Phone Number field on the Payments page and the status change on the Logistics page.
+-   The agent implemented the frontend logic for splitting multiple IMEIs on the Procurement page but did not follow through with end-to-end testing to ensure the change propagates correctly to Inventory, Invoices, and Reports.
+-   The agent identified that the notification system is not persistent but did not create a formal task or plan to fix it, leaving it as a known limitation.</analysis>

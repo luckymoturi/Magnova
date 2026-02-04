@@ -91,7 +91,7 @@ Logistics → Invoicing → Sales Orders (Export)
 
 ### Accessing the System
 
-**URL**: https://exim-flow.preview.emergentagent.com
+**URL**: https://novatrade.preview.emergentagent.com
 
 ### Registration Process
 
