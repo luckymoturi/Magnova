@@ -948,7 +948,7 @@ async def create_shipment(shipment_data: ShipmentCreate, current_user: User = De
         "pickup_date": shipment_data.pickup_date.isoformat(),
         "expected_delivery": shipment_data.expected_delivery.isoformat(),
         "actual_delivery": None,
-        "status": "Pending",
+        "status": "In Transit",
         "imei_list": shipment_data.imei_list,
         "pickup_quantity": shipment_data.pickup_quantity or len(shipment_data.imei_list),
         "brand": shipment_data.brand,
