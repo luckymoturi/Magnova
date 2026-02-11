@@ -33,13 +33,13 @@ export const ProcurementPage = () => {
     po_number: '',
     vendor_name: '',
     store_location: '',
-    imei: '',
     serial_number: '',
     device_model: '',
     brand: '',
     storage: '',
     colour: '',
     quantity: '',
+    purchase_quantity: '',
     purchase_price: '',
   });
 
@@ -122,46 +122,38 @@ export const ProcurementPage = () => {
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
-      // Split IMEI numbers by comma and create separate records for each
-      const imeiList = formData.imei.split(',').map(imei => imei.trim()).filter(imei => imei);
-      
-      if (imeiList.length === 0) {
-        toast.error('Please enter at least one IMEI number');
+      if (!formData.purchase_quantity) {
+        toast.error('Please enter purchase quantity');
         return;
       }
       
-      // Create a procurement record for each IMEI
-      const createdRecords = [];
-      for (const imei of imeiList) {
-        const procurementData = {
-          po_number: formData.po_number,
-          vendor_name: formData.vendor_name,
-          store_location: formData.store_location,
-          imei: imei,
-          serial_number: formData.serial_number,
-          device_model: `${formData.brand} ${formData.device_model}`,
-          quantity: 1, // Each IMEI represents 1 quantity
-          purchase_price: parseFloat(formData.purchase_price),
-        };
-        
-        await api.post('/procurement', procurementData);
-        createdRecords.push(imei);
-        
-        // Add notification for logistics page for each IMEI
-        addLogisticsNotification({
-          po_number: formData.po_number,
-          imei: imei,
-          vendor_name: formData.vendor_name,
-          brand: formData.brand,
-          model: formData.device_model,
-          store_location: formData.store_location,
-        });
-      }
+      const procurementData = {
+        po_number: formData.po_number,
+        vendor_name: formData.vendor_name,
+        store_location: formData.store_location,
+        serial_number: formData.serial_number,
+        device_model: `${formData.brand} ${formData.device_model}`,
+        colour: formData.colour,
+        po_quantity: parseInt(formData.quantity) || 1,
+        purchase_quantity: parseInt(formData.purchase_quantity),
+        purchase_price: parseFloat(formData.purchase_price),
+      };
+      
+      await api.post('/procurement', procurementData);
+      
+      // Add notification for logistics page
+      addLogisticsNotification({
+        po_number: formData.po_number,
+        vendor_name: formData.vendor_name,
+        brand: formData.brand,
+        model: formData.device_model,
+        store_location: formData.store_location,
+      });
       
       // Clear procurement notification if it exists
       clearProcurementNotification(formData.po_number);
       
-      toast.success(`${createdRecords.length} IMEI(s) recorded - Logistics notifications sent`);
+      toast.success('Procurement record created successfully - Logistics notification sent');
       setDialogOpen(false);
       resetForm();
       refreshAfterProcurementChange();
@@ -189,13 +181,13 @@ export const ProcurementPage = () => {
       po_number: '',
       vendor_name: '',
       store_location: '',
-      imei: '',
       serial_number: '',
       device_model: '',
       brand: '',
       storage: '',
       colour: '',
       quantity: '',
+      purchase_quantity: '',
       purchase_price: '',
     });
     setSelectedPO(null);
@@ -237,12 +229,12 @@ export const ProcurementPage = () => {
                       <Package className="w-5 h-5 text-purple-600" />
                     </div>
                     <div>
-                      <div className="font-medium text-slate-900">
-                        <span className="font-mono text-magnova-blue">{notif.po_number}</span>
-                        <span className="mx-2 text-slate-400">|</span>
+                      <div className="font-medium text-neutral-900">
+                        <span className="font-mono text-neutral-900">{notif.po_number}</span>
+                        <span className="mx-2 text-neutral-400">|</span>
                         <span>{notif.brand} {notif.model}</span>
                       </div>
-                      <div className="text-sm text-slate-500">
+                      <div className="text-sm text-neutral-500">
                         Vendor: {notif.vendor} • Location: {notif.location}
                       </div>
                     </div>
@@ -259,7 +251,7 @@ export const ProcurementPage = () => {
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="text-slate-400 hover:text-slate-600"
+                      className="text-neutral-400 hover:text-neutral-600"
                       onClick={(e) => { e.stopPropagation(); clearProcurementNotification(notif.po_number); }}
                     >
                       <X className="w-4 h-4" />
@@ -273,27 +265,27 @@ export const ProcurementPage = () => {
 
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Procurement</h1>
-            <p className="text-slate-600 mt-1">Record device procurement with IMEI tracking</p>
+            <h1 className="text-2xl font-black text-neutral-900 tracking-tight ">Procurement</h1>
+            <p className="text-neutral-600 mt-1">Record device procurement with IMEI tracking</p>
           </div>
           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
             <DialogTrigger asChild>
-              <Button data-testid="create-procurement-button" className="bg-magnova-blue hover:bg-magnova-dark-blue">
+              <Button data-testid="create-procurement-button" className="bg-teal-600 hover:bg-teal-700 text-white">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Procurement
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-3xl bg-white">
               <DialogHeader>
-                <DialogTitle className="text-magnova-orange">Add Procurement Record</DialogTitle>
-                <DialogDescription className="text-slate-600">Record new device procurement - Select PO to auto-populate details</DialogDescription>
+                <DialogTitle className="text-teal-600">Add Procurement Record</DialogTitle>
+                <DialogDescription className="text-neutral-600">Record new device procurement - Select PO to auto-populate details</DialogDescription>
               </DialogHeader>
               <form onSubmit={handleCreate} className="space-y-4" data-testid="procurement-form">
                 {/* PO Selection */}
-                <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                <div className="p-4 bg-neutral-50 rounded-lg border border-neutral-200">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label className="text-slate-700 font-medium">PO Number *</Label>
+                      <Label className="text-neutral-700 font-medium">PO Number *</Label>
                       <Select value={formData.po_number} onValueChange={handlePOSelect} required>
                         <SelectTrigger data-testid="po-select" className="bg-white">
                           <SelectValue placeholder="Select PO" />
@@ -313,7 +305,7 @@ export const ProcurementPage = () => {
                     </div>
                     {poItems.length > 1 && (
                       <div>
-                        <Label className="text-slate-700 font-medium">Select Line Item *</Label>
+                        <Label className="text-neutral-700 font-medium">Select Line Item *</Label>
                         <Select value={selectedItemIndex} onValueChange={handleItemSelect} required>
                           <SelectTrigger className="bg-white">
                             <SelectValue placeholder="Select item" />
@@ -334,80 +326,93 @@ export const ProcurementPage = () => {
                 {/* Auto-populated Fields */}
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <Label className="text-slate-700">Vendor Name</Label>
+                    <Label className="text-neutral-700">Vendor Name</Label>
                     <Input
                       value={formData.vendor_name}
                       onChange={(e) => setFormData({ ...formData, vendor_name: e.target.value })}
                       required
-                      className="bg-slate-100 text-slate-900"
+                      className="bg-neutral-100 text-neutral-900"
                       data-testid="vendor-input"
                       readOnly
                     />
                   </div>
                   <div>
-                    <Label className="text-slate-700">Store Location</Label>
+                    <Label className="text-neutral-700">Store Location</Label>
                     <Input
                       value={formData.store_location}
                       onChange={(e) => setFormData({ ...formData, store_location: e.target.value })}
                       required
-                      className="bg-slate-100 text-slate-900"
+                      className="bg-neutral-100 text-neutral-900"
                       data-testid="location-input"
                       readOnly
                     />
                   </div>
                   <div>
-                    <Label className="text-slate-700">Brand</Label>
+                    <Label className="text-neutral-700">Brand</Label>
                     <Input
                       value={formData.brand}
                       onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
                       required
-                      className="bg-slate-100 text-slate-900"
+                      className="bg-neutral-100 text-neutral-900"
                       readOnly
                     />
                   </div>
                   <div>
-                    <Label className="text-slate-700">Device Model</Label>
+                    <Label className="text-neutral-700">Device Model</Label>
                     <Input
                       value={formData.device_model}
                       onChange={(e) => setFormData({ ...formData, device_model: e.target.value })}
                       required
-                      className="bg-slate-100 text-slate-900"
+                      className="bg-neutral-100 text-neutral-900"
                       data-testid="model-input"
                       readOnly
                     />
                   </div>
                   <div>
-                    <Label className="text-slate-700">Storage</Label>
+                    <Label className="text-neutral-700">Storage</Label>
                     <Input
                       value={formData.storage}
                       onChange={(e) => setFormData({ ...formData, storage: e.target.value })}
-                      className="bg-slate-100 text-slate-900"
+                      className="bg-neutral-100 text-neutral-900"
                       readOnly
                     />
                   </div>
                   <div>
-                    <Label className="text-slate-700">Colour</Label>
+                    <Label className="text-neutral-700">Colour</Label>
                     <Input
                       value={formData.colour}
                       onChange={(e) => setFormData({ ...formData, colour: e.target.value })}
-                      className="bg-slate-100 text-slate-900"
-                      readOnly
+                      className="bg-white text-neutral-900"
+                      placeholder="Enter colour"
                     />
                   </div>
                   <div>
-                    <Label className="text-slate-700">Quantity</Label>
+                    <Label className="text-neutral-700">PO Quantity</Label>
                     <Input
                       type="number"
                       value={formData.quantity}
                       onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                       required
-                      className="bg-white text-slate-900"
-                      placeholder="Enter quantity"
+                      className="bg-neutral-100 text-neutral-900"
+                      placeholder="Enter PO quantity"
+                      min="1"
+                      readOnly
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-neutral-700">Purchase Quantity *</Label>
+                    <Input
+                      type="number"
+                      value={formData.purchase_quantity}
+                      onChange={(e) => setFormData({ ...formData, purchase_quantity: e.target.value })}
+                      required
+                      className="bg-white text-neutral-900"
+                      placeholder="Enter purchase quantity"
                       min="1"
                     />
                   </div>
                   <div>
-                    <Label className="text-slate-700">Purchase Price</Label>
+                    <Label className="text-neutral-700">Purchase Price</Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -415,33 +420,22 @@ export const ProcurementPage = () => {
                       onChange={(e) => setFormData({ ...formData, purchase_price: e.target.value })}
                       required
                       data-testid="price-input"
-                      className="bg-white text-slate-900"
+                      className="bg-white text-neutral-900"
                       placeholder="Enter price"
                     />
                   </div>
                   <div>
-                    <Label className="text-slate-700">IMEI Number *</Label>
-                    <Input
-                      value={formData.imei}
-                      onChange={(e) => setFormData({ ...formData, imei: e.target.value })}
-                      required
-                      data-testid="imei-input"
-                      className="font-mono bg-white text-slate-900"
-                      placeholder="Enter IMEI"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-slate-700">Serial Number</Label>
+                    <Label className="text-neutral-700">Serial Number</Label>
                     <Input
                       value={formData.serial_number}
                       onChange={(e) => setFormData({ ...formData, serial_number: e.target.value })}
                       data-testid="serial-input"
-                      className="font-mono bg-white text-slate-900"
-                      placeholder="Optional"
+                      className="font-mono bg-white text-neutral-900"
+                      placeholder="Enter serial number"
                     />
                   </div>
                 </div>
-                <Button type="submit" className="w-full bg-magnova-blue hover:bg-magnova-dark-blue" data-testid="submit-procurement">
+                <Button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white" data-testid="submit-procurement">
                   Add Procurement Record
                 </Button>
               </form>
@@ -450,28 +444,28 @@ export const ProcurementPage = () => {
         </div>
 
         {/* IMEI Search Filter */}
-        <div className="mb-4 bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+        <div className="mb-4 bg-white border border-neutral-200 rounded-lg p-4 shadow-sm">
           <div className="flex items-center gap-4">
             <div className="flex-1 max-w-md">
-              <Label className="text-slate-700 font-medium mb-1 block">Search by IMEI</Label>
+              <Label className="text-neutral-700 font-medium mb-1 block">Search by IMEI</Label>
               <Input
                 value={searchImei}
                 onChange={(e) => setSearchImei(e.target.value)}
                 placeholder="Enter IMEI to filter records..."
-                className="bg-white text-slate-900 font-mono"
+                className="bg-white text-neutral-900 font-mono"
                 data-testid="imei-search-input"
               />
             </div>
             {searchImei && (
               <div className="flex items-center gap-2 mt-6">
-                <span className="text-sm text-slate-500">
+                <span className="text-sm text-neutral-500">
                   Showing {filteredRecords.length} of {records.length} records
                 </span>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setSearchImei('')}
-                  className="text-slate-400 hover:text-slate-600"
+                  className="text-neutral-400 hover:text-neutral-600"
                 >
                   Clear
                 </Button>
@@ -480,17 +474,17 @@ export const ProcurementPage = () => {
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-white border border-neutral-200 rounded-lg shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full" data-testid="procurement-table">
               <thead>
-                <tr className="bg-magnova-blue text-white">
+                <tr className="bg-teal-600 text-white">
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">PO Number</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">IMEI</th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Device Model</th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Vendor</th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Location</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Qty</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">PO Qty</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Purchase Qty</th>
                   <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider">Price</th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Date</th>
                   {isAdmin && <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Actions</th>}
@@ -499,28 +493,28 @@ export const ProcurementPage = () => {
               <tbody>
                 {filteredRecords.length === 0 ? (
                   <tr>
-                    <td colSpan={isAdmin ? 9 : 8} className="px-4 py-8 text-center text-slate-500">
+                    <td colSpan={isAdmin ? 9 : 8} className="px-4 py-8 text-center text-neutral-500">
                       {searchImei ? `No records found for IMEI "${searchImei}"` : 'No procurement records found'}
                     </td>
                   </tr>
                 ) : (
                   filteredRecords.map((record) => (
-                    <tr key={record.procurement_id} className="table-row border-b border-slate-100 hover:bg-slate-50" data-testid="procurement-row">
-                      <td className="px-4 py-3 text-sm font-mono font-medium text-magnova-blue">{record.po_number}</td>
-                      <td className="px-4 py-3 text-sm font-mono text-slate-900">{record.imei}</td>
-                      <td className="px-4 py-3 text-sm text-slate-900">{record.device_model}</td>
-                      <td className="px-4 py-3 text-sm text-slate-900">{record.vendor_name}</td>
-                      <td className="px-4 py-3 text-sm text-slate-600">{record.store_location}</td>
-                      <td className="px-4 py-3 text-sm text-slate-900">{record.quantity || 1}</td>
-                      <td className="px-4 py-3 text-sm text-right text-slate-900 font-medium">₹{record.purchase_price?.toFixed(2) || '0.00'}</td>
-                      <td className="px-4 py-3 text-sm text-slate-600">{new Date(record.procurement_date).toLocaleDateString()}</td>
+                    <tr key={record.procurement_id} className="table-row border-b border-neutral-100 hover:bg-neutral-50" data-testid="procurement-row">
+                      <td className="px-4 py-3 text-sm font-mono font-medium text-neutral-900">{record.po_number}</td>
+                      <td className="px-4 py-3 text-sm text-neutral-900">{record.device_model}</td>
+                      <td className="px-4 py-3 text-sm text-neutral-900">{record.vendor_name}</td>
+                      <td className="px-4 py-3 text-sm text-neutral-600">{record.store_location}</td>
+                      <td className="px-4 py-3 text-sm text-neutral-900">{record.po_quantity || 1}</td>
+                      <td className="px-4 py-3 text-sm text-neutral-900">{record.purchase_quantity || 1}</td>
+                      <td className="px-4 py-3 text-sm text-right text-neutral-900 font-medium">₹{record.purchase_price?.toFixed(2) || '0.00'}</td>
+                      <td className="px-4 py-3 text-sm text-neutral-600">{new Date(record.procurement_date).toLocaleDateString()}</td>
                       {isAdmin && (
                         <td className="px-4 py-3 text-sm">
                           <Button
                             size="sm"
                             variant="ghost"
                             onClick={() => handleDelete(record.procurement_id)}
-                            className="text-red-600 hover:text-red-800 hover:bg-red-50 h-8 w-8 p-0"
+                            className="text-neutral-800 hover:text-neutral-900 hover:bg-neutral-100 h-8 w-8 p-0"
                             data-testid="delete-procurement-button"
                           >
                             <Trash2 className="w-4 h-4" />

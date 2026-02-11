@@ -219,31 +219,31 @@ export const InvoicesPage = () => {
       <div data-testid="invoices-page">
         {/* Invoice Notifications Banner - Inventory Complete, Ready for Invoice */}
         {pendingInvoices.length > 0 && (
-          <div className="mb-6 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-lg p-4" data-testid="invoice-notifications">
+          <div className="mb-6 bg-gradient-to-r from-teal-50 to-teal-50 border border-teal-200 rounded-lg p-4" data-testid="invoice-notifications">
             <div className="flex items-center gap-2 mb-3">
-              <Bell className="w-5 h-5 text-emerald-600 animate-pulse" />
-              <h3 className="font-semibold text-emerald-800">Inventory Updated - Ready for Invoice</h3>
-              <span className="bg-emerald-500 text-white text-xs px-2 py-0.5 rounded-full">{pendingInvoices.length}</span>
+              <Bell className="w-5 h-5 text-teal-600 animate-pulse" />
+              <h3 className="font-semibold text-teal-800">Inventory Updated - Ready for Invoice</h3>
+              <span className="bg-teal-500 text-white text-xs px-2 py-0.5 rounded-full">{pendingInvoices.length}</span>
             </div>
             <div className="space-y-2">
               {pendingInvoices.map((notif, index) => (
                 <div 
                   key={`invoice-${notif.po_number}-${notif.imei}-${index}`}
-                  className="flex items-center justify-between bg-white rounded-lg p-3 border border-emerald-100 hover:border-emerald-300 transition-colors cursor-pointer"
+                  className="flex items-center justify-between bg-white rounded-lg p-3 border border-teal-100 hover:border-teal-300 transition-colors cursor-pointer"
                   onClick={() => handleNotificationClick(notif)}
                   data-testid="invoice-notification-item"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="bg-emerald-100 p-2 rounded-lg">
-                      <Receipt className="w-5 h-5 text-emerald-600" />
+                    <div className="bg-teal-100 p-2 rounded-lg">
+                      <Receipt className="w-5 h-5 text-teal-600" />
                     </div>
                     <div>
-                      <div className="font-medium text-slate-900">
-                        <span className="font-mono text-magnova-blue">{notif.po_number || 'N/A'}</span>
-                        <span className="mx-2 text-slate-400">|</span>
+                      <div className="font-medium text-neutral-900">
+                        <span className="font-mono text-neutral-900">{notif.po_number || 'N/A'}</span>
+                        <span className="mx-2 text-neutral-400">|</span>
                         <span>{notif.brand} {notif.model}</span>
                       </div>
-                      <div className="text-sm text-slate-500">
+                      <div className="text-sm text-neutral-500">
                         IMEI: {notif.imei} • Vendor: {notif.vendor} • Action: {notif.action}
                       </div>
                     </div>
@@ -251,7 +251,7 @@ export const InvoicesPage = () => {
                   <div className="flex items-center gap-2">
                     <Button
                       size="sm"
-                      className="bg-emerald-600 hover:bg-emerald-700"
+                      className="bg-teal-600 hover:bg-teal-700 text-white"
                       onClick={(e) => { e.stopPropagation(); handleNotificationClick(notif); }}
                     >
                       <FileText className="w-4 h-4 mr-1" />
@@ -260,7 +260,7 @@ export const InvoicesPage = () => {
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="text-slate-400 hover:text-slate-600"
+                      className="text-neutral-400 hover:text-neutral-600"
                       onClick={(e) => { e.stopPropagation(); clearInvoiceNotification(notif.po_number, notif.imei); }}
                     >
                       <X className="w-4 h-4" />
@@ -274,26 +274,26 @@ export const InvoicesPage = () => {
 
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Invoices</h1>
-            <p className="text-slate-600 mt-1">Manage store invoices and billing</p>
+            <h1 className="text-2xl font-black text-neutral-900 tracking-tight">Invoices</h1>
+            <p className="text-neutral-600 mt-1">Manage store invoices and billing</p>
           </div>
           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
             <DialogTrigger asChild>
-              <Button data-testid="create-invoice-button" className="bg-magnova-orange hover:bg-orange-600">
+              <Button data-testid="create-invoice-button" className="bg-teal-600 hover:bg-neutral-700 text-white">
                 <Plus className="w-4 h-4 mr-2" />
                 Create Invoice
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl bg-white">
               <DialogHeader>
-                <DialogTitle className="text-magnova-orange">Create Invoice</DialogTitle>
-                <DialogDescription className="text-slate-600">Generate new store invoice</DialogDescription>
+                <DialogTitle className="text-teal-600">Create Invoice</DialogTitle>
+                <DialogDescription className="text-neutral-600">Generate new store invoice</DialogDescription>
               </DialogHeader>
               <form onSubmit={handleCreate} className="space-y-4" data-testid="invoice-form">
                 <div className="grid grid-cols-2 gap-4">
                   {/* From Organization */}
                   <div>
-                    <Label className="text-slate-700">From (Seller) *</Label>
+                    <Label className="text-neutral-700">From (Seller) *</Label>
                     <Select 
                       value={formData.from_organization} 
                       onValueChange={(value) => setFormData({ ...formData, from_organization: value })} 
@@ -311,7 +311,7 @@ export const InvoicesPage = () => {
 
                   {/* To Organization - Editable */}
                   <div>
-                    <Label className="text-slate-700">To (Buyer) *</Label>
+                    <Label className="text-neutral-700">To (Buyer) *</Label>
                     <Input
                       value={formData.to_organization}
                       onChange={(e) => setFormData({ ...formData, to_organization: e.target.value })}
@@ -324,7 +324,7 @@ export const InvoicesPage = () => {
 
                   {/* Invoice Date */}
                   <div>
-                    <Label className="text-slate-700">Invoice Date *</Label>
+                    <Label className="text-neutral-700">Invoice Date *</Label>
                     <Input
                       type="date"
                       value={formData.invoice_date}
@@ -337,7 +337,7 @@ export const InvoicesPage = () => {
 
                   {/* Description */}
                   <div>
-                    <Label className="text-slate-700">Description / Item</Label>
+                    <Label className="text-neutral-700">Description / Item</Label>
                     <Input
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -348,7 +348,7 @@ export const InvoicesPage = () => {
 
                   {/* Selling Price (Including GST) */}
                   <div>
-                    <Label className="text-slate-700">Selling Price (Including GST) *</Label>
+                    <Label className="text-neutral-700">Selling Price (Including GST) *</Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -363,7 +363,7 @@ export const InvoicesPage = () => {
 
                   {/* GST Percentage */}
                   <div>
-                    <Label className="text-slate-700">GST Percentage *</Label>
+                    <Label className="text-neutral-700">GST Percentage *</Label>
                     <Select 
                       value={formData.gst_percentage} 
                       onValueChange={(value) => setFormData({ ...formData, gst_percentage: value })} 
@@ -384,29 +384,29 @@ export const InvoicesPage = () => {
 
                   {/* Price Breakdown Section */}
                   {formData.selling_price && formData.base_price && (
-                    <div className="col-span-2 p-4 bg-slate-50 rounded-lg border border-slate-200">
-                      <h4 className="text-sm font-semibold text-slate-700 mb-3">Price Breakdown</h4>
+                    <div className="col-span-2 p-4 bg-neutral-50 rounded-lg border border-neutral-200">
+                      <h4 className="text-sm font-semibold text-neutral-700 mb-3">Price Breakdown</h4>
                       <div className="grid grid-cols-3 gap-4">
                         {/* Base Price (Excluding GST) */}
-                        <div className="bg-white p-3 rounded-lg border border-slate-200">
-                          <Label className="text-slate-500 text-xs">Cost (Excl. GST)</Label>
-                          <p className="text-lg font-bold text-slate-900" data-testid="base-price-display">
+                        <div className="bg-white p-3 rounded-lg border border-neutral-200">
+                          <Label className="text-neutral-500 text-xs">Cost (Excl. GST)</Label>
+                          <p className="text-lg font-bold text-neutral-900" data-testid="base-price-display">
                             ₹{parseFloat(formData.base_price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                           </p>
                         </div>
                         
                         {/* GST Amount */}
-                        <div className="bg-white p-3 rounded-lg border border-slate-200">
-                          <Label className="text-slate-500 text-xs">GST Amount ({formData.gst_percentage}%)</Label>
-                          <p className="text-lg font-bold text-magnova-orange" data-testid="gst-amount-display">
+                        <div className="bg-white p-3 rounded-lg border border-neutral-200">
+                          <Label className="text-neutral-500 text-xs">GST Amount ({formData.gst_percentage}%)</Label>
+                          <p className="text-lg font-bold text-teal-600" data-testid="gst-amount-display">
                             + ₹{parseFloat(formData.gst_amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                           </p>
                         </div>
                         
                         {/* Total (Selling Price) */}
-                        <div className="bg-emerald-50 p-3 rounded-lg border border-emerald-200">
-                          <Label className="text-emerald-600 text-xs">Total (Incl. GST)</Label>
-                          <p className="text-lg font-bold text-emerald-700" data-testid="total-price-display">
+                        <div className="bg-teal-50 p-3 rounded-lg border border-teal-200">
+                          <Label className="text-teal-600 text-xs">Total (Incl. GST)</Label>
+                          <p className="text-lg font-bold text-teal-700" data-testid="total-price-display">
                             ₹{parseFloat(formData.selling_price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                           </p>
                         </div>
@@ -416,7 +416,7 @@ export const InvoicesPage = () => {
 
                   {/* Billing Address */}
                   <div className="col-span-2">
-                    <Label className="text-slate-700">Billing Address</Label>
+                    <Label className="text-neutral-700">Billing Address</Label>
                     <Input
                       value={formData.billing_address}
                       onChange={(e) => setFormData({ ...formData, billing_address: e.target.value })}
@@ -427,7 +427,7 @@ export const InvoicesPage = () => {
 
                   {/* IMEI List */}
                   <div className="col-span-2">
-                    <Label className="text-slate-700">IMEI List (comma-separated)</Label>
+                    <Label className="text-neutral-700">IMEI List (comma-separated)</Label>
                     <Input
                       value={formData.imei_list}
                       onChange={(e) => setFormData({ ...formData, imei_list: e.target.value })}
@@ -435,11 +435,11 @@ export const InvoicesPage = () => {
                       className="font-mono bg-white"
                       data-testid="imei-list-input"
                     />
-                    <p className="text-xs text-slate-500 mt-1">Optional - Enter IMEIs for device sales</p>
+                    <p className="text-xs text-neutral-500 mt-1">Optional - Enter IMEIs for device sales</p>
                   </div>
                 </div>
 
-                <Button type="submit" className="w-full bg-magnova-orange hover:bg-orange-600" data-testid="submit-invoice">
+                <Button type="submit" className="w-full bg-teal-600 hover:bg-neutral-700 text-white" data-testid="submit-invoice">
                   Create Invoice
                 </Button>
               </form>
@@ -447,11 +447,11 @@ export const InvoicesPage = () => {
           </Dialog>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-white border border-neutral-200 rounded-lg shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full" data-testid="invoices-table">
               <thead>
-                <tr className="bg-magnova-orange text-white">
+                <tr className="bg-teal-600 text-white">
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Invoice No.</th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">From → To</th>
                   <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider">Base Price</th>
@@ -465,35 +465,35 @@ export const InvoicesPage = () => {
               <tbody>
                 {invoices.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-slate-500">
-                      <FileText className="w-12 h-12 mx-auto mb-2 text-slate-300" />
+                    <td colSpan={8} className="px-4 py-8 text-center text-neutral-500">
+                      <FileText className="w-12 h-12 mx-auto mb-2 text-neutral-300" />
                       No invoices found
                     </td>
                   </tr>
                 ) : (
                   invoices.map((invoice) => (
-                    <tr key={invoice.invoice_id} className="table-row border-b border-slate-100 hover:bg-slate-50" data-testid="invoice-row">
+                    <tr key={invoice.invoice_id} className="table-row border-b border-neutral-100 hover:bg-neutral-50" data-testid="invoice-row">
                       <td className="px-4 py-3 text-sm">
                         <button
                           onClick={() => openPrintDialog(invoice)}
-                          className="font-mono font-medium text-magnova-blue hover:text-magnova-dark-blue hover:underline"
+                          className="font-mono font-medium text-neutral-900 hover:text-neutral-800 hover:underline"
                           data-testid="view-invoice-button"
                         >
                           {invoice.invoice_number}
                         </button>
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-600">{invoice.from_organization} → {invoice.to_organization}</td>
-                      <td className="px-4 py-3 text-sm text-right text-slate-900">₹{invoice.amount?.toLocaleString()}</td>
-                      <td className="px-4 py-3 text-sm text-right text-slate-600">{invoice.gst_percentage || 18}%</td>
-                      <td className="px-4 py-3 text-sm text-right text-magnova-orange">₹{invoice.gst_amount?.toLocaleString()}</td>
-                      <td className="px-4 py-3 text-sm text-right font-bold text-emerald-700">₹{invoice.total_amount?.toLocaleString()}</td>
-                      <td className="px-4 py-3 text-sm text-slate-600">{new Date(invoice.invoice_date).toLocaleDateString()}</td>
+                      <td className="px-4 py-3 text-sm text-neutral-600">{invoice.from_organization} → {invoice.to_organization}</td>
+                      <td className="px-4 py-3 text-sm text-right text-neutral-900">₹{invoice.amount?.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-sm text-right text-neutral-600">{invoice.gst_percentage || 18}%</td>
+                      <td className="px-4 py-3 text-sm text-right text-teal-600">₹{invoice.gst_amount?.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-sm text-right font-bold text-teal-700">₹{invoice.total_amount?.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-sm text-neutral-600">{new Date(invoice.invoice_date).toLocaleDateString()}</td>
                       <td className="px-4 py-3 text-sm space-x-1">
                         <Button
                           size="sm"
                           variant="ghost"
                           onClick={() => openPrintDialog(invoice)}
-                          className="text-magnova-blue hover:text-magnova-dark-blue h-8 w-8 p-0"
+                          className="text-neutral-900 hover:text-neutral-800 h-8 w-8 p-0"
                           data-testid="print-invoice-button"
                         >
                           <Printer className="w-4 h-4" />
@@ -503,7 +503,7 @@ export const InvoicesPage = () => {
                             size="sm"
                             variant="ghost"
                             onClick={() => handleDelete(invoice.invoice_id)}
-                            className="text-red-600 hover:text-red-800 hover:bg-red-50 h-8 w-8 p-0"
+                            className="text-neutral-800 hover:text-neutral-900 hover:bg-neutral-100 h-8 w-8 p-0"
                             data-testid="delete-invoice-button"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -523,9 +523,9 @@ export const InvoicesPage = () => {
           <DialogContent className="max-w-4xl bg-white max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center justify-between">
-                <span className="text-magnova-blue">Invoice Preview</span>
+                <span className="text-neutral-900">Invoice Preview</span>
                 <div className="flex gap-2">
-                  <Button onClick={handlePrint} className="bg-magnova-orange hover:bg-orange-600">
+                  <Button onClick={handlePrint} className="bg-teal-600 hover:bg-neutral-700 text-white">
                     <Printer className="w-4 h-4 mr-2" />
                     Print Invoice
                   </Button>
@@ -535,42 +535,42 @@ export const InvoicesPage = () => {
             
             {selectedInvoice && (
               <div ref={printRef} className="bg-white p-6">
-                <div className="invoice-container border-2 border-slate-200 p-8 rounded-lg">
+                <div className="invoice-container border-2 border-neutral-200 p-8 rounded-lg">
                   {/* Header */}
-                  <div className="flex justify-between items-start border-b-4 border-magnova-orange pb-6 mb-6">
+                  <div className="flex justify-between items-start border-b-4 border-teal-600 pb-6 mb-6">
                     <div className="company-info">
-                      <h1 className="text-3xl font-black text-magnova-blue">{selectedInvoice.from_organization}</h1>
-                      <p className="text-slate-600 mt-1">Mobile & Electronics Store</p>
-                      <p className="text-slate-500 text-sm mt-2">GST No: 29AABCU9603R1ZM</p>
-                      <p className="text-slate-500 text-sm">Phone: +91 98765 43210</p>
+                      <h1 className="text-2xl font-black text-neutral-900">{selectedInvoice.from_organization}</h1>
+                      <p className="text-neutral-600 mt-1">Mobile & Electronics Store</p>
+                      <p className="text-neutral-500 text-sm mt-2">GST No: 29AABCU9603R1ZM</p>
+                      <p className="text-neutral-500 text-sm">Phone: +91 98765 43210</p>
                     </div>
                     <div className="text-right">
-                      <h2 className="text-4xl font-black text-magnova-orange">INVOICE</h2>
-                      <p className="text-slate-600 mt-2 font-mono text-lg">{selectedInvoice.invoice_number}</p>
-                      <p className="text-slate-500 text-sm mt-1">Date: {formatDate(selectedInvoice.invoice_date)}</p>
+                      <h2 className="text-4xl font-black text-teal-600">INVOICE</h2>
+                      <p className="text-neutral-600 mt-2 font-mono text-lg">{selectedInvoice.invoice_number}</p>
+                      <p className="text-neutral-500 text-sm mt-1">Date: {formatDate(selectedInvoice.invoice_date)}</p>
                     </div>
                   </div>
 
                   {/* Bill To */}
                   <div className="grid grid-cols-2 gap-8 mb-8">
                     <div>
-                      <h3 className="text-sm font-bold text-magnova-orange uppercase tracking-wider border-b border-slate-200 pb-2 mb-3">Bill To</h3>
-                      <p className="text-lg font-semibold text-slate-900">{selectedInvoice.to_organization}</p>
-                      <p className="text-slate-600 text-sm mt-1">{selectedInvoice.billing_address || 'Address not provided'}</p>
+                      <h3 className="text-sm font-bold text-teal-600 uppercase tracking-wider border-b border-neutral-200 pb-2 mb-3">Bill To</h3>
+                      <p className="text-lg font-semibold text-neutral-900">{selectedInvoice.to_organization}</p>
+                      <p className="text-neutral-600 text-sm mt-1">{selectedInvoice.billing_address || 'Address not provided'}</p>
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-magnova-orange uppercase tracking-wider border-b border-slate-200 pb-2 mb-3">Invoice Details</h3>
+                      <h3 className="text-sm font-bold text-teal-600 uppercase tracking-wider border-b border-neutral-200 pb-2 mb-3">Invoice Details</h3>
                       <div className="space-y-1 text-sm">
                         <div className="flex justify-between">
-                          <span className="text-slate-500">Invoice No:</span>
+                          <span className="text-neutral-500">Invoice No:</span>
                           <span className="font-mono font-medium">{selectedInvoice.invoice_number}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-500">Invoice Date:</span>
+                          <span className="text-neutral-500">Invoice Date:</span>
                           <span className="font-medium">{formatDate(selectedInvoice.invoice_date)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-500">Payment Terms:</span>
+                          <span className="text-neutral-500">Payment Terms:</span>
                           <span className="font-medium">Due on Receipt</span>
                         </div>
                       </div>
@@ -580,7 +580,7 @@ export const InvoicesPage = () => {
                   {/* Items Table */}
                   <table className="w-full mb-6">
                     <thead>
-                      <tr className="bg-magnova-blue text-white">
+                      <tr className="bg-teal-600 text-white">
                         <th className="px-4 py-3 text-left text-xs font-medium uppercase">S.No</th>
                         <th className="px-4 py-3 text-left text-xs font-medium uppercase">Description</th>
                         <th className="px-4 py-3 text-center text-xs font-medium uppercase">HSN</th>
@@ -590,12 +590,12 @@ export const InvoicesPage = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      <tr className="border-b border-slate-200">
+                      <tr className="border-b border-neutral-200">
                         <td className="px-4 py-4 text-sm">1</td>
                         <td className="px-4 py-4 text-sm">
                           <p className="font-medium">{selectedInvoice.description || 'Goods/Services'}</p>
                           {selectedInvoice.imei_list && selectedInvoice.imei_list.length > 0 && (
-                            <p className="text-xs text-slate-500 mt-1 font-mono">
+                            <p className="text-xs text-neutral-500 mt-1 font-mono">
                               IMEI: {selectedInvoice.imei_list.join(', ')}
                             </p>
                           )}
@@ -611,19 +611,19 @@ export const InvoicesPage = () => {
                   {/* Totals */}
                   <div className="flex justify-end mb-8">
                     <div className="w-80">
-                      <div className="flex justify-between py-2 border-b border-slate-200">
-                        <span className="text-slate-600">Subtotal:</span>
+                      <div className="flex justify-between py-2 border-b border-neutral-200">
+                        <span className="text-neutral-600">Subtotal:</span>
                         <span className="font-medium">₹{selectedInvoice.amount?.toLocaleString()}</span>
                       </div>
-                      <div className="flex justify-between py-2 border-b border-slate-200">
-                        <span className="text-slate-600">CGST ({(selectedInvoice.gst_percentage || 18) / 2}%):</span>
+                      <div className="flex justify-between py-2 border-b border-neutral-200">
+                        <span className="text-neutral-600">CGST ({(selectedInvoice.gst_percentage || 18) / 2}%):</span>
                         <span className="font-medium">₹{(selectedInvoice.gst_amount / 2)?.toLocaleString()}</span>
                       </div>
-                      <div className="flex justify-between py-2 border-b border-slate-200">
-                        <span className="text-slate-600">SGST ({(selectedInvoice.gst_percentage || 18) / 2}%):</span>
+                      <div className="flex justify-between py-2 border-b border-neutral-200">
+                        <span className="text-neutral-600">SGST ({(selectedInvoice.gst_percentage || 18) / 2}%):</span>
                         <span className="font-medium">₹{(selectedInvoice.gst_amount / 2)?.toLocaleString()}</span>
                       </div>
-                      <div className="flex justify-between py-3 bg-magnova-blue text-white px-3 rounded mt-2">
+                      <div className="flex justify-between py-3 bg-neutral-900 text-white px-3 rounded mt-2">
                         <span className="font-bold">TOTAL:</span>
                         <span className="font-bold text-lg">₹{selectedInvoice.total_amount?.toLocaleString()}</span>
                       </div>
@@ -631,18 +631,18 @@ export const InvoicesPage = () => {
                   </div>
 
                   {/* Amount in Words */}
-                  <div className="bg-slate-50 p-4 rounded-lg mb-8">
-                    <p className="text-sm text-slate-600">
+                  <div className="bg-neutral-50 p-4 rounded-lg mb-8">
+                    <p className="text-sm text-neutral-600">
                       <span className="font-medium">Amount in Words:</span>{' '}
                       <span className="italic">Rupees {numberToWords(Math.floor(selectedInvoice.total_amount || 0))} Only</span>
                     </p>
                   </div>
 
                   {/* Footer */}
-                  <div className="grid grid-cols-2 gap-8 pt-6 border-t border-slate-200">
+                  <div className="grid grid-cols-2 gap-8 pt-6 border-t border-neutral-200">
                     <div>
-                      <h4 className="font-bold text-sm text-slate-700 mb-2">Terms & Conditions:</h4>
-                      <ul className="text-xs text-slate-500 space-y-1">
+                      <h4 className="font-bold text-sm text-neutral-700 mb-2">Terms & Conditions:</h4>
+                      <ul className="text-xs text-neutral-500 space-y-1">
                         <li>• Goods once sold will not be taken back or exchanged.</li>
                         <li>• Warranty as per manufacturer terms.</li>
                         <li>• Subject to local jurisdiction only.</li>
@@ -650,9 +650,9 @@ export const InvoicesPage = () => {
                       </ul>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-medium text-slate-700 mb-16">For {selectedInvoice.from_organization}</p>
-                      <div className="border-t border-slate-400 pt-2 inline-block px-8">
-                        <p className="text-sm text-slate-600">Authorized Signatory</p>
+                      <p className="text-sm font-medium text-neutral-700 mb-16">For {selectedInvoice.from_organization}</p>
+                      <div className="border-t border-neutral-400 pt-2 inline-block px-8">
+                        <p className="text-sm text-neutral-600">Authorized Signatory</p>
                       </div>
                     </div>
                   </div>

@@ -35,11 +35,11 @@ export const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-8 bg-slate-50" data-testid="register-page">
+    <div className="min-h-screen flex items-center justify-center p-8 bg-neutral-50" data-testid="register-page">
       <Card className="w-full max-w-md shadow-sm bg-white">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold text-slate-900">Create Account</CardTitle>
-          <CardDescription className="text-slate-600">Register for a new account</CardDescription>
+          <CardTitle className="text-2xl font-bold text-neutral-900">Create Account</CardTitle>
+          <CardDescription className="text-neutral-600">Register for a new account</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4" data-testid="register-form">
@@ -122,9 +122,9 @@ export const RegisterPage = () => {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-neutral-600">
               Already have an account?{' '}
-              <Link to="/login" className="text-magnova-orange hover:underline font-medium" data-testid="login-link">
+              <Link to="/login" className="text-teal-600 hover:underline font-medium" data-testid="login-link">
                 Sign in
               </Link>
             </p>

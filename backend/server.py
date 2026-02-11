@@ -117,7 +117,8 @@ class ProcurementRecord(BaseModel):
     imei: str
     serial_number: Optional[str] = None
     device_model: str
-    quantity: Optional[int] = 1
+    po_quantity: Optional[int] = 1
+    purchase_quantity: Optional[int] = 1
     purchase_price: float
     procurement_date: datetime
     created_by: str
@@ -127,10 +128,11 @@ class ProcurementCreate(BaseModel):
     po_number: str
     vendor_name: str
     store_location: str
-    imei: str
+    imei: Optional[str] = None
     serial_number: Optional[str] = None
     device_model: str
-    quantity: Optional[int] = 1
+    po_quantity: Optional[int] = 1
+    purchase_quantity: int
     purchase_price: float
 
 class Payment(BaseModel):
@@ -207,6 +209,9 @@ class IMEIScan(BaseModel):
     location: str
     organization: str
     vendor: Optional[str] = None
+    brand: Optional[str] = None
+    model: Optional[str] = None
+    colour: Optional[str] = None
 
 class LogisticsShipment(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -534,7 +539,10 @@ async def create_procurement(proc_data: ProcurementCreate, current_user: User = 
     if not po:
         raise HTTPException(status_code=400, detail="PO not found")
     
-    existing_imei = await db.procurement.find_one({"imei": proc_data.imei})
+    # Generate IMEI if not provided
+    imei = proc_data.imei or str(uuid4()).replace('-', '')[:15]
+    
+    existing_imei = await db.procurement.find_one({"imei": imei})
     if existing_imei:
         raise HTTPException(status_code=400, detail="IMEI already exists")
     
@@ -544,10 +552,11 @@ async def create_procurement(proc_data: ProcurementCreate, current_user: User = 
         "po_number": proc_data.po_number,
         "vendor_name": proc_data.vendor_name,
         "store_location": proc_data.store_location,
-        "imei": proc_data.imei,
+        "imei": imei,
         "serial_number": proc_data.serial_number,
         "device_model": proc_data.device_model,
-        "quantity": proc_data.quantity or 1,
+        "po_quantity": proc_data.po_quantity or 1,
+        "purchase_quantity": proc_data.purchase_quantity,
         "purchase_price": proc_data.purchase_price,
         "procurement_date": datetime.now(timezone.utc).isoformat(),
         "created_by": current_user.user_id,
@@ -557,7 +566,7 @@ async def create_procurement(proc_data: ProcurementCreate, current_user: User = 
     await db.procurement.insert_one(proc_doc)
     
     imei_doc = {
-        "imei": proc_data.imei,
+        "imei": imei,
         "procurement_id": proc_id,
         "device_model": proc_data.device_model,
         "status": "Procured",
@@ -572,7 +581,7 @@ async def create_procurement(proc_data: ProcurementCreate, current_user: User = 
     }
     await db.imei_inventory.insert_one(imei_doc)
     
-    await create_audit_log("CREATE", "Procurement", proc_id, current_user, {"imei": proc_data.imei})
+    await create_audit_log("CREATE", "Procurement", proc_id, current_user, {"imei": imei})
     
     return ProcurementRecord(**{k: v for k, v in proc_doc.items() if k != "_id"})
 
@@ -749,7 +758,7 @@ async def get_payments(po_number: Optional[str] = None, payment_type: Optional[s
 # IMEI Inventory Endpoints
 @api_router.get("/inventory/lookup/{imei}")
 async def lookup_imei(imei: str, current_user: User = Depends(get_current_user)):
-    """Lookup IMEI details from procurement records, PO items, and existing inventory"""
+    """Lookup IMEI details - always returns found: true to allow any IMEI without procurement linking"""
     # First check if IMEI exists in inventory
     inventory_record = await db.imei_inventory.find_one({"imei": imei}, {"_id": 0})
     
@@ -769,9 +778,7 @@ async def lookup_imei(imei: str, current_user: User = Depends(get_current_user))
             if not po_item_data:
                 po_item_data = po["items"][0] if po["items"] else None
     
-    if not inventory_record and not procurement_record:
-        return {"found": False, "message": "IMEI not found in procurement or inventory"}
-    
+    # Always return found: true - allow any IMEI without requiring procurement linking
     result = {
         "found": True,
         "in_inventory": inventory_record is not None,
@@ -814,83 +821,128 @@ async def lookup_imei(imei: str, current_user: User = Depends(get_current_user))
 
 @api_router.post("/inventory/scan")
 async def scan_imei(scan_data: IMEIScan, current_user: User = Depends(get_current_user)):
-    imei_record = await db.imei_inventory.find_one({"imei": scan_data.imei})
-    
-    # If IMEI not in inventory, check procurement and create entry
-    if not imei_record:
-        procurement_record = await db.procurement.find_one({"imei": scan_data.imei})
-        if not procurement_record:
-            raise HTTPException(status_code=404, detail="IMEI not found in procurement records. Please add this IMEI through procurement first.")
+    try:
+        # Validate required fields
+        if not scan_data.imei or not scan_data.imei.strip():
+            raise HTTPException(status_code=400, detail="IMEI is required")
+        if not scan_data.action or not scan_data.action.strip():
+            raise HTTPException(status_code=400, detail="Action is required")
+        if not scan_data.location or not scan_data.location.strip():
+            raise HTTPException(status_code=400, detail="Location is required")
         
-        # Get PO item data for brand, model, color
-        po_item_data = None
-        if procurement_record.get("po_number"):
-            po = await db.purchase_orders.find_one({"po_number": procurement_record.get("po_number")}, {"_id": 0})
-            if po and po.get("items"):
-                for item in po["items"]:
-                    if item.get("imei") == scan_data.imei or item.get("vendor") == procurement_record.get("vendor_name"):
-                        po_item_data = item
-                        break
-                if not po_item_data:
-                    po_item_data = po["items"][0] if po["items"] else None
+        # Valid actions
+        valid_actions = ["inward_nova", "inward_magnova", "outward_nova", "outward_magnova", "dispatch", "available"]
+        if scan_data.action not in valid_actions:
+            raise HTTPException(status_code=400, detail=f"Invalid action. Must be one of: {', '.join(valid_actions)}")
         
-        # Create new inventory entry from procurement data
-        new_inventory = {
-            "imei": scan_data.imei,
-            "device_model": procurement_record.get("device_model", "Unknown"),
-            "status": "Procured",
-            "vendor": procurement_record.get("vendor_name") or scan_data.vendor,
-            "organization": "Nova",
-            "current_location": scan_data.location or procurement_record.get("store_location"),
-            "created_at": datetime.now(timezone.utc).isoformat(),
+        imei_record = await db.imei_inventory.find_one({"imei": scan_data.imei})
+        
+        # If IMEI not in inventory, check procurement and create entry
+        if not imei_record:
+            procurement_record = await db.procurement.find_one({"imei": scan_data.imei})
+            
+            # Get PO item data for brand, model, color
+            po_item_data = None
+            if procurement_record and procurement_record.get("po_number"):
+                po = await db.purchase_orders.find_one({"po_number": procurement_record.get("po_number")}, {"_id": 0})
+                if po and po.get("items"):
+                    for item in po["items"]:
+                        if item.get("imei") == scan_data.imei or item.get("vendor") == procurement_record.get("vendor_name"):
+                            po_item_data = item
+                            break
+                    if not po_item_data:
+                        po_item_data = po["items"][0] if po["items"] else None
+            
+            # Create new inventory entry - allow IMEI even without procurement record
+            new_inventory = {
+                "imei": scan_data.imei,
+                "device_model": procurement_record.get("device_model", "Unknown") if procurement_record else "Unknown",
+                "status": "Procured" if procurement_record else "Available",
+                "vendor": (procurement_record.get("vendor_name") if procurement_record else None) or scan_data.vendor or "Unknown",
+                "organization": "Nova",
+                "current_location": scan_data.location or (procurement_record.get("store_location") if procurement_record else ""),
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }
+            
+            # Add procurement data if available
+            if procurement_record:
+                new_inventory["po_number"] = procurement_record.get("po_number")
+                new_inventory["procurement_id"] = procurement_record.get("procurement_id")
+                new_inventory["purchase_price"] = procurement_record.get("purchase_price")
+            
+            # Add brand, model, color from PO item data
+            if po_item_data:
+                new_inventory["brand"] = po_item_data.get("brand")
+                new_inventory["model"] = po_item_data.get("model")
+                new_inventory["colour"] = po_item_data.get("colour")
+                new_inventory["storage"] = po_item_data.get("storage")
+            
+            await db.imei_inventory.insert_one(new_inventory)
+            imei_record = new_inventory
+        
+        update_data = {
             "updated_at": datetime.now(timezone.utc).isoformat(),
-            "po_number": procurement_record.get("po_number"),
-            "procurement_id": procurement_record.get("procurement_id"),
-            "purchase_price": procurement_record.get("purchase_price"),
+            "current_location": scan_data.location,
         }
         
-        # Add brand, model, color from PO item data
-        if po_item_data:
-            new_inventory["brand"] = po_item_data.get("brand")
-            new_inventory["model"] = po_item_data.get("model")
-            new_inventory["colour"] = po_item_data.get("colour")
-            new_inventory["storage"] = po_item_data.get("storage")
+        # Add vendor if provided
+        if scan_data.vendor and scan_data.vendor.strip():
+            update_data["vendor"] = scan_data.vendor
         
-        await db.imei_inventory.insert_one(new_inventory)
-        imei_record = new_inventory
+        # Add brand, model, colour if provided
+        if scan_data.brand and scan_data.brand.strip():
+            update_data["brand"] = scan_data.brand
+        if scan_data.model and scan_data.model.strip():
+            update_data["model"] = scan_data.model
+        if scan_data.colour and scan_data.colour.strip():
+            update_data["colour"] = scan_data.colour
+        
+        # Set status based on action
+        if scan_data.action == "inward_nova":
+            update_data["status"] = "Inward Nova"
+            update_data["inward_nova_date"] = datetime.now(timezone.utc).isoformat()
+        elif scan_data.action == "inward_magnova":
+            update_data["status"] = "Inward Magnova"
+            update_data["inward_magnova_date"] = datetime.now(timezone.utc).isoformat()
+            update_data["organization"] = "Magnova"
+        elif scan_data.action == "outward_nova":
+            update_data["status"] = "Outward Nova"
+            update_data["outward_nova_date"] = datetime.now(timezone.utc).isoformat()
+        elif scan_data.action == "outward_magnova":
+            update_data["status"] = "Outward Magnova"
+            update_data["outward_magnova_date"] = datetime.now(timezone.utc).isoformat()
+        elif scan_data.action == "dispatch":
+            update_data["status"] = "Dispatched"
+            update_data["dispatched_date"] = datetime.now(timezone.utc).isoformat()
+        elif scan_data.action == "available":
+            update_data["status"] = "Available"
+        
+        # Update the inventory record
+        result = await db.imei_inventory.update_one(
+            {"imei": scan_data.imei}, 
+            {"$set": update_data}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=400, detail="Failed to update IMEI record")
+        
+        await create_audit_log("SCAN", "IMEI", scan_data.imei, current_user, {
+            "action": scan_data.action, 
+            "location": scan_data.location, 
+            "vendor": scan_data.vendor or "N/A"
+        })
+        
+        return {
+            "message": "IMEI scanned successfully", 
+            "status": update_data.get("status", "Unknown")
+        }
     
-    update_data = {
-        "updated_at": datetime.now(timezone.utc).isoformat(),
-        "current_location": scan_data.location,
-    }
-    
-    # Add vendor if provided
-    if scan_data.vendor:
-        update_data["vendor"] = scan_data.vendor
-    
-    if scan_data.action == "inward_nova":
-        update_data["status"] = "Inward Nova"
-        update_data["inward_nova_date"] = datetime.now(timezone.utc).isoformat()
-    elif scan_data.action == "inward_magnova":
-        update_data["status"] = "Inward Magnova"
-        update_data["inward_magnova_date"] = datetime.now(timezone.utc).isoformat()
-        update_data["organization"] = "Magnova"
-    elif scan_data.action == "outward_nova":
-        update_data["status"] = "Outward Nova"
-        update_data["outward_nova_date"] = datetime.now(timezone.utc).isoformat()
-    elif scan_data.action == "outward_magnova":
-        update_data["status"] = "Outward Magnova"
-        update_data["outward_magnova_date"] = datetime.now(timezone.utc).isoformat()
-    elif scan_data.action == "dispatch":
-        update_data["status"] = "Dispatched"
-        update_data["dispatched_date"] = datetime.now(timezone.utc).isoformat()
-    elif scan_data.action == "available":
-        update_data["status"] = "Available"
-    
-    await db.imei_inventory.update_one({"imei": scan_data.imei}, {"$set": update_data})
-    await create_audit_log("SCAN", "IMEI", scan_data.imei, current_user, {"action": scan_data.action, "location": scan_data.location, "vendor": scan_data.vendor})
-    
-    return {"message": "IMEI scanned successfully", "status": update_data.get("status", imei_record["status"])}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error scanning IMEI {scan_data.imei}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to scan IMEI: {str(e)}")
 
 @api_router.get("/inventory", response_model=List[IMEIInventory])
 async def get_inventory(status: Optional[str] = None, organization: Optional[str] = None, current_user: User = Depends(get_current_user)):
@@ -1258,9 +1310,9 @@ async def export_master_report(current_user: User = Depends(get_current_user)):
         'SL No', 'PO ID', 'PO Date', 'Purchase Office', 'Vendor', 'Location', 'Brand', 'Model', 
         'Storage', 'Colour', 'IMEI', 'Qty', 'Rate', 'PO Value', 'GRN No',
         # PAYMENT (Magnova → Nova) - 6 columns
-        'Payment#', 'Bank Acc#', 'IFSC', 'Payment Dt', 'UTR No', 'Amount',
+        'Payment#', 'Payee Account', 'Payee Bank', 'Payment Dt', 'UTR/Ref#', 'Amount',
         # PAYMENTS (Nova → Vendors) - 7 columns
-        'Payment#', 'Payee Name', 'Payee Type', 'Bank Acc#', 'Payment Dt', 'UTR No', 'Amount',
+        'Payment#', 'Payee Name', 'Payee Type', 'Account #', 'Payment Dt', 'UTR #', 'Amount',
         # LOGISTICS - 4 columns
         'Courier', 'Dispatch Dt', 'POD No', 'Status',
         # STORES - 4 columns
@@ -1307,8 +1359,8 @@ async def export_master_report(current_user: User = Depends(get_current_user)):
             
             # PAYMENT (Magnova → Nova) columns
             worksheet.write(row, 15, related_int_payment.get("payment_id", "")[:8] if related_int_payment else "-", cell_format)
-            worksheet.write(row, 16, "XXXX1234" if related_int_payment and related_int_payment.get("payment_mode") == "Bank Transfer" else "-", cell_format)
-            worksheet.write(row, 17, "HDFC0001234" if related_int_payment and related_int_payment.get("payment_mode") == "Bank Transfer" else "-", cell_format)
+            worksheet.write(row, 16, related_int_payment.get("payee_account", "-") if related_int_payment else "-", cell_format)
+            worksheet.write(row, 17, related_int_payment.get("payee_bank", "-") if related_int_payment else "-", cell_format)
             worksheet.write(row, 18, str(related_int_payment.get("payment_date", ""))[:10] if related_int_payment else "-", cell_format)
             worksheet.write(row, 19, related_int_payment.get("transaction_ref", "-") if related_int_payment else "-", cell_format)
             worksheet.write(row, 20, related_int_payment.get("amount", 0) if related_int_payment else 0, money_format)

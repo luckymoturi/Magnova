@@ -41,20 +41,20 @@ export const Sidebar = () => {
   );
 
   return (
-    <div className="sidebar" data-testid="sidebar">
-      <div className="p-6 border-b border-slate-700">
-        <h1 className="text-xl font-black text-white tracking-tight">
+    <div className="sidebar bg-white" data-testid="sidebar">
+      <div className="p-6 border-b border-gray-200">
+        <h1 className="text-xl font-black text-gray-900 tracking-tight">
           MAGNOVA-NOVA
         </h1>
-        <p className="text-xs text-slate-400 mt-1">ERP System</p>
+        <p className="text-xs text-gray-600 mt-1">ERP System</p>
       </div>
 
       <div className="p-4">
-        <div className="mb-4 p-3 bg-slate-800 rounded-md">
-          <p className="text-xs text-slate-400">Logged in as</p>
-          <p className="text-sm font-medium text-white mt-1">{user?.name}</p>
-          <p className="text-xs text-slate-400">{user?.organization}</p>
-          <p className="text-xs text-blue-400">{user?.role}</p>
+        <div className="mb-4 p-3 bg-gray-100 rounded-md">
+          <p className="text-xs text-gray-600">Logged in as</p>
+          <p className="text-sm font-medium text-gray-900 mt-1">{user?.name}</p>
+          <p className="text-xs text-gray-600">{user?.organization}</p>
+          <p className="text-xs text-teal-600">{user?.role}</p>
         </div>
 
         <nav className="space-y-1">
@@ -68,8 +68,8 @@ export const Sidebar = () => {
                 data-testid={`nav-${item.label.toLowerCase().replace(' ', '-')}`}
                 className={`nav-item flex items-center px-3 py-2.5 rounded-md text-sm ${
                   isActive
-                    ? 'active text-white bg-blue-600/20'
-                    : 'text-slate-300 hover:text-white'
+                    ? 'active text-gray-900 bg-teal-100'
+                    : 'text-gray-700 hover:text-gray-900'
                 }`}
               >
                 <Icon className="w-4 h-4 mr-3" strokeWidth={1.5} />
@@ -80,11 +80,11 @@ export const Sidebar = () => {
         </nav>
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-700">
+      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
         <button
           onClick={handleLogout}
           data-testid="logout-button"
-          className="flex items-center w-full px-3 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-slate-800 rounded-md transition-all duration-200"
+          className="flex items-center w-full px-3 py-2.5 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-all duration-200"
         >
           <LogOut className="w-4 h-4 mr-3" strokeWidth={1.5} />
           Logout

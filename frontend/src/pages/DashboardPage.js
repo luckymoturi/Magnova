@@ -57,7 +57,7 @@ export const DashboardPage = () => {
     return (
       <Layout>
         <div className="flex items-center justify-center h-64">
-          <p className="text-slate-500">Loading dashboard...</p>
+          <p className="text-neutral-500">Loading dashboard...</p>
         </div>
       </Layout>
     );
@@ -68,22 +68,22 @@ export const DashboardPage = () => {
       title: 'Total Purchase Orders',
       value: stats?.total_pos || 0,
       icon: ShoppingCart,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
+      color: 'text-teal-600',
+      bgColor: 'bg-teal-50',
     },
     {
       title: 'Pending Approvals',
       value: stats?.pending_pos || 0,
       icon: Clock,
-      color: 'text-magnova-orange',
-      bgColor: 'bg-orange-50',
+      color: 'text-teal-600',
+      bgColor: 'bg-neutral-100',
     },
     {
       title: 'Total Procurement',
       value: stats?.total_procurement || 0,
       icon: Package,
-      color: 'text-emerald-600',
-      bgColor: 'bg-emerald-50',
+      color: 'text-teal-600',
+      bgColor: 'bg-teal-50',
     },
     {
       title: 'Total Inventory',
@@ -96,15 +96,15 @@ export const DashboardPage = () => {
       title: 'Available Stock',
       value: stats?.available_inventory || 0,
       icon: CheckCircle2,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
+      color: 'text-teal-600',
+      bgColor: 'bg-teal-50',
     },
     {
       title: 'Total Sales Orders',
       value: stats?.total_sales || 0,
       icon: TrendingUp,
-      color: 'text-rose-600',
-      bgColor: 'bg-rose-50',
+      color: 'text-teal-600',
+      bgColor: 'bg-teal-50',
     },
   ];
 
@@ -113,12 +113,12 @@ export const DashboardPage = () => {
       <div data-testid="dashboard-page">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Dashboard</h1>
-            <p className="text-slate-600 mt-1">Welcome back, {user?.name}</p>
+            <h1 className="text-2xl font-black text-neutral-900 tracking-tight">Dashboard</h1>
+            <p className="text-neutral-600 mt-1">Welcome back, {user?.name}</p>
           </div>
           <div className="flex items-center gap-3">
             {lastUpdated && (
-              <span className="text-xs text-slate-500 flex items-center gap-1">
+              <span className="text-xs text-neutral-500 flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 Last updated: {lastUpdated.toLocaleTimeString()}
               </span>
@@ -126,10 +126,10 @@ export const DashboardPage = () => {
             <button 
               onClick={fetchStats}
               disabled={isRefreshing}
-              className={`p-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors ${isRefreshing ? 'opacity-50' : ''}`}
+              className={`p-2 rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors ${isRefreshing ? 'opacity-50' : ''}`}
               data-testid="refresh-dashboard-btn"
             >
-              <RefreshCw className={`w-4 h-4 text-slate-600 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 text-neutral-600 ${isRefreshing ? 'animate-spin' : ''}`} />
             </button>
           </div>
         </div>
@@ -138,12 +138,12 @@ export const DashboardPage = () => {
           {statCards.map((stat, index) => {
             const Icon = stat.icon;
             return (
-              <Card key={index} className="card-hover shadow-sm bg-white" data-testid={`stat-card-${index}`}>
+              <Card key={index} className="card-hover shadow-sm bg-white border-neutral-900" data-testid={`stat-card-${index}`}>
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-sm font-medium text-slate-600 mb-1">{stat.title}</p>
-                      <p className="text-3xl font-bold text-slate-900">{stat.value}</p>
+                      <p className="text-sm font-medium text-neutral-600 mb-1">{stat.title}</p>
+                      <p className="text-2xl font-bold text-neutral-900">{stat.value}</p>
                     </div>
                     <div className={`p-3 rounded-lg ${stat.bgColor}`}>
                       <Icon className={`w-6 h-6 ${stat.color}`} strokeWidth={1.5} />
@@ -156,7 +156,7 @@ export const DashboardPage = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="shadow-sm bg-white">
+          <Card className="shadow-sm bg-white border-neutral-900">
             <CardHeader>
               <CardTitle className="text-lg font-bold">Quick Actions</CardTitle>
             </CardHeader>
@@ -166,66 +166,66 @@ export const DashboardPage = () => {
                   <Link
                     to="/purchase-orders"
                     data-testid="quick-action-po"
-                    className="block p-3 hover:bg-slate-50 rounded-md border border-slate-200 transition-colors duration-200 group"
+                    className="block p-3 hover:bg-neutral-50 rounded-md border border-neutral-200 transition-colors duration-200 group"
                   >
-                    <p className="font-medium text-magnova-orange group-hover:text-magnova-blue">Create Purchase Order</p>
-                    <p className="text-sm text-slate-600">Start a new procurement request</p>
+                    <p className="font-medium text-teal-600 group-hover:text-neutral-900">Create Purchase Order</p>
+                    <p className="text-sm text-neutral-600">Start a new procurement request</p>
                   </Link>
                 )}
                 {user?.organization === 'Nova' && (
                   <Link
                     to="/procurement"
                     data-testid="quick-action-procurement"
-                    className="block p-3 hover:bg-slate-50 rounded-md border border-slate-200 transition-colors duration-200 group"
+                    className="block p-3 hover:bg-neutral-50 rounded-md border border-neutral-200 transition-colors duration-200 group"
                   >
-                    <p className="font-medium text-magnova-orange group-hover:text-magnova-blue">Add Procurement</p>
-                    <p className="text-sm text-slate-600">Record new device procurement</p>
+                    <p className="font-medium text-teal-600 group-hover:text-neutral-900">Add Procurement</p>
+                    <p className="text-sm text-neutral-600">Record new device procurement</p>
                   </Link>
                 )}
                 <Link
                   to="/inventory"
                   data-testid="quick-action-inventory"
-                  className="block p-3 hover:bg-slate-50 rounded-md border border-slate-200 transition-colors duration-200 group"
+                  className="block p-3 hover:bg-neutral-50 rounded-md border border-neutral-200 transition-colors duration-200 group"
                 >
-                  <p className="font-medium text-magnova-orange group-hover:text-magnova-blue">View Inventory</p>
-                  <p className="text-sm text-slate-600">Check current stock levels</p>
+                  <p className="font-medium text-teal-600 group-hover:text-neutral-900">View Inventory</p>
+                  <p className="text-sm text-neutral-600">Check current stock levels</p>
                 </Link>
                 <Link
                   to="/reports"
                   data-testid="quick-action-reports"
-                  className="block p-3 hover:bg-slate-50 rounded-md border border-slate-200 transition-colors duration-200 group"
+                  className="block p-3 hover:bg-neutral-50 rounded-md border border-neutral-200 transition-colors duration-200 group"
                 >
-                  <p className="font-medium text-magnova-orange group-hover:text-magnova-blue">Generate Reports</p>
-                  <p className="text-sm text-slate-600">Export data and analytics</p>
+                  <p className="font-medium text-teal-600 group-hover:text-neutral-900">Generate Reports</p>
+                  <p className="text-sm text-neutral-600">Export data and analytics</p>
                 </Link>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm bg-white">
+          <Card className="shadow-sm bg-white border-neutral-900">
             <CardHeader>
               <CardTitle className="text-lg font-bold">System Overview</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-md">
+                <div className="flex items-center justify-between p-3 bg-neutral-50 rounded-md">
                   <div>
-                    <p className="text-sm font-medium text-slate-600">Organization</p>
-                    <p className="text-lg font-bold text-slate-900">{user?.organization}</p>
+                    <p className="text-sm font-medium text-neutral-600">Organization</p>
+                    <p className="text-lg font-bold text-neutral-900">{user?.organization}</p>
                   </div>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-md">
+                <div className="flex items-center justify-between p-3 bg-neutral-50 rounded-md">
                   <div>
-                    <p className="text-sm font-medium text-slate-600">Your Role</p>
-                    <p className="text-lg font-bold text-slate-900">{user?.role}</p>
+                    <p className="text-sm font-medium text-neutral-600">Your Role</p>
+                    <p className="text-lg font-bold text-neutral-900">{user?.role}</p>
                   </div>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-emerald-50 rounded-md border border-emerald-200">
+                <div className="flex items-center justify-between p-3 bg-teal-50 rounded-md border border-teal-200">
                   <div>
-                    <p className="text-sm font-medium text-emerald-600">System Status</p>
-                    <p className="text-lg font-bold text-emerald-900">Operational</p>
+                    <p className="text-sm font-medium text-teal-600">System Status</p>
+                    <p className="text-lg font-bold text-teal-900">Operational</p>
                   </div>
-                  <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                  <CheckCircle2 className="w-6 h-6 text-teal-600" />
                 </div>
               </div>
             </CardContent>

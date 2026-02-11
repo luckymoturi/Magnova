@@ -37,19 +37,19 @@ export const LoginPage = () => {
           backgroundImage: 'url(https://images.unsplash.com/photo-1614571272828-2d8289ff8fc0?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzV8MHwxfHNlYXJjaHwyfHxtb2Rlcm4lMjB3YXJlaG91c2UlMjBsb2dpc3RpY3MlMjBhYnN0cmFjdHxlbnwwfHx8fDE3Njk4NzAzOTF8MA&ixlib=rb-4.1.0&q=85)',
         }}
       >
-        <div className="absolute inset-0 bg-magnova-blue/90"></div>
+        <div className="absolute inset-0 bg-neutral-900/90"></div>
         <div className="relative z-10 p-12 flex flex-col justify-center text-white">
           <h1 className="text-5xl font-black tracking-tight mb-4">MAGNOVA-NOVA</h1>
-          <p className="text-xl text-slate-100">Procurement & Sales Management System</p>
-          <p className="text-slate-200 mt-4">End-to-end visibility for your supply chain</p>
+          <p className="text-xl text-neutral-100">Procurement & Sales Management System</p>
+          <p className="text-neutral-200 mt-4">End-to-end visibility for your supply chain</p>
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-8 bg-slate-50">
+      <div className="flex-1 flex items-center justify-center p-8 bg-neutral-50">
         <Card className="w-full max-w-md shadow-sm bg-white">
           <CardHeader>
-            <CardTitle className="text-2xl font-bold text-slate-900">Sign In</CardTitle>
-            <CardDescription className="text-slate-600">Enter your credentials to access your account</CardDescription>
+            <CardTitle className="text-2xl font-bold text-neutral-900">Sign In</CardTitle>
+            <CardDescription className="text-neutral-600">Enter your credentials to access your account</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4" data-testid="login-form">
@@ -83,9 +83,9 @@ export const LoginPage = () => {
             </form>
 
             <div className="mt-6 text-center">
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-neutral-600">
                 Don't have an account?{' '}
-                <Link to="/register" className="text-magnova-orange hover:underline font-medium" data-testid="register-link">
+                <Link to="/register" className="text-teal-600 hover:underline font-medium" data-testid="register-link">
                   Register here
                 </Link>
               </p>

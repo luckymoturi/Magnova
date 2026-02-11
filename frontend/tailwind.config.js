@@ -47,9 +47,9 @@ module.exports = {
   			input: 'hsl(var(--input))',
   			ring: 'hsl(var(--ring))',
   			magnova: {
-  				blue: '#00418F',
-  				'dark-blue': '#003366',
-  				orange: '#F58120'
+  				black: '#171717',
+  				gray: '#525252',
+  				teal: '#14B8A6'
   			},
   			chart: {
   				'1': 'hsl(var(--chart-1))',

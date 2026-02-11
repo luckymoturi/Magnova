@@ -28,6 +28,7 @@ export const ReportsPage = () => {
 
   useEffect(() => {
     filterReport();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [masterReport, searchTerm, poFilter]);
 
   const fetchStats = async () => {
@@ -291,19 +292,19 @@ export const ReportsPage = () => {
       <div data-testid="reports-page">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Master Report</h1>
-            <p className="text-slate-600 mt-1">Complete view of all linked data - PO, Finance, Logistics, Stores</p>
+            <h1 className="text-2xl font-black text-neutral-900 tracking-tight">Master Report</h1>
+            <p className="text-neutral-600 mt-1">Complete view of all linked data - PO, Finance, Logistics, Stores</p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={fetchMasterReport} variant="outline" className="border-magnova-blue text-magnova-blue">
+            <Button onClick={fetchMasterReport} variant="outline" className="border-neutral-900 text-neutral-900">
               <RefreshCw className="w-4 h-4 mr-2" />
               Refresh
             </Button>
-            <Button onClick={handleExportCSV} variant="outline" className="border-slate-300 text-slate-700">
+            <Button onClick={handleExportCSV} variant="outline" className="border-neutral-300 text-neutral-700">
               <Download className="w-4 h-4 mr-2" />
               CSV
             </Button>
-            <Button onClick={handleExportExcel} className="bg-emerald-600 hover:bg-emerald-700">
+            <Button onClick={handleExportExcel} className="bg-teal-600 hover:bg-teal-700 text-white">
               <FileSpreadsheet className="w-4 h-4 mr-2" />
               Export Excel
             </Button>
@@ -312,36 +313,36 @@ export const ReportsPage = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
-          <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
-            <p className="text-xs text-slate-500 mb-1">Total POs</p>
-            <p className="text-2xl font-bold text-slate-900">{stats?.total_pos || 0}</p>
+          <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-sm">
+            <p className="text-xs text-neutral-500 mb-1">Total POs</p>
+            <p className="text-2xl font-bold text-neutral-900">{stats?.total_pos || 0}</p>
           </div>
-          <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
-            <p className="text-xs text-slate-500 mb-1">Procurement</p>
-            <p className="text-2xl font-bold text-slate-900">{stats?.total_procurement || 0}</p>
+          <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-sm">
+            <p className="text-xs text-neutral-500 mb-1">Procurement</p>
+            <p className="text-2xl font-bold text-neutral-900">{stats?.total_procurement || 0}</p>
           </div>
-          <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
-            <p className="text-xs text-slate-500 mb-1">Inventory</p>
-            <p className="text-2xl font-bold text-slate-900">{stats?.total_inventory || 0}</p>
+          <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-sm">
+            <p className="text-xs text-neutral-500 mb-1">Inventory</p>
+            <p className="text-2xl font-bold text-neutral-900">{stats?.total_inventory || 0}</p>
           </div>
-          <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
-            <p className="text-xs text-slate-500 mb-1">Available</p>
-            <p className="text-2xl font-bold text-emerald-600">{stats?.available_inventory || 0}</p>
+          <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-sm">
+            <p className="text-xs text-neutral-500 mb-1">Available</p>
+            <p className="text-2xl font-bold text-teal-600">{stats?.available_inventory || 0}</p>
           </div>
-          <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
-            <p className="text-xs text-slate-500 mb-1">Sales Orders</p>
-            <p className="text-2xl font-bold text-slate-900">{stats?.total_sales || 0}</p>
+          <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-sm">
+            <p className="text-xs text-neutral-500 mb-1">Sales Orders</p>
+            <p className="text-2xl font-bold text-neutral-900">{stats?.total_sales || 0}</p>
           </div>
-          <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
-            <p className="text-xs text-slate-500 mb-1">Payments</p>
-            <p className="text-2xl font-bold text-magnova-orange">{formatCurrency(stats?.total_payment_amount)}</p>
+          <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-sm">
+            <p className="text-xs text-neutral-500 mb-1">Payments</p>
+            <p className="text-2xl font-bold text-teal-600">{formatCurrency(stats?.total_payment_amount)}</p>
           </div>
         </div>
 
         {/* Filters */}
         <div className="mb-4 flex gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400" />
             <Input
               placeholder="Search by PO, Vendor, Brand, Model, IMEI, Location..."
               value={searchTerm}
@@ -363,155 +364,155 @@ export const ReportsPage = () => {
         </div>
 
         {/* Master Report Table */}
-        <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-white border border-neutral-200 rounded-lg shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-xs" data-testid="master-report-table">
               <thead>
                 {/* Section Headers */}
                 <tr>
-                  <th colSpan="15" className="bg-green-600 text-white px-2 py-2 text-left text-sm font-bold border-r border-green-500">
+                  <th colSpan="15" className="bg-teal-600 text-white px-2 py-2 text-left text-sm font-bold border-r border-teal-500">
                     PROCUREMENT (Magnova → Nova PO)
                   </th>
-                  <th colSpan="6" className="bg-orange-500 text-white px-2 py-2 text-left text-sm font-bold border-r border-orange-400">
+                  <th colSpan="6" className="bg-neutral-1000 text-white px-2 py-2 text-left text-sm font-bold border-r border-neutral-500">
                     PAYMENT (Magnova → Nova)
                   </th>
                   <th colSpan="7" className="bg-purple-600 text-white px-2 py-2 text-left text-sm font-bold border-r border-purple-500">
                     PAYMENTS (Nova → Vendors)
                   </th>
-                  <th colSpan="4" className="bg-blue-600 text-white px-2 py-2 text-left text-sm font-bold border-r border-blue-500">
+                  <th colSpan="4" className="bg-teal-600 text-white px-2 py-2 text-left text-sm font-bold border-r border-teal-500">
                     LOGISTICS
                   </th>
-                  <th colSpan="4" className="bg-pink-500 text-white px-2 py-2 text-left text-sm font-bold border-r border-pink-400">
+                  <th colSpan="4" className="bg-neutral-600 text-white px-2 py-2 text-left text-sm font-bold border-r border-neutral-500">
                     STORES
                   </th>
                   {isAdmin && (
-                    <th className="bg-red-600 text-white px-2 py-2 text-left text-sm font-bold">
+                    <th className="bg-teal-600 text-white px-2 py-2 text-left text-sm font-bold">
                       ACTIONS
                     </th>
                   )}
                 </tr>
                 {/* Column Headers */}
-                <tr className="bg-slate-100">
+                <tr className="bg-neutral-100">
                   {/* PROCUREMENT (Magnova → Nova) */}
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">SL No</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">PO ID</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">PO Date</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Purchase Office</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Vendor</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Location</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Brand</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Model</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Storage</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Colour</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">IMEI</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Qty</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Rate</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">PO Value</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200 border-r border-slate-300">GRN No</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">SL No</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">PO ID</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">PO Date</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Purchase Office</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Vendor</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Location</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Brand</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Model</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Storage</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Colour</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">IMEI</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Qty</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Rate</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">PO Value</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200 border-r border-neutral-300">GRN No</th>
                   {/* PAYMENT (Magnova → Nova) - Internal */}
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Payment#</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Bank Acc#</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">IFSC</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Payment Dt</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">UTR No</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200 border-r border-slate-300">Amount</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Payment#</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Bank Acc#</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">IFSC</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Payment Dt</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">UTR No</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200 border-r border-neutral-300">Amount</th>
                   {/* PAYMENTS (Nova → Vendors) - External */}
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Payment#</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Payee Name</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Payee Type</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Bank Acc#</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Payment Dt</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">UTR No</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200 border-r border-slate-300">Amount</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Payment#</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Payee Name</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Payee Type</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Bank Acc#</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Payment Dt</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">UTR No</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200 border-r border-neutral-300">Amount</th>
                   {/* LOGISTICS */}
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Courier</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Dispatch Dt</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">POD No</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200 border-r border-slate-300">Status</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Courier</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Dispatch Dt</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">POD No</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200 border-r border-neutral-300">Status</th>
                   {/* STORES */}
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Received Dt</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Rcvd Qty</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Warehouse</th>
-                  <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Status</th>
-                  {isAdmin && <th className="px-2 py-2 text-left font-medium text-slate-700 border-b border-slate-200">Delete</th>}
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Received Dt</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Rcvd Qty</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Warehouse</th>
+                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Status</th>
+                  {isAdmin && <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Delete</th>}
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={isAdmin ? 37 : 36} className="px-4 py-8 text-center text-slate-500">Loading report data...</td>
+                    <td colSpan={isAdmin ? 37 : 36} className="px-4 py-8 text-center text-neutral-500">Loading report data...</td>
                   </tr>
                 ) : filteredReport.length === 0 ? (
                   <tr>
-                    <td colSpan={isAdmin ? 37 : 36} className="px-4 py-8 text-center text-slate-500">No data found</td>
+                    <td colSpan={isAdmin ? 37 : 36} className="px-4 py-8 text-center text-neutral-500">No data found</td>
                   </tr>
                 ) : (
                   filteredReport.map((row, index) => (
-                    <tr key={index} className={`border-b border-slate-100 hover:bg-slate-50 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
+                    <tr key={index} className={`border-b border-neutral-100 hover:bg-neutral-50 ${index % 2 === 0 ? 'bg-white' : 'bg-neutral-50/50'}`}>
                       {/* PROCUREMENT (Magnova → Nova) */}
-                      <td className="px-2 py-2 text-slate-900">{row.sl_no}</td>
-                      <td className="px-2 py-2 font-mono text-magnova-blue font-medium">{row.po_id}</td>
-                      <td className="px-2 py-2 text-slate-900">{formatDate(row.po_date)}</td>
-                      <td className="px-2 py-2 text-slate-900">{row.purchase_office || '-'}</td>
-                      <td className="px-2 py-2 text-slate-900">{row.vendor || '-'}</td>
-                      <td className="px-2 py-2 text-slate-900">{row.location || '-'}</td>
-                      <td className="px-2 py-2 text-slate-900">{row.brand || '-'}</td>
-                      <td className="px-2 py-2 text-slate-900">{row.model || '-'}</td>
-                      <td className="px-2 py-2 text-slate-900">{row.storage || '-'}</td>
-                      <td className="px-2 py-2 text-slate-900">{row.colour || '-'}</td>
-                      <td className="px-2 py-2 font-mono text-slate-700">{row.imei || '-'}</td>
-                      <td className="px-2 py-2 text-slate-900">{row.qty || '-'}</td>
-                      <td className="px-2 py-2 text-slate-900">{formatCurrency(row.rate)}</td>
-                      <td className="px-2 py-2 font-medium text-slate-900">{formatCurrency(row.po_value)}</td>
-                      <td className="px-2 py-2 text-slate-700 border-r border-slate-200">{row.grn_no}</td>
+                      <td className="px-2 py-2 text-neutral-900">{row.sl_no}</td>
+                      <td className="px-2 py-2 font-mono text-neutral-900 font-medium">{row.po_id}</td>
+                      <td className="px-2 py-2 text-neutral-900">{formatDate(row.po_date)}</td>
+                      <td className="px-2 py-2 text-neutral-900">{row.purchase_office || '-'}</td>
+                      <td className="px-2 py-2 text-neutral-900">{row.vendor || '-'}</td>
+                      <td className="px-2 py-2 text-neutral-900">{row.location || '-'}</td>
+                      <td className="px-2 py-2 text-neutral-900">{row.brand || '-'}</td>
+                      <td className="px-2 py-2 text-neutral-900">{row.model || '-'}</td>
+                      <td className="px-2 py-2 text-neutral-900">{row.storage || '-'}</td>
+                      <td className="px-2 py-2 text-neutral-900">{row.colour || '-'}</td>
+                      <td className="px-2 py-2 font-mono text-neutral-700">{row.imei || '-'}</td>
+                      <td className="px-2 py-2 text-neutral-900">{row.qty || '-'}</td>
+                      <td className="px-2 py-2 text-neutral-900">{formatCurrency(row.rate)}</td>
+                      <td className="px-2 py-2 font-medium text-neutral-900">{formatCurrency(row.po_value)}</td>
+                      <td className="px-2 py-2 text-neutral-700 border-r border-neutral-200">{row.grn_no}</td>
                       {/* PAYMENT (Magnova → Nova) - Internal */}
-                      <td className="px-2 py-2 text-slate-700">{row.payment_no}</td>
-                      <td className="px-2 py-2 text-slate-700">{row.bank_account}</td>
-                      <td className="px-2 py-2 text-slate-700">{row.ifsc_code}</td>
-                      <td className="px-2 py-2 text-slate-700">{formatDate(row.payment_date)}</td>
-                      <td className="px-2 py-2 font-mono text-slate-700">{row.utr_no}</td>
-                      <td className="px-2 py-2 font-medium text-orange-600 border-r border-slate-200">{formatCurrency(row.payment_amount)}</td>
+                      <td className="px-2 py-2 text-neutral-700">{row.payment_no}</td>
+                      <td className="px-2 py-2 text-neutral-700">{row.bank_account}</td>
+                      <td className="px-2 py-2 text-neutral-700">{row.ifsc_code}</td>
+                      <td className="px-2 py-2 text-neutral-700">{formatDate(row.payment_date)}</td>
+                      <td className="px-2 py-2 font-mono text-neutral-700">{row.utr_no}</td>
+                      <td className="px-2 py-2 font-medium text-neutral-700 border-r border-neutral-200">{formatCurrency(row.payment_amount)}</td>
                       {/* PAYMENTS (Nova → Vendors) - External */}
-                      <td className="px-2 py-2 text-slate-700">{row.ext_payment_no}</td>
-                      <td className="px-2 py-2 text-slate-700">{row.ext_payee_name}</td>
-                      <td className="px-2 py-2 text-slate-700">
+                      <td className="px-2 py-2 text-neutral-700">{row.ext_payment_no}</td>
+                      <td className="px-2 py-2 text-neutral-700">{row.ext_payee_name}</td>
+                      <td className="px-2 py-2 text-neutral-700">
                         <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
-                          row.ext_payee_type === 'Vendor' ? 'bg-green-100 text-green-700' :
-                          row.ext_payee_type === 'Credit Card' ? 'bg-blue-100 text-blue-700' :
-                          'bg-slate-100 text-slate-600'
+                          row.ext_payee_type === 'Vendor' ? 'bg-teal-100 text-teal-700' :
+                          row.ext_payee_type === 'Credit Card' ? 'bg-teal-100 text-teal-700' :
+                          'bg-neutral-100 text-neutral-600'
                         }`}>
                           {row.ext_payee_type}
                         </span>
                       </td>
-                      <td className="px-2 py-2 text-slate-700">{row.ext_bank_account}</td>
-                      <td className="px-2 py-2 text-slate-700">{formatDate(row.ext_payment_date)}</td>
-                      <td className="px-2 py-2 font-mono text-slate-700">{row.ext_utr_no}</td>
-                      <td className="px-2 py-2 font-medium text-purple-600 border-r border-slate-200">{formatCurrency(row.ext_payment_amount)}</td>
+                      <td className="px-2 py-2 text-neutral-700">{row.ext_bank_account}</td>
+                      <td className="px-2 py-2 text-neutral-700">{formatDate(row.ext_payment_date)}</td>
+                      <td className="px-2 py-2 font-mono text-neutral-700">{row.ext_utr_no}</td>
+                      <td className="px-2 py-2 font-medium text-purple-600 border-r border-neutral-200">{formatCurrency(row.ext_payment_amount)}</td>
                       {/* LOGISTICS */}
-                      <td className="px-2 py-2 text-slate-700">{row.courier_name}</td>
-                      <td className="px-2 py-2 text-slate-700">{formatDate(row.dispatch_date)}</td>
-                      <td className="px-2 py-2 text-slate-700">{row.pod_number}</td>
-                      <td className="px-2 py-2 border-r border-slate-200">
+                      <td className="px-2 py-2 text-neutral-700">{row.courier_name}</td>
+                      <td className="px-2 py-2 text-neutral-700">{formatDate(row.dispatch_date)}</td>
+                      <td className="px-2 py-2 text-neutral-700">{row.pod_number}</td>
+                      <td className="px-2 py-2 border-r border-neutral-200">
                         <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
-                          row.shipment_status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' :
-                          row.shipment_status === 'In Transit' ? 'bg-blue-100 text-blue-700' :
-                          row.shipment_status === 'Pending' ? 'bg-orange-100 text-orange-700' :
-                          'bg-slate-100 text-slate-600'
+                          row.shipment_status === 'Delivered' ? 'bg-teal-100 text-teal-700' :
+                          row.shipment_status === 'In Transit' ? 'bg-teal-100 text-teal-700' :
+                          row.shipment_status === 'Pending' ? 'bg-neutral-200 text-neutral-800' :
+                          'bg-neutral-100 text-neutral-600'
                         }`}>
                           {row.shipment_status}
                         </span>
                       </td>
                       {/* STORES */}
-                      <td className="px-2 py-2 text-slate-700">{formatDate(row.stock_received_date)}</td>
-                      <td className="px-2 py-2 text-slate-700">{row.received_qty || '-'}</td>
-                      <td className="px-2 py-2 text-slate-700">{row.warehouse}</td>
+                      <td className="px-2 py-2 text-neutral-700">{formatDate(row.stock_received_date)}</td>
+                      <td className="px-2 py-2 text-neutral-700">{row.received_qty || '-'}</td>
+                      <td className="px-2 py-2 text-neutral-700">{row.warehouse}</td>
                       <td className="px-2 py-2">
                         <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
-                          row.stock_status === 'Available' ? 'bg-emerald-100 text-emerald-700' :
+                          row.stock_status === 'Available' ? 'bg-teal-100 text-teal-700' :
                           row.stock_status === 'Inward Nova' ? 'bg-purple-100 text-purple-700' :
                           row.stock_status === 'Inward Magnova' ? 'bg-indigo-100 text-indigo-700' :
                           row.stock_status === 'Dispatched' ? 'bg-cyan-100 text-cyan-700' :
-                          'bg-slate-100 text-slate-600'
+                          'bg-neutral-100 text-neutral-600'
                         }`}>
                           {row.stock_status}
                         </span>
@@ -522,7 +523,7 @@ export const ReportsPage = () => {
                             size="sm"
                             variant="ghost"
                             onClick={() => handleDeleteRow(row)}
-                            className="text-red-600 hover:text-red-800 hover:bg-red-50 h-6 w-6 p-0"
+                            className="text-neutral-800 hover:text-neutral-900 hover:bg-neutral-100 h-6 w-6 p-0"
                             data-testid="delete-report-row"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -539,27 +540,27 @@ export const ReportsPage = () => {
 
         {/* Summary */}
         {filteredReport.length > 0 && (
-          <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+          <div className="mt-4 p-4 bg-neutral-50 rounded-lg border border-neutral-200">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
-                <span className="text-slate-500">Total Records:</span>
-                <span className="ml-2 font-bold text-slate-900">{filteredReport.length}</span>
+                <span className="text-neutral-500">Total Records:</span>
+                <span className="ml-2 font-bold text-neutral-900">{filteredReport.length}</span>
               </div>
               <div>
-                <span className="text-slate-500">Total PO Value:</span>
-                <span className="ml-2 font-bold text-slate-900">
+                <span className="text-neutral-500">Total PO Value:</span>
+                <span className="ml-2 font-bold text-neutral-900">
                   {formatCurrency(filteredReport.reduce((sum, r) => sum + (r.po_value || 0), 0))}
                 </span>
               </div>
               <div>
-                <span className="text-slate-500">Total Qty:</span>
-                <span className="ml-2 font-bold text-slate-900">
+                <span className="text-neutral-500">Total Qty:</span>
+                <span className="ml-2 font-bold text-neutral-900">
                   {filteredReport.reduce((sum, r) => sum + (r.qty || 0), 0)}
                 </span>
               </div>
               <div>
-                <span className="text-slate-500">Total Payments:</span>
-                <span className="ml-2 font-bold text-orange-600">
+                <span className="text-neutral-500">Total Payments:</span>
+                <span className="ml-2 font-bold text-neutral-700">
                   {formatCurrency(filteredReport.reduce((sum, r) => sum + (r.payment_amount || 0), 0))}
                 </span>
               </div>

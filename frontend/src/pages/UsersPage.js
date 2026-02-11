@@ -8,11 +8,11 @@ export const UsersPage = () => {
     <Layout>
       <div data-testid="users-page">
         <div className="mb-8">
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">User Management</h1>
-          <p className="text-slate-600 mt-1">Manage system users and roles</p>
+          <h1 className="text-2xl font-black text-neutral-900 tracking-tight">User Management</h1>
+          <p className="text-neutral-600 mt-1">Manage system users and roles</p>
         </div>
 
-        <Card className="shadow-sm">
+        <Card className="shadow-sm bg-neutral-50">
           <CardHeader>
             <CardTitle className="text-lg font-bold flex items-center gap-2">
               <Users className="w-5 h-5" />
@@ -21,14 +21,14 @@ export const UsersPage = () => {
           </CardHeader>
           <CardContent>
             <div className="text-center py-12">
-              <Users className="w-16 h-16 mx-auto mb-4 text-slate-300" />
-              <h3 className="text-lg font-medium text-slate-900 mb-2">User Management Coming Soon</h3>
-              <p className="text-slate-600 max-w-md mx-auto">
+              <Users className="w-16 h-16 mx-auto mb-4 text-neutral-300" />
+              <h3 className="text-lg font-medium text-neutral-900 mb-2">User Management Coming Soon</h3>
+              <p className="text-neutral-600 max-w-md mx-auto">
                 Advanced user management features including user creation, role assignment, 
                 permissions management, and activity monitoring will be available in the next update.
               </p>
-              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-md max-w-md mx-auto">
-                <p className="text-sm text-blue-900">
+              <div className="mt-6 p-4 bg-teal-50 border border-teal-200 rounded-md max-w-md mx-auto">
+                <p className="text-sm text-teal-900">
                   <strong>Current Capability:</strong> Users can self-register through the registration page. 
                   Admins can manage roles during the registration process.
                 </p>

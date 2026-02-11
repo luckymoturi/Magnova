@@ -74,11 +74,11 @@ export const SalesOrdersPage = () => {
 
   const getStatusColor = (status) => {
     const colors = {
-      Created: 'bg-blue-50 text-blue-700 border-blue-200',
-      Fulfilled: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      Cancelled: 'bg-red-50 text-red-700 border-red-200',
+      Created: 'bg-teal-50 text-teal-700 border-teal-200',
+      Fulfilled: 'bg-teal-50 text-teal-700 border-teal-200',
+      Cancelled: 'bg-neutral-100 text-neutral-900 border-neutral-300',
     };
-    return colors[status] || 'bg-slate-50 text-slate-700 border-slate-200';
+    return colors[status] || 'bg-neutral-50 text-neutral-700 border-neutral-200';
   };
 
   return (
@@ -86,8 +86,8 @@ export const SalesOrdersPage = () => {
       <div data-testid="sales-orders-page">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Sales Orders</h1>
-            <p className="text-slate-600 mt-1">Manage export sales to agencies</p>
+            <h1 className="text-2xl font-black text-neutral-900 tracking-tight">Sales Orders</h1>
+            <p className="text-neutral-600 mt-1">Manage export sales to agencies</p>
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
@@ -164,48 +164,48 @@ export const SalesOrdersPage = () => {
           </Dialog>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-white border border-neutral-200 rounded-lg shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full" data-testid="sales-orders-table">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-100">
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">SO Number</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Customer</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Quantity</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Amount</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Created</th>
-                  {isAdmin && <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>}
+                <tr className="bg-neutral-50 border-b border-neutral-100">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">SO Number</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Customer</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Type</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Quantity</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-neutral-500 uppercase tracking-wider">Amount</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Created</th>
+                  {isAdmin && <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Actions</th>}
                 </tr>
               </thead>
               <tbody>
                 {salesOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={isAdmin ? 8 : 7} className="px-4 py-8 text-center text-slate-500">
-                      <ShoppingBag className="w-12 h-12 mx-auto mb-2 text-slate-300" />
+                    <td colSpan={isAdmin ? 8 : 7} className="px-4 py-8 text-center text-neutral-500">
+                      <ShoppingBag className="w-12 h-12 mx-auto mb-2 text-neutral-300" />
                       No sales orders found
                     </td>
                   </tr>
                 ) : (
                   salesOrders.map((order) => (
-                    <tr key={order.sales_order_id} className="table-row border-b border-slate-100" data-testid="sales-order-row">
-                      <td className="px-4 py-3 text-sm font-mono font-medium text-slate-900">{order.so_number}</td>
-                      <td className="px-4 py-3 text-sm text-slate-900">{order.customer_name}</td>
-                      <td className="px-4 py-3 text-sm text-slate-600">{order.customer_type}</td>
-                      <td className="px-4 py-3 text-sm text-slate-900">{order.total_quantity}</td>
-                      <td className="px-4 py-3 text-sm text-right text-slate-900">₹{order.total_amount.toFixed(2)}</td>
+                    <tr key={order.sales_order_id} className="table-row border-b border-neutral-100" data-testid="sales-order-row">
+                      <td className="px-4 py-3 text-sm font-mono font-medium text-neutral-900">{order.so_number}</td>
+                      <td className="px-4 py-3 text-sm text-neutral-900">{order.customer_name}</td>
+                      <td className="px-4 py-3 text-sm text-neutral-600">{order.customer_type}</td>
+                      <td className="px-4 py-3 text-sm text-neutral-900">{order.total_quantity}</td>
+                      <td className="px-4 py-3 text-sm text-right text-neutral-900">₹{order.total_amount.toFixed(2)}</td>
                       <td className="px-4 py-3 text-sm">
                         <span className={`status-badge ${getStatusColor(order.status)}`}>{order.status}</span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-600">{new Date(order.created_at).toLocaleDateString()}</td>
+                      <td className="px-4 py-3 text-sm text-neutral-600">{new Date(order.created_at).toLocaleDateString()}</td>
                       {isAdmin && (
                         <td className="px-4 py-3 text-sm">
                           <Button
                             size="sm"
                             variant="ghost"
                             onClick={() => handleDelete(order.so_number)}
-                            className="text-red-600 hover:text-red-800 hover:bg-red-50 h-8 w-8 p-0"
+                            className="text-neutral-800 hover:text-neutral-900 hover:bg-neutral-100 h-8 w-8 p-0"
                             data-testid="delete-sales-order-button"
                           >
                             <Trash2 className="w-4 h-4" />

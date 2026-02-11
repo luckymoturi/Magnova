@@ -7,13 +7,15 @@ import { Label } from '../components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner';
-import { Plus, Trash2, Building2, Users, X, ExternalLink, Bell, CreditCard, Banknote, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, Building2, Users, X, ExternalLink, Bell, CreditCard, Banknote, AlertTriangle, Search } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useDataRefresh } from '../context/DataRefreshContext';
 import { Navigate } from 'react-router-dom';
 
 export const PaymentsPage = () => {
   const [payments, setPayments] = useState([]);
+  const [filteredPayments, setFilteredPayments] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [pos, setPOs] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [paymentType, setPaymentType] = useState('');
@@ -66,6 +68,23 @@ export const PaymentsPage = () => {
     }
   }, [refreshTimestamps.payments, refreshTimestamps.purchaseOrders, isAdmin]);
 
+  useEffect(() => {
+    if (searchTerm.trim() === '') {
+      setFilteredPayments(payments);
+    } else {
+      const term = searchTerm.toLowerCase();
+      const filtered = payments.filter(payment => 
+        payment.po_number?.toLowerCase().includes(term) ||
+        payment.payment_type?.toLowerCase().includes(term) ||
+        payment.payee_name?.toLowerCase().includes(term) ||
+        payment.transaction_ref?.toLowerCase().includes(term) ||
+        payment.utr_number?.toLowerCase().includes(term) ||
+        payment.payee_bank?.toLowerCase().includes(term)
+      );
+      setFilteredPayments(filtered);
+    }
+  }, [searchTerm, payments]);
+
   // Redirect non-admin users after all hooks
   if (!isAdmin) {
     return <Navigate to="/dashboard" replace />;
@@ -75,6 +94,7 @@ export const PaymentsPage = () => {
     try {
       const response = await api.get('/payments');
       setPayments(response.data);
+      setFilteredPayments(response.data);
     } catch (error) {
       toast.error('Failed to fetch payments');
     }
@@ -262,8 +282,8 @@ export const PaymentsPage = () => {
   };
 
   // Separate payments by type
-  const internalPayments = payments.filter(p => p.payment_type === 'internal' || !p.payment_type);
-  const externalPayments = payments.filter(p => p.payment_type === 'external');
+  const internalPayments = filteredPayments.filter(p => p.payment_type === 'internal' || !p.payment_type);
+  const externalPayments = filteredPayments.filter(p => p.payment_type === 'external');
 
   // Get external payments for a specific PO
   const getExternalPaymentsForPO = (poNumber) => {
@@ -275,30 +295,30 @@ export const PaymentsPage = () => {
       <div data-testid="payments-page">
         {/* Internal Payment Notifications Banner */}
         {pendingInternalPayments.length > 0 && (
-          <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4" data-testid="internal-payment-notifications">
+          <div className="mb-6 bg-gradient-to-r from-teal-50 to-indigo-50 border border-teal-200 rounded-lg p-4" data-testid="internal-payment-notifications">
             <div className="flex items-center gap-2 mb-3">
-              <Bell className="w-5 h-5 text-blue-600 animate-pulse" />
-              <h3 className="font-semibold text-blue-800">New PO Created - Internal Payment Required</h3>
-              <span className="bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">{pendingInternalPayments.length}</span>
+              <Bell className="w-5 h-5 text-teal-600 animate-pulse" />
+              <h3 className="font-semibold text-neutral-800">New PO Created - Internal Payment Required</h3>
+              <span className="bg-teal-500 text-white text-xs px-2 py-0.5 rounded-full">{pendingInternalPayments.length}</span>
             </div>
             <div className="space-y-2">
               {pendingInternalPayments.map((notif, index) => (
                 <div 
                   key={`internal-${notif.po_number}-${index}`}
-                  className="flex items-center justify-between bg-white rounded-lg p-3 border border-blue-100 hover:border-blue-300 transition-colors cursor-pointer"
+                  className="flex items-center justify-between bg-white rounded-lg p-3 border border-teal-100 hover:border-teal-300 transition-colors cursor-pointer"
                   onClick={() => handleInternalNotificationClick(notif)}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="bg-blue-100 p-2 rounded-lg">
-                      <Banknote className="w-5 h-5 text-blue-600" />
+                    <div className="bg-teal-100 p-2 rounded-lg">
+                      <Banknote className="w-5 h-5 text-teal-600" />
                     </div>
                     <div>
-                      <div className="font-medium text-slate-900">
-                        <span className="font-mono text-magnova-blue">{notif.po_number}</span>
-                        <span className="mx-2 text-slate-400">|</span>
+                      <div className="font-medium text-neutral-900">
+                        <span className="font-mono text-neutral-900">{notif.po_number}</span>
+                        <span className="mx-2 text-neutral-400">|</span>
                         <span>{notif.brand} {notif.model}</span>
                       </div>
-                      <div className="text-sm text-slate-500">
+                      <div className="text-sm text-neutral-500">
                         Vendor: {notif.vendor} • Total: ₹{notif.total_value?.toLocaleString() || '0'} • Qty: {notif.total_qty}
                       </div>
                     </div>
@@ -306,7 +326,7 @@ export const PaymentsPage = () => {
                   <div className="flex items-center gap-2">
                     <Button
                       size="sm"
-                      className="bg-blue-600 hover:bg-blue-700"
+                      className="bg-teal-600 hover:bg-teal-700 text-white"
                       onClick={(e) => { e.stopPropagation(); handleInternalNotificationClick(notif); }}
                     >
                       <Banknote className="w-4 h-4 mr-1" />
@@ -315,7 +335,7 @@ export const PaymentsPage = () => {
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="text-slate-400 hover:text-slate-600"
+                      className="text-neutral-400 hover:text-neutral-600"
                       onClick={(e) => { e.stopPropagation(); clearInternalPaymentNotification(notif.po_number); }}
                     >
                       <X className="w-4 h-4" />
@@ -329,30 +349,30 @@ export const PaymentsPage = () => {
 
         {/* External Payment Notifications Banner */}
         {pendingExternalPayments.length > 0 && (
-          <div className="mb-6 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-lg p-4" data-testid="external-payment-notifications">
+          <div className="mb-6 bg-gradient-to-r from-neutral-100 to-neutral-100 border border-neutral-300 rounded-lg p-4" data-testid="external-payment-notifications">
             <div className="flex items-center gap-2 mb-3">
-              <Bell className="w-5 h-5 text-orange-600 animate-pulse" />
-              <h3 className="font-semibold text-orange-800">Internal Payment Complete - External Payment Required</h3>
-              <span className="bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full">{pendingExternalPayments.length}</span>
+              <Bell className="w-5 h-5 text-neutral-700 animate-pulse" />
+              <h3 className="font-semibold text-neutral-900">Internal Payment Complete - External Payment Required</h3>
+              <span className="bg-neutral-1000 text-white text-xs px-2 py-0.5 rounded-full">{pendingExternalPayments.length}</span>
             </div>
             <div className="space-y-2">
               {pendingExternalPayments.map((notif, index) => (
                 <div 
                   key={`external-${notif.po_number}-${index}`}
-                  className="flex items-center justify-between bg-white rounded-lg p-3 border border-orange-100 hover:border-orange-300 transition-colors cursor-pointer"
+                  className="flex items-center justify-between bg-white rounded-lg p-3 border border-neutral-200 hover:border-neutral-400 transition-colors cursor-pointer"
                   onClick={() => handleExternalNotificationClick(notif)}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="bg-orange-100 p-2 rounded-lg">
-                      <CreditCard className="w-5 h-5 text-orange-600" />
+                    <div className="bg-neutral-200 p-2 rounded-lg">
+                      <CreditCard className="w-5 h-5 text-neutral-700" />
                     </div>
                     <div>
-                      <div className="font-medium text-slate-900">
-                        <span className="font-mono text-magnova-blue">{notif.po_number}</span>
-                        <span className="mx-2 text-slate-400">|</span>
+                      <div className="font-medium text-neutral-900">
+                        <span className="font-mono text-neutral-900">{notif.po_number}</span>
+                        <span className="mx-2 text-neutral-400">|</span>
                         <span>Pay to: {notif.vendor}</span>
                       </div>
-                      <div className="text-sm text-slate-500">
+                      <div className="text-sm text-neutral-500">
                         Internal Paid: ₹{notif.internal_amount?.toLocaleString() || '0'} • Location: {notif.location}
                       </div>
                     </div>
@@ -360,7 +380,7 @@ export const PaymentsPage = () => {
                   <div className="flex items-center gap-2">
                     <Button
                       size="sm"
-                      className="bg-orange-600 hover:bg-orange-700"
+                      className="bg-neutral-700 hover:bg-neutral-800"
                       onClick={(e) => { e.stopPropagation(); handleExternalNotificationClick(notif); }}
                     >
                       <CreditCard className="w-4 h-4 mr-1" />
@@ -369,7 +389,7 @@ export const PaymentsPage = () => {
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="text-slate-400 hover:text-slate-600"
+                      className="text-neutral-400 hover:text-neutral-600"
                       onClick={(e) => { e.stopPropagation(); clearExternalPaymentNotification(notif.po_number); }}
                     >
                       <X className="w-4 h-4" />
@@ -381,22 +401,23 @@ export const PaymentsPage = () => {
           </div>
         )}
 
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Payments</h1>
-            <p className="text-slate-600 mt-1">Track internal and external payment transactions (Admin Only)</p>
-          </div>
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-2xl font-black text-neutral-900 tracking-tight">Payments</h1>
+              <p className="text-neutral-600 mt-1">Track internal and external payment transactions (Admin Only)</p>
+            </div>
           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForms(); }}>
             <DialogTrigger asChild>
-              <Button data-testid="create-payment-button" className="bg-magnova-blue hover:bg-magnova-dark-blue">
+              <Button data-testid="create-payment-button" className="bg-teal-600 hover:bg-teal-700 text-white">
                 <Plus className="w-4 h-4 mr-2" />
                 Record Payment
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl bg-white">
               <DialogHeader>
-                <DialogTitle className="text-magnova-orange">Record Payment</DialogTitle>
-                <DialogDescription className="text-slate-600">Select payment type to record transaction</DialogDescription>
+                <DialogTitle className="text-teal-600">Record Payment</DialogTitle>
+                <DialogDescription className="text-neutral-600">Select payment type to record transaction</DialogDescription>
               </DialogHeader>
                 
                 {/* Payment Type Selection */}
@@ -404,21 +425,21 @@ export const PaymentsPage = () => {
                   <div className="grid grid-cols-2 gap-4 py-6">
                     <button
                       onClick={() => setPaymentType('internal')}
-                      className="p-6 border-2 border-slate-200 rounded-lg hover:border-magnova-blue hover:bg-blue-50 transition-all text-left"
+                      className="p-6 border-2 border-neutral-200 rounded-lg hover:border-neutral-900 hover:bg-teal-50 transition-all text-left"
                       data-testid="select-internal-payment"
                     >
-                      <Building2 className="w-8 h-8 text-magnova-blue mb-3" />
-                      <h3 className="font-bold text-slate-900 mb-1">Internal Payment</h3>
-                      <p className="text-sm text-slate-600">Magnova → Nova payment</p>
+                      <Building2 className="w-8 h-8 text-neutral-900 mb-3" />
+                      <h3 className="font-bold text-neutral-900 mb-1">Internal Payment</h3>
+                      <p className="text-sm text-neutral-600">Magnova → Nova payment</p>
                     </button>
                     <button
                       onClick={() => setPaymentType('external')}
-                      className="p-6 border-2 border-slate-200 rounded-lg hover:border-magnova-orange hover:bg-orange-50 transition-all text-left"
+                      className="p-6 border-2 border-neutral-200 rounded-lg hover:border-teal-600 hover:bg-neutral-100 transition-all text-left"
                       data-testid="select-external-payment"
                     >
-                      <Users className="w-8 h-8 text-magnova-orange mb-3" />
-                      <h3 className="font-bold text-slate-900 mb-1">External Payment</h3>
-                      <p className="text-sm text-slate-600">Nova → Vendor/CC payment</p>
+                      <Users className="w-8 h-8 text-teal-600 mb-3" />
+                      <h3 className="font-bold text-neutral-900 mb-1">External Payment</h3>
+                      <p className="text-sm text-neutral-600">Nova → Vendor/CC payment</p>
                     </button>
                   </div>
                 )}
@@ -427,7 +448,7 @@ export const PaymentsPage = () => {
                 {paymentType === 'internal' && (
                   <form onSubmit={handleCreateInternal} className="space-y-4" data-testid="internal-payment-form">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-bold text-magnova-blue flex items-center gap-2">
+                      <h3 className="font-bold text-neutral-900 flex items-center gap-2">
                         <Building2 className="w-5 h-5" /> Internal Payment (Magnova → Nova)
                       </h3>
                       <Button type="button" variant="ghost" size="sm" onClick={() => setPaymentType('')}>
@@ -436,7 +457,7 @@ export const PaymentsPage = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label className="text-slate-700">PO Number *</Label>
+                        <Label className="text-neutral-700">PO Number *</Label>
                         <Select value={internalForm.po_number} onValueChange={handleInternalPOSelect} required>
                           <SelectTrigger className="bg-white" data-testid="internal-po-select">
                             <SelectValue placeholder="Select PO" />
@@ -451,15 +472,15 @@ export const PaymentsPage = () => {
                         </Select>
                       </div>
                       <div>
-                        <Label className="text-slate-700">Payee Name</Label>
+                        <Label className="text-neutral-700">Payee Name</Label>
                         <Input
                           value={internalForm.payee_name}
-                          className="bg-slate-100"
+                          className="bg-neutral-100"
                           readOnly
                         />
                       </div>
                       <div>
-                        <Label className="text-slate-700">Payee Account *</Label>
+                        <Label className="text-neutral-700">Payee Account *</Label>
                         <Input
                           value={internalForm.payee_account}
                           onChange={(e) => setInternalForm({ ...internalForm, payee_account: e.target.value })}
@@ -470,7 +491,7 @@ export const PaymentsPage = () => {
                         />
                       </div>
                       <div>
-                        <Label className="text-slate-700">Payee Bank *</Label>
+                        <Label className="text-neutral-700">Payee Bank *</Label>
                         <Input
                           value={internalForm.payee_bank}
                           onChange={(e) => setInternalForm({ ...internalForm, payee_bank: e.target.value })}
@@ -481,7 +502,7 @@ export const PaymentsPage = () => {
                         />
                       </div>
                       <div>
-                        <Label className="text-slate-700">Amount *</Label>
+                        <Label className="text-neutral-700">Amount *</Label>
                         <Input
                           type="number"
                           step="0.01"
@@ -494,7 +515,7 @@ export const PaymentsPage = () => {
                         />
                       </div>
                       <div>
-                        <Label className="text-slate-700">Payment Mode *</Label>
+                        <Label className="text-neutral-700">Payment Mode *</Label>
                         <Select value={internalForm.payment_mode} onValueChange={(v) => setInternalForm({ ...internalForm, payment_mode: v })} required>
                           <SelectTrigger className="bg-white" data-testid="internal-mode-select">
                             <SelectValue placeholder="Select mode" />
@@ -509,7 +530,7 @@ export const PaymentsPage = () => {
                         </Select>
                       </div>
                       <div>
-                        <Label className="text-slate-700">Transaction Ref (UTR)</Label>
+                        <Label className="text-neutral-700">Transaction Ref (UTR)</Label>
                         <Input
                           value={internalForm.transaction_ref}
                           onChange={(e) => setInternalForm({ ...internalForm, transaction_ref: e.target.value })}
@@ -518,7 +539,7 @@ export const PaymentsPage = () => {
                         />
                       </div>
                       <div>
-                        <Label className="text-slate-700">Payment Date *</Label>
+                        <Label className="text-neutral-700">Payment Date *</Label>
                         <Input
                           type="date"
                           value={internalForm.payment_date}
@@ -529,7 +550,7 @@ export const PaymentsPage = () => {
                         />
                       </div>
                     </div>
-                    <Button type="submit" className="w-full bg-magnova-blue hover:bg-magnova-dark-blue" data-testid="submit-internal-payment">
+                    <Button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white" data-testid="submit-internal-payment">
                       Record Internal Payment
                     </Button>
                   </form>
@@ -539,7 +560,7 @@ export const PaymentsPage = () => {
                 {paymentType === 'external' && (
                   <form onSubmit={handleCreateExternal} className="space-y-4" data-testid="external-payment-form">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-bold text-magnova-orange flex items-center gap-2">
+                      <h3 className="font-bold text-teal-600 flex items-center gap-2">
                         <Users className="w-5 h-5" /> External Payment (Nova → Vendor/CC)
                       </h3>
                       <Button type="button" variant="ghost" size="sm" onClick={() => setPaymentType('')}>
@@ -548,9 +569,9 @@ export const PaymentsPage = () => {
                     </div>
                     
                     {/* PO Selection with Summary */}
-                    <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <div className="p-4 bg-neutral-50 rounded-lg border border-neutral-200">
                       <div>
-                        <Label className="text-slate-700 font-medium">PO Number *</Label>
+                        <Label className="text-neutral-700 font-medium">PO Number *</Label>
                         <Select value={externalForm.po_number} onValueChange={handleExternalPOSelect} required>
                           <SelectTrigger className="bg-white" data-testid="external-po-select">
                             <SelectValue placeholder="Select PO" />
@@ -567,24 +588,24 @@ export const PaymentsPage = () => {
                       
                       {/* Payment Summary - Shows internal vs external balance */}
                       {paymentSummary && (
-                        <div className="mt-3 p-3 bg-white rounded-lg border border-slate-200">
-                          <p className="text-xs text-slate-500 uppercase font-medium mb-2">Payment Balance</p>
+                        <div className="mt-3 p-3 bg-white rounded-lg border border-neutral-200">
+                          <p className="text-xs text-neutral-500 uppercase font-medium mb-2">Payment Balance</p>
                           <div className="grid grid-cols-3 gap-2 text-sm">
                             <div>
-                              <span className="text-slate-500">Internal Paid:</span>
-                              <span className="ml-1 font-bold text-slate-900">₹{paymentSummary.internal_paid?.toLocaleString()}</span>
+                              <span className="text-neutral-500">Internal Paid:</span>
+                              <span className="ml-1 font-bold text-neutral-900">₹{paymentSummary.internal_paid?.toLocaleString()}</span>
                             </div>
                             <div>
-                              <span className="text-slate-500">External Paid:</span>
-                              <span className="ml-1 font-bold text-magnova-orange">₹{paymentSummary.external_paid?.toLocaleString()}</span>
+                              <span className="text-neutral-500">External Paid:</span>
+                              <span className="ml-1 font-bold text-teal-600">₹{paymentSummary.external_paid?.toLocaleString()}</span>
                             </div>
                             <div>
-                              <span className="text-slate-500">Remaining:</span>
-                              <span className="ml-1 font-bold text-emerald-600">₹{paymentSummary.external_remaining?.toLocaleString()}</span>
+                              <span className="text-neutral-500">Remaining:</span>
+                              <span className="ml-1 font-bold text-teal-600">₹{paymentSummary.external_remaining?.toLocaleString()}</span>
                             </div>
                           </div>
                           {paymentSummary.external_remaining <= 0 && (
-                            <p className="mt-2 text-xs text-red-600 font-medium">⚠ No remaining balance for external payments</p>
+                            <p className="mt-2 text-xs text-neutral-800 font-medium">⚠ No remaining balance for external payments</p>
                           )}
                         </div>
                       )}
@@ -592,7 +613,7 @@ export const PaymentsPage = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label className="text-slate-700">Payee Type *</Label>
+                        <Label className="text-neutral-700">Payee Type *</Label>
                         <Select value={externalForm.payee_type} onValueChange={(v) => setExternalForm({ ...externalForm, payee_type: v, account_number: '', ifsc_code: '', payee_phone: '' })} required>
                           <SelectTrigger className="bg-white" data-testid="payee-type-select">
                             <SelectValue placeholder="Select type" />
@@ -604,7 +625,7 @@ export const PaymentsPage = () => {
                         </Select>
                       </div>
                       <div>
-                        <Label className="text-slate-700">Payee Name *</Label>
+                        <Label className="text-neutral-700">Payee Name *</Label>
                         <Input
                           value={externalForm.payee_name}
                           onChange={(e) => setExternalForm({ ...externalForm, payee_name: e.target.value })}
@@ -618,7 +639,7 @@ export const PaymentsPage = () => {
                       {/* Payee Phone Number - Only visible when CC is selected */}
                       {externalForm.payee_type === 'cc' && (
                         <div className="col-span-2">
-                          <Label className="text-slate-700">Payee Phone Number *</Label>
+                          <Label className="text-neutral-700">Payee Phone Number *</Label>
                           <Input
                             value={externalForm.payee_phone}
                             onChange={(e) => setExternalForm({ ...externalForm, payee_phone: e.target.value })}
@@ -635,7 +656,7 @@ export const PaymentsPage = () => {
                         <>
                           {/* Credit Card fields */}
                           <div>
-                            <Label className="text-slate-700">Credit Card Number *</Label>
+                            <Label className="text-neutral-700">Credit Card Number *</Label>
                             <Input
                               value={externalForm.account_number}
                               onChange={(e) => setExternalForm({ ...externalForm, account_number: e.target.value })}
@@ -646,7 +667,7 @@ export const PaymentsPage = () => {
                             />
                           </div>
                           <div>
-                            <Label className="text-slate-700">Bank Name *</Label>
+                            <Label className="text-neutral-700">Bank Name *</Label>
                             <Input
                               value={externalForm.ifsc_code}
                               onChange={(e) => setExternalForm({ ...externalForm, ifsc_code: e.target.value })}
@@ -661,7 +682,7 @@ export const PaymentsPage = () => {
                         <>
                           {/* Vendor fields */}
                           <div>
-                            <Label className="text-slate-700">Account Number *</Label>
+                            <Label className="text-neutral-700">Account Number *</Label>
                             <Input
                               value={externalForm.account_number}
                               onChange={(e) => setExternalForm({ ...externalForm, account_number: e.target.value })}
@@ -672,7 +693,7 @@ export const PaymentsPage = () => {
                             />
                           </div>
                           <div>
-                            <Label className="text-slate-700">IFSC Code *</Label>
+                            <Label className="text-neutral-700">IFSC Code *</Label>
                             <Input
                               value={externalForm.ifsc_code}
                               onChange={(e) => setExternalForm({ ...externalForm, ifsc_code: e.target.value.toUpperCase() })}
@@ -685,7 +706,7 @@ export const PaymentsPage = () => {
                         </>
                       )}
                       <div>
-                        <Label className="text-slate-700">Location *</Label>
+                        <Label className="text-neutral-700">Location *</Label>
                         <Input
                           value={externalForm.location}
                           onChange={(e) => setExternalForm({ ...externalForm, location: e.target.value })}
@@ -696,7 +717,7 @@ export const PaymentsPage = () => {
                         />
                       </div>
                       <div>
-                        <Label className="text-slate-700">Amount *</Label>
+                        <Label className="text-neutral-700">Amount *</Label>
                         <Input
                           type="number"
                           step="0.01"
@@ -710,7 +731,7 @@ export const PaymentsPage = () => {
                         />
                       </div>
                       <div>
-                        <Label className="text-slate-700">Payment Mode *</Label>
+                        <Label className="text-neutral-700">Payment Mode *</Label>
                         <Select value={externalForm.payment_mode} onValueChange={(v) => setExternalForm({ ...externalForm, payment_mode: v })} required>
                           <SelectTrigger className="bg-white" data-testid="external-mode-select">
                             <SelectValue placeholder="Select mode" />
@@ -725,7 +746,7 @@ export const PaymentsPage = () => {
                         </Select>
                       </div>
                       <div>
-                        <Label className="text-slate-700">UTR Number *</Label>
+                        <Label className="text-neutral-700">UTR Number *</Label>
                         <Input
                           value={externalForm.utr_number}
                           onChange={(e) => setExternalForm({ ...externalForm, utr_number: e.target.value })}
@@ -736,7 +757,7 @@ export const PaymentsPage = () => {
                         />
                       </div>
                       <div className="col-span-2">
-                        <Label className="text-slate-700">Payment Date *</Label>
+                        <Label className="text-neutral-700">Payment Date *</Label>
                         <Input
                           type="date"
                           value={externalForm.payment_date}
@@ -749,7 +770,7 @@ export const PaymentsPage = () => {
                     </div>
                     <Button 
                       type="submit" 
-                      className="w-full bg-magnova-orange hover:bg-orange-600" 
+                      className="w-full bg-teal-600 hover:bg-neutral-700 text-white" 
                       data-testid="submit-external-payment"
                       disabled={paymentSummary && paymentSummary.external_remaining <= 0}
                     >
@@ -759,19 +780,30 @@ export const PaymentsPage = () => {
                 )}
               </DialogContent>
             </Dialog>
+          </div>
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400" />
+            <Input
+              placeholder="Search by PO, Payee, Transaction/UTR, Bank..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-white text-sm placeholder:text-sm"
+              data-testid="search-input"
+            />
+          </div>
         </div>
 
         {/* Internal Payments Section */}
         <div className="mb-8">
-          <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-magnova-blue" />
+          <h2 className="text-lg font-bold text-neutral-900 mb-4 flex items-center gap-2">
+            <Building2 className="w-5 h-5 text-neutral-900" />
             Internal Payments (Magnova → Nova)
           </h2>
-          <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+          <div className="bg-white border border-neutral-200 rounded-lg shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full" data-testid="internal-payments-table">
                 <thead>
-                  <tr className="bg-magnova-blue text-white">
+                  <tr className="bg-teal-600 text-white">
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">PO Number</th>
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Payee</th>
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Account</th>
@@ -786,37 +818,37 @@ export const PaymentsPage = () => {
                 <tbody>
                   {internalPayments.length === 0 ? (
                     <tr>
-                      <td colSpan={isAdmin ? 9 : 8} className="px-4 py-8 text-center text-slate-500">
-                        No internal payments found
+                      <td colSpan={isAdmin ? 9 : 8} className="px-4 py-8 text-center text-neutral-500">
+                        {searchTerm ? `No internal payments found for "${searchTerm}"` : 'No internal payments found'}
                       </td>
                     </tr>
                   ) : (
                     internalPayments.map((payment) => (
-                      <tr key={payment.payment_id} className="border-b border-slate-100 hover:bg-slate-50" data-testid="internal-payment-row">
+                      <tr key={payment.payment_id} className="border-b border-neutral-100 hover:bg-neutral-50" data-testid="internal-payment-row">
                         <td className="px-4 py-3 text-sm">
                           <button
                             onClick={() => showLinkedExternalPayments(payment.po_number, payment)}
-                            className="font-mono font-medium text-magnova-blue hover:text-magnova-dark-blue hover:underline flex items-center gap-1"
+                            className="font-mono font-medium text-neutral-900 hover:text-neutral-800 hover:underline flex items-center gap-1"
                             data-testid="view-linked-payments"
                           >
                             {payment.po_number}
                             <ExternalLink className="w-3 h-3" />
                           </button>
                         </td>
-                        <td className="px-4 py-3 text-sm text-slate-900">{payment.payee_name}</td>
-                        <td className="px-4 py-3 text-sm font-mono text-slate-600">{payment.payee_account || '-'}</td>
-                        <td className="px-4 py-3 text-sm text-slate-600">{payment.payee_bank || '-'}</td>
-                        <td className="px-4 py-3 text-sm text-slate-600">{payment.payment_mode}</td>
-                        <td className="px-4 py-3 text-sm text-right font-medium text-slate-900">₹{payment.amount?.toLocaleString()}</td>
-                        <td className="px-4 py-3 text-sm font-mono text-slate-600">{payment.transaction_ref || '-'}</td>
-                        <td className="px-4 py-3 text-sm text-slate-600">{new Date(payment.payment_date).toLocaleDateString()}</td>
+                        <td className="px-4 py-3 text-sm text-neutral-900">{payment.payee_name}</td>
+                        <td className="px-4 py-3 text-sm font-mono text-neutral-600">{payment.payee_account || '-'}</td>
+                        <td className="px-4 py-3 text-sm text-neutral-600">{payment.payee_bank || '-'}</td>
+                        <td className="px-4 py-3 text-sm text-neutral-600">{payment.payment_mode}</td>
+                        <td className="px-4 py-3 text-sm text-right font-medium text-neutral-900">₹{payment.amount?.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-sm font-mono text-neutral-600">{payment.transaction_ref || '-'}</td>
+                        <td className="px-4 py-3 text-sm text-neutral-600">{new Date(payment.payment_date).toLocaleDateString()}</td>
                         {isAdmin && (
                           <td className="px-4 py-3 text-sm">
                             <Button
                               size="sm"
                               variant="ghost"
                               onClick={() => handleDelete(payment.payment_id)}
-                              className="text-red-600 hover:text-red-800 hover:bg-red-50 h-8 w-8 p-0"
+                              className="text-neutral-800 hover:text-neutral-900 hover:bg-neutral-100 h-8 w-8 p-0"
                               data-testid="delete-internal-payment"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -834,15 +866,15 @@ export const PaymentsPage = () => {
 
         {/* External Payments Section */}
         <div>
-          <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-            <Users className="w-5 h-5 text-magnova-orange" />
+          <h2 className="text-lg font-bold text-neutral-900 mb-4 flex items-center gap-2">
+            <Users className="w-5 h-5 text-teal-600" />
             External Payments (Nova → Vendor/CC)
           </h2>
-          <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+          <div className="bg-white border border-neutral-200 rounded-lg shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full" data-testid="external-payments-table">
                 <thead>
-                  <tr className="bg-magnova-orange text-white">
+                  <tr className="bg-teal-600 text-white">
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">PO Number</th>
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Payee Type</th>
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Payee Name</th>
@@ -859,48 +891,48 @@ export const PaymentsPage = () => {
                 <tbody>
                   {externalPayments.length === 0 ? (
                     <tr>
-                      <td colSpan={isAdmin ? 11 : 10} className="px-4 py-8 text-center text-slate-500">
-                        No external payments found
+                      <td colSpan={isAdmin ? 11 : 10} className="px-4 py-8 text-center text-neutral-500">
+                        {searchTerm ? `No external payments found for "${searchTerm}"` : 'No external payments found'}
                       </td>
                     </tr>
                   ) : (
                     externalPayments.map((payment) => (
-                      <tr key={payment.payment_id} className="border-b border-slate-100 hover:bg-slate-50" data-testid="external-payment-row">
-                        <td className="px-4 py-3 text-sm font-mono font-medium text-magnova-blue">{payment.po_number}</td>
+                      <tr key={payment.payment_id} className="border-b border-neutral-100 hover:bg-neutral-50" data-testid="external-payment-row">
+                        <td className="px-4 py-3 text-sm font-mono font-medium text-neutral-900">{payment.po_number}</td>
                         <td className="px-4 py-3 text-sm">
                           <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            payment.payee_type === 'vendor' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+                            payment.payee_type === 'vendor' ? 'bg-teal-100 text-teal-700' : 'bg-purple-100 text-purple-700'
                           }`}>
                             {payment.payee_type === 'cc' ? 'CREDIT CARD' : payment.payee_type?.toUpperCase() || '-'}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-sm text-slate-900">{payment.payee_name}</td>
-                        <td className="px-4 py-3 text-sm text-slate-600">{payment.payee_phone || '-'}</td>
-                        <td className="px-4 py-3 text-sm font-mono text-slate-600">
+                        <td className="px-4 py-3 text-sm text-neutral-900">{payment.payee_name}</td>
+                        <td className="px-4 py-3 text-sm text-neutral-600">{payment.payee_phone || '-'}</td>
+                        <td className="px-4 py-3 text-sm font-mono text-neutral-600">
                           {payment.payee_type === 'cc' ? (
                             <span title="Credit Card Number">{payment.account_number || '-'}</span>
                           ) : (
                             <span title="Account Number">{payment.account_number || '-'}</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-sm text-slate-600">
+                        <td className="px-4 py-3 text-sm text-neutral-600">
                           {payment.payee_type === 'cc' ? (
                             <span title="Bank Name">{payment.ifsc_code || '-'}</span>
                           ) : (
                             <span title="IFSC Code" className="font-mono">{payment.ifsc_code || '-'}</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-sm text-slate-600">{payment.location || '-'}</td>
-                        <td className="px-4 py-3 text-sm text-right font-medium text-slate-900">₹{payment.amount?.toLocaleString()}</td>
-                        <td className="px-4 py-3 text-sm font-mono text-slate-600">{payment.utr_number || '-'}</td>
-                        <td className="px-4 py-3 text-sm text-slate-600">{new Date(payment.payment_date).toLocaleDateString()}</td>
+                        <td className="px-4 py-3 text-sm text-neutral-600">{payment.location || '-'}</td>
+                        <td className="px-4 py-3 text-sm text-right font-medium text-neutral-900">₹{payment.amount?.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-sm font-mono text-neutral-600">{payment.utr_number || '-'}</td>
+                        <td className="px-4 py-3 text-sm text-neutral-600">{new Date(payment.payment_date).toLocaleDateString()}</td>
                         {isAdmin && (
                           <td className="px-4 py-3 text-sm">
                             <Button
                               size="sm"
                               variant="ghost"
                               onClick={() => handleDelete(payment.payment_id)}
-                              className="text-red-600 hover:text-red-800 hover:bg-red-50 h-8 w-8 p-0"
+                              className="text-neutral-800 hover:text-neutral-900 hover:bg-neutral-100 h-8 w-8 p-0"
                               data-testid="delete-external-payment"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -920,36 +952,36 @@ export const PaymentsPage = () => {
         <Dialog open={linkedPaymentsDialog.open} onOpenChange={(open) => setLinkedPaymentsDialog({ ...linkedPaymentsDialog, open })}>
           <DialogContent className="max-w-3xl bg-white">
             <DialogHeader>
-              <DialogTitle className="text-magnova-blue flex items-center gap-2">
+              <DialogTitle className="text-neutral-900 flex items-center gap-2">
                 <Building2 className="w-5 h-5" />
                 Payment Details - {linkedPaymentsDialog.poNumber}
               </DialogTitle>
-              <DialogDescription className="text-slate-600">
+              <DialogDescription className="text-neutral-600">
                 Internal payment and linked external payments for this PO
               </DialogDescription>
             </DialogHeader>
 
             {/* Internal Payment Info */}
             {linkedPaymentsDialog.internalPayment && (
-              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200 mb-4">
-                <h4 className="font-bold text-magnova-blue mb-3 flex items-center gap-2">
+              <div className="p-4 bg-teal-50 rounded-lg border border-teal-200 mb-4">
+                <h4 className="font-bold text-neutral-900 mb-3 flex items-center gap-2">
                   <Building2 className="w-4 h-4" /> Internal Payment (Magnova → Nova)
                 </h4>
                 <div className="grid grid-cols-4 gap-4 text-sm">
                   <div>
-                    <span className="text-slate-500">Payee:</span>
+                    <span className="text-neutral-500">Payee:</span>
                     <span className="ml-1 font-medium">{linkedPaymentsDialog.internalPayment.payee_name}</span>
                   </div>
                   <div>
-                    <span className="text-slate-500">Amount:</span>
-                    <span className="ml-1 font-bold text-magnova-blue">₹{linkedPaymentsDialog.internalPayment.amount?.toLocaleString()}</span>
+                    <span className="text-neutral-500">Amount:</span>
+                    <span className="ml-1 font-bold text-neutral-900">₹{linkedPaymentsDialog.internalPayment.amount?.toLocaleString()}</span>
                   </div>
                   <div>
-                    <span className="text-slate-500">Mode:</span>
+                    <span className="text-neutral-500">Mode:</span>
                     <span className="ml-1 font-medium">{linkedPaymentsDialog.internalPayment.payment_mode}</span>
                   </div>
                   <div>
-                    <span className="text-slate-500">Date:</span>
+                    <span className="text-neutral-500">Date:</span>
                     <span className="ml-1 font-medium">{new Date(linkedPaymentsDialog.internalPayment.payment_date).toLocaleDateString()}</span>
                   </div>
                 </div>
@@ -958,20 +990,20 @@ export const PaymentsPage = () => {
 
             {/* Payment Summary */}
             {linkedPaymentsDialog.summary && (
-              <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 mb-4">
-                <h4 className="font-bold text-slate-700 mb-3">Payment Summary</h4>
+              <div className="p-4 bg-neutral-50 rounded-lg border border-neutral-200 mb-4">
+                <h4 className="font-bold text-neutral-700 mb-3">Payment Summary</h4>
                 <div className="grid grid-cols-3 gap-4 text-sm">
                   <div className="p-3 bg-white rounded-lg border">
-                    <span className="text-slate-500 block text-xs uppercase">Internal Paid</span>
-                    <span className="font-bold text-lg text-magnova-blue">₹{linkedPaymentsDialog.summary.internal_paid?.toLocaleString()}</span>
+                    <span className="text-neutral-500 block text-xs uppercase">Internal Paid</span>
+                    <span className="font-bold text-lg text-neutral-900">₹{linkedPaymentsDialog.summary.internal_paid?.toLocaleString()}</span>
                   </div>
                   <div className="p-3 bg-white rounded-lg border">
-                    <span className="text-slate-500 block text-xs uppercase">External Paid</span>
-                    <span className="font-bold text-lg text-magnova-orange">₹{linkedPaymentsDialog.summary.external_paid?.toLocaleString()}</span>
+                    <span className="text-neutral-500 block text-xs uppercase">External Paid</span>
+                    <span className="font-bold text-lg text-teal-600">₹{linkedPaymentsDialog.summary.external_paid?.toLocaleString()}</span>
                   </div>
                   <div className="p-3 bg-white rounded-lg border">
-                    <span className="text-slate-500 block text-xs uppercase">Remaining</span>
-                    <span className="font-bold text-lg text-emerald-600">₹{linkedPaymentsDialog.summary.external_remaining?.toLocaleString()}</span>
+                    <span className="text-neutral-500 block text-xs uppercase">Remaining</span>
+                    <span className="font-bold text-lg text-teal-600">₹{linkedPaymentsDialog.summary.external_remaining?.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
@@ -979,18 +1011,18 @@ export const PaymentsPage = () => {
 
             {/* Linked External Payments */}
             <div>
-              <h4 className="font-bold text-magnova-orange mb-3 flex items-center gap-2">
+              <h4 className="font-bold text-teal-600 mb-3 flex items-center gap-2">
                 <Users className="w-4 h-4" /> External Payments (Nova → Vendor/CC)
               </h4>
               {getExternalPaymentsForPO(linkedPaymentsDialog.poNumber).length === 0 ? (
-                <div className="p-6 bg-slate-50 rounded-lg text-center text-slate-500">
+                <div className="p-6 bg-neutral-50 rounded-lg text-center text-neutral-500">
                   No external payments found for this PO
                 </div>
               ) : (
-                <div className="border border-slate-200 rounded-lg overflow-hidden">
+                <div className="border border-neutral-200 rounded-lg overflow-hidden">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="bg-magnova-orange text-white">
+                      <tr className="bg-teal-600 text-white">
                         <th className="px-3 py-2 text-left text-xs">Payee Type</th>
                         <th className="px-3 py-2 text-left text-xs">Payee Name</th>
                         <th className="px-3 py-2 text-left text-xs">Account/Card #</th>
@@ -1003,21 +1035,21 @@ export const PaymentsPage = () => {
                     </thead>
                     <tbody>
                       {getExternalPaymentsForPO(linkedPaymentsDialog.poNumber).map((payment) => (
-                        <tr key={payment.payment_id} className="border-b border-slate-100 hover:bg-slate-50">
+                        <tr key={payment.payment_id} className="border-b border-neutral-100 hover:bg-neutral-50">
                           <td className="px-3 py-2">
                             <span className={`px-2 py-1 rounded text-xs font-medium ${
-                              payment.payee_type === 'vendor' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+                              payment.payee_type === 'vendor' ? 'bg-teal-100 text-teal-700' : 'bg-purple-100 text-purple-700'
                             }`}>
                               {payment.payee_type === 'cc' ? 'CREDIT CARD' : payment.payee_type?.toUpperCase()}
                             </span>
                           </td>
-                          <td className="px-3 py-2 text-slate-900">{payment.payee_name}</td>
-                          <td className="px-3 py-2 font-mono text-slate-600">{payment.account_number}</td>
-                          <td className="px-3 py-2 text-slate-600">{payment.ifsc_code || '-'}</td>
-                          <td className="px-3 py-2 text-slate-600">{payment.location}</td>
+                          <td className="px-3 py-2 text-neutral-900">{payment.payee_name}</td>
+                          <td className="px-3 py-2 font-mono text-neutral-600">{payment.account_number}</td>
+                          <td className="px-3 py-2 text-neutral-600">{payment.ifsc_code || '-'}</td>
+                          <td className="px-3 py-2 text-neutral-600">{payment.location}</td>
                           <td className="px-3 py-2 text-right font-medium">₹{payment.amount?.toLocaleString()}</td>
-                          <td className="px-3 py-2 font-mono text-slate-600">{payment.utr_number}</td>
-                          <td className="px-3 py-2 text-slate-600">{new Date(payment.payment_date).toLocaleDateString()}</td>
+                          <td className="px-3 py-2 font-mono text-neutral-600">{payment.utr_number}</td>
+                          <td className="px-3 py-2 text-neutral-600">{new Date(payment.payment_date).toLocaleDateString()}</td>
                         </tr>
                       ))}
                     </tbody>
