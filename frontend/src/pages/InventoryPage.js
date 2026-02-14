@@ -7,7 +7,7 @@ import { Label } from '../components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner';
-import { Scan, Search, Trash2, CheckCircle, AlertCircle, Bell, X, Package, FileText } from 'lucide-react';
+import { Scan, Search, Trash2, CheckCircle, AlertCircle, Bell, X, Package, FileText, MapPin, Smartphone, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useDataRefresh } from '../context/DataRefreshContext';
 
@@ -364,7 +364,46 @@ export const InventoryPage = () => {
     return rows;
   };
 
-  const chartPalette = ['#0f766e', '#14b8a6', '#2dd4bf', '#5eead4', '#99f6e4'];
+  const chartPalette = ['#0d9488', '#06b6d4', '#6366f1', '#8b5cf6', '#ec4899'];
+
+  // Stats for dashboard cards
+  const inventoryStats = useMemo(() => {
+    const total = filteredInventory.length;
+    const byStatus = {};
+    const byLocation = {};
+    const byModel = {};
+
+    filteredInventory.forEach((item) => {
+      const status = item.status || 'Unknown';
+      const location = item.current_location || item.location || 'Unknown';
+      const model = item.model || item.device_model || 'Unknown';
+
+      byStatus[status] = (byStatus[status] || 0) + 1;
+      byLocation[location] = (byLocation[location] || 0) + 1;
+      byModel[model] = (byModel[model] || 0) + 1;
+    });
+
+    // Get top locations
+    const topLocations = Object.entries(byLocation)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+
+    // Get top models
+    const topModels = Object.entries(byModel)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+
+    return {
+      total,
+      byStatus,
+      byLocation,
+      byModel,
+      topLocations,
+      topModels,
+      statusCount: Object.keys(byStatus).length,
+      locationCount: Object.keys(byLocation).length,
+    };
+  }, [filteredInventory]);
 
   const buildChartData = (items) => {
     const byLocation = new Map();
@@ -729,188 +768,460 @@ export const InventoryPage = () => {
         </div>
 
         {showDashboard && (
-          <div className="mb-8 space-y-4" data-testid="inventory-dashboard">
-            <div className="flex items-center justify-between">
+          <div className="mb-8 space-y-6" data-testid="inventory-dashboard">
+            {/* Stats Cards Row */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-2">
               <div>
-                <h2 className="text-lg font-semibold text-neutral-900">Inventory Dashboard</h2>
-                <p className="text-sm text-neutral-600">Grouped by location, model, storage, and colour</p>
+                <h2 className="text-2xl font-bold text-neutral-900 tracking-tight">Inventory Overview</h2>
+                <p className="text-sm text-neutral-600 mt-1">Real-time summary of inventory by status, location, and models</p>
               </div>
-              <div className="text-sm text-neutral-600">
-                Total IMEIs: <span className="font-semibold text-neutral-900">{filteredInventory.length}</span>
+              <div className="flex-shrink-0 flex items-center gap-2 bg-gradient-to-r from-teal-50 to-cyan-50 px-4 py-2 rounded-lg border border-teal-200/60 shadow-sm">
+                <Package className="w-5 h-5 text-teal-600" />
+                <span className="text-sm font-semibold text-teal-700">Total: {filteredInventory.length} IMEIs</span>
               </div>
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-              {[...dashboardData.locations, ...(dashboardData.total ? [dashboardData.total] : [])].map((locationEntry) => {
-                return (
-                  <div
-                    key={locationEntry.location}
-                    className="border border-teal-100 rounded-lg overflow-hidden shadow-sm bg-white"
-                    data-testid={`dashboard-card-${locationEntry.location}`}
-                  >
-                    <div className="bg-teal-600 text-white px-4 py-2 text-center text-sm font-semibold uppercase tracking-wide">
-                      {locationEntry.location}
-                    </div>
-                    <div className="bg-neutral-50 grid grid-cols-4 gap-px text-xs font-semibold text-neutral-700">
-                      <div className="bg-neutral-50 px-3 py-2">Model</div>
-                      <div className="bg-neutral-50 px-3 py-2">Storage</div>
-                      <div className="bg-neutral-50 px-3 py-2">Colour</div>
-                      <div className="bg-neutral-50 px-3 py-2 text-right">Qty</div>
-                    </div>
-                    <div className="max-h-80 overflow-auto">
-                      <table className="w-full text-xs table-fixed" data-testid="dashboard-table">
-                        <colgroup>
-                          <col className="w-[34%]" />
-                          <col className="w-[22%]" />
-                          <col className="w-[28%]" />
-                          <col className="w-[16%]" />
-                        </colgroup>
-                        <tbody>
-                          {Array.from(locationEntry.models.values()).map((modelEntry) => {
-                            const rows = buildRows(modelEntry);
-                            return rows.map((row, rowIndex) => (
-                              <tr
-                                key={`${modelEntry.model}-${row.storage}-${row.colour}-${rowIndex}`}
-                                className="border-t border-neutral-100"
-                              >
-                                {row.showModel && (
-                                  <td
-                                    className="bg-neutral-50 text-neutral-900 px-3 py-2 align-middle font-medium"
-                                    rowSpan={row.modelRowSpan}
-                                  >
-                                    <span className="block truncate" title={row.model}>{row.model}</span>
-                                  </td>
-                                )}
-                                {row.showStorage && (
-                                  <td
-                                    className="bg-neutral-50 text-neutral-900 px-3 py-2 align-middle font-medium"
-                                    rowSpan={row.storageRowSpan}
-                                  >
-                                    <span className="block truncate" title={row.storage}>{row.storage}</span>
-                                  </td>
-                                )}
-                                {!row.showStorage && <td className="px-3 py-2 bg-white"></td>}
-                                <td className={`px-3 py-2 ${row.isTotalRow ? 'font-semibold text-neutral-900' : 'text-neutral-800'}`}>
-                                  <span className="block truncate" title={row.colour}>{row.colour}</span>
-                                </td>
-                                <td className={`px-3 py-2 text-right ${row.isTotalRow ? 'font-semibold text-neutral-900' : 'text-neutral-800'}`}>
-                                  {row.qty}
-                                </td>
-                              </tr>
-                            ));
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                    <div className="px-4 py-2 text-xs font-semibold text-neutral-800 bg-neutral-50 text-right">
-                      Location Total: {locationEntry.total}
-                    </div>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <div className="bg-white border border-teal-200/50 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="p-3 bg-teal-50 rounded-lg">
+                    <Package className="w-6 h-6 text-teal-600" />
                   </div>
-                );
-              })}
+                  <span className="text-xs font-medium bg-teal-100 text-teal-700 px-2.5 py-1 rounded-full">Total</span>
+                </div>
+                <p className="text-4xl font-bold text-neutral-900 mb-1">{inventoryStats.total}</p>
+                <p className="text-sm text-neutral-600">Total IMEIs</p>
+              </div>
+              <div className="bg-white border border-cyan-200/50 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="p-3 bg-cyan-50 rounded-lg">
+                    <MapPin className="w-6 h-6 text-cyan-600" />
+                  </div>
+                  <span className="text-xs font-medium bg-cyan-100 text-cyan-700 px-2.5 py-1 rounded-full">Locations</span>
+                </div>
+                <p className="text-4xl font-bold text-neutral-900 mb-1">{inventoryStats.locationCount}</p>
+                <p className="text-sm text-neutral-600">Active Locations</p>
+              </div>
+              <div className="bg-white border border-violet-200/50 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="p-3 bg-violet-50 rounded-lg">
+                    <Smartphone className="w-6 h-6 text-violet-600" />
+                  </div>
+                  <span className="text-xs font-medium bg-violet-100 text-violet-700 px-2.5 py-1 rounded-full">Models</span>
+                </div>
+                <p className="text-4xl font-bold text-neutral-900 mb-1">{inventoryStats.topModels.length}</p>
+                <p className="text-sm text-neutral-600">Unique Models</p>
+              </div>
+              <div className="bg-white border border-amber-200/50 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="p-3 bg-amber-50 rounded-lg">
+                    <CheckCircle2 className="w-6 h-6 text-amber-600" />
+                  </div>
+                  <span className="text-xs font-medium bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full">Status</span>
+                </div>
+                <p className="text-4xl font-bold text-neutral-900 mb-1">{inventoryStats.statusCount}</p>
+                <p className="text-sm text-neutral-600">Status Types</p>
+              </div>
+            </div>
+
+            {/* Charts and Tables Row */}
+            <div className="grid gap-6 lg:grid-cols-2 mb-8">
+              {/* Status Breakdown */}
+              <div className="bg-white rounded-lg border border-neutral-200/60 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+                <div className="bg-gradient-to-r from-neutral-50 to-neutral-50 px-6 py-4 border-b border-neutral-200/60">
+                  <h3 className="font-semibold text-neutral-900 text-lg flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 bg-teal-500 rounded-full"></span>
+                    Status Breakdown
+                  </h3>
+                </div>
+                <div className="p-6">
+                  <div className="space-y-3">
+                    {Object.entries(inventoryStats.byStatus).length === 0 ? (
+                      <p className="text-sm text-neutral-500 text-center py-4">No data available</p>
+                    ) : (
+                      Object.entries(inventoryStats.byStatus)
+                        .sort((a, b) => b[1] - a[1])
+                        .map(([status, count], idx) => {
+                          const percentage = inventoryStats.total > 0 ? Math.round((count / inventoryStats.total) * 100) : 0;
+                          return (
+                            <div key={status} className="flex items-center gap-3">
+                              <div className="w-24 text-sm font-medium text-neutral-700 truncate">{status}</div>
+                              <div className="flex-1 h-6 bg-neutral-100 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full rounded-full transition-all duration-500"
+                                  style={{
+                                    width: `${percentage}%`,
+                                    backgroundColor: chartPalette[idx % chartPalette.length],
+                                  }}
+                                ></div>
+                              </div>
+                              <div className="w-16 text-sm text-neutral-600 text-right font-medium">{count}</div>
+                              <div className="w-10 text-xs text-neutral-400 text-right">{percentage}%</div>
+                            </div>
+                          );
+                        })
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Top Locations */}
+              <div className="bg-white rounded-lg border border-neutral-200/60 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+                <div className="bg-gradient-to-r from-neutral-50 to-neutral-50 px-6 py-4 border-b border-neutral-200/60">
+                  <h3 className="font-semibold text-neutral-900 text-lg flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 bg-cyan-500 rounded-full"></span>
+                    Top Locations
+                  </h3>
+                </div>
+                <div className="p-6">
+                  <div className="space-y-3">
+                    {inventoryStats.topLocations.length === 0 ? (
+                      <p className="text-sm text-neutral-500 text-center py-4">No data available</p>
+                    ) : (
+                      inventoryStats.topLocations.map(([location, count], idx) => {
+                        const percentage = inventoryStats.total > 0 ? Math.round((count / inventoryStats.total) * 100) : 0;
+                        return (
+                          <div key={location} className="flex items-center gap-3">
+                            <div className="w-8 h-8 flex items-center justify-center bg-cyan-50 text-cyan-600 rounded-lg text-sm font-bold">
+                              {idx + 1}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-sm font-medium text-neutral-800 truncate">{location}</span>
+                                <span className="text-sm text-neutral-600">{count}</span>
+                              </div>
+                              <div className="h-2 bg-neutral-100 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-cyan-500 rounded-full transition-all duration-500"
+                                  style={{ width: `${percentage}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Top Models */}
+            <div className="bg-white rounded-lg border border-neutral-200/60 shadow-sm hover:shadow-md transition-shadow overflow-hidden mb-8">
+              <div className="bg-gradient-to-r from-neutral-50 to-neutral-50 px-6 py-4 border-b border-neutral-200/60">
+                <h3 className="font-semibold text-neutral-900 text-lg flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 bg-violet-500 rounded-full"></span>
+                  Top Models
+                </h3>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                  {inventoryStats.topModels.length === 0 ? (
+                    <p className="col-span-full text-sm text-neutral-500 text-center py-8">No data available</p>
+                  ) : (
+                    inventoryStats.topModels.map(([model, count], idx) => (
+                      <div
+                        key={model}
+                        className="bg-white border border-violet-200/60 rounded-lg p-4 text-center hover:shadow-md transition-all hover:border-violet-300"
+                      >
+                        <div className="bg-violet-50 rounded-lg p-3 mb-3 inline-block">
+                          <div className="text-2xl font-bold text-violet-600">{count}</div>
+                        </div>
+                        <div className="text-sm font-medium text-neutral-700 truncate" title={model}>{model}</div>
+                        <div className="text-xs text-violet-600 font-medium mt-2">Rank #{idx + 1}</div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Detailed Inventory List */}
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-semibold text-neutral-900 text-lg">Complete Inventory List</h3>
+                <p className="text-sm text-neutral-600 mt-1">All items with location, model, storage, and color details</p>
+              </div>
+              <div className="bg-white rounded-lg border border-neutral-200/60 shadow-sm overflow-hidden">
+                {/* Table Header */}
+                <div className="grid grid-cols-5 gap-px bg-neutral-50 border-b border-neutral-200/60 sticky top-0">
+                  <div className="px-6 py-4 text-xs font-semibold text-neutral-700">Location</div>
+                  <div className="px-6 py-4 text-xs font-semibold text-neutral-700">Model</div>
+                  <div className="px-6 py-4 text-xs font-semibold text-neutral-700">Storage</div>
+                  <div className="px-6 py-4 text-xs font-semibold text-neutral-700">Colour</div>
+                  <div className="px-6 py-4 text-xs font-semibold text-neutral-700 text-right">Quantity</div>
+                </div>
+                {/* Table Body */}
+                <div className="divide-y divide-neutral-100 max-h-96 overflow-auto">
+                  {filteredInventory.length === 0 ? (
+                    <div className="px-6 py-8 text-center text-sm text-neutral-500">
+                      No inventory items found
+                    </div>
+                  ) : (
+                    filteredInventory.map((item, idx) => (
+                      <div key={idx} className="grid grid-cols-5 gap-px hover:bg-neutral-50/50 transition-colors">
+                        <div className="px-6 py-4 text-sm font-medium text-neutral-900 truncate">
+                          {item.current_location || item.location || 'Unknown'}
+                        </div>
+                        <div className="px-6 py-4 text-sm text-neutral-700 truncate">
+                          {item.model || item.device_model || '-'}
+                        </div>
+                        <div className="px-6 py-4 text-sm text-neutral-700 truncate">
+                          {item.storage || '-'}
+                        </div>
+                        <div className="px-6 py-4 text-sm text-neutral-700 truncate">
+                          {item.colour || 'Unknown'}
+                        </div>
+                        <div className="px-6 py-4 text-sm font-semibold text-neutral-900 text-right">1</div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Detailed Tables by Location - Old Card Layout - Hidden */}
+            <div className="space-y-4 hidden">
+              <div>
+                <h3 className="font-semibold text-neutral-900 text-lg">Detailed Inventory by Location</h3>
+                <p className="text-sm text-neutral-600 mt-1">Breakdown by model, storage capacity, and color</p>
+              </div>
+              <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
+                {[...dashboardData.locations, ...(dashboardData.total ? [dashboardData.total] : [])].map((locationEntry) => {
+                  return (
+                    <div
+                      key={locationEntry.location}
+                      className="border border-neutral-200/60 rounded-lg overflow-hidden shadow-sm bg-white hover:shadow-md transition-all"
+                      data-testid={`dashboard-card-${locationEntry.location}`}
+                    >
+                      <div className="bg-gradient-to-r from-neutral-800 to-neutral-700 text-white px-5 py-4">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-base">{locationEntry.location}</span>
+                          <span className="bg-white/20 px-3 py-1 rounded-md text-sm font-semibold">{locationEntry.total}</span>
+                        </div>
+                      </div>
+                      <div className="bg-neutral-50/80 grid grid-cols-4 gap-px text-xs font-semibold text-neutral-700 border-b border-neutral-200/60">
+                        <div className="bg-neutral-50 px-4 py-3">Model</div>
+                        <div className="bg-neutral-50 px-4 py-3">Storage</div>
+                        <div className="bg-neutral-50 px-4 py-3">Colour</div>
+                        <div className="bg-neutral-50 px-4 py-3 text-right">Qty</div>
+                      </div>
+                      <div className="max-h-72 overflow-auto divide-y divide-neutral-100">
+                        <table className="w-full text-xs table-fixed">
+                          <colgroup>
+                            <col className="w-[34%]" />
+                            <col className="w-[22%]" />
+                            <col className="w-[28%]" />
+                            <col className="w-[16%]" />
+                          </colgroup>
+                          <tbody>
+                            {Array.from(locationEntry.models.values()).map((modelEntry) => {
+                              const rows = buildRows(modelEntry);
+                              return rows.map((row, rowIndex) => (
+                                <tr
+                                  key={`${modelEntry.model}-${row.storage}-${row.colour}-${rowIndex}`}
+                                  className={`${row.isTotalRow ? 'bg-neutral-50 font-semibold' : 'hover:bg-neutral-50/50'} transition-colors`}
+                                >
+                                  {row.showModel && (
+                                    <td
+                                      className="bg-neutral-50 text-neutral-900 px-4 py-3 align-middle font-semibold text-sm"
+                                      rowSpan={row.modelRowSpan}
+                                    >
+                                      <span className="block truncate" title={row.model}>{row.model}</span>
+                                    </td>
+                                  )}
+                                  {row.showStorage && (
+                                    <td
+                                      className="bg-neutral-50 text-neutral-900 px-4 py-3 align-middle font-medium text-sm"
+                                      rowSpan={row.storageRowSpan}
+                                    >
+                                      <span className="block truncate" title={row.storage}>{row.storage}</span>
+                                    </td>
+                                  )}
+                                  {!row.showStorage && <td className="px-4 py-3 bg-white"></td>}
+                                  <td className={`px-4 py-3 ${row.isTotalRow ? 'font-semibold text-neutral-900' : 'text-neutral-700'}`}>
+                                    <span className="block truncate" title={row.colour}>{row.colour}</span>
+                                  </td>
+                                  <td className={`px-4 py-3 text-right font-medium ${row.isTotalRow ? 'text-neutral-900' : 'text-neutral-700'}`}>
+                                    {row.qty}
+                                  </td>
+                                </tr>
+                              ));
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div className="px-5 py-3 text-sm font-semibold text-neutral-800 bg-neutral-50 border-t border-neutral-200/60 flex items-center justify-between">
+                        <span>Location Total</span>
+                        <span className="bg-teal-600 text-white px-3 py-1 rounded-md font-semibold">{locationEntry.total}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
 
         {showCharts && (
-          <div className="mb-8 space-y-4" data-testid="inventory-charts">
+          <div className="mb-8 space-y-6" data-testid="inventory-charts">
+            {/* Header */}
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-neutral-900">Inventory Charts</h2>
-                <p className="text-sm text-neutral-600">Quick visual summary of locations, models, and colours</p>
+                <h2 className="text-xl font-bold text-neutral-900">Inventory Analytics</h2>
+                <p className="text-sm text-neutral-500 mt-1">Visual breakdown by location, model, and colour</p>
               </div>
-              <div className="text-sm text-neutral-600">
-                Total IMEIs: <span className="font-semibold text-neutral-900">{filteredInventory.length}</span>
+              <div className="flex items-center gap-2 bg-indigo-50 px-4 py-2 rounded-full border border-indigo-200">
+                <Package className="w-5 h-5 text-indigo-600" />
+                <span className="text-sm font-semibold text-indigo-700">Total: {filteredInventory.length} IMEIs</span>
               </div>
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-3">
-              <div className="border border-teal-100 rounded-lg bg-white p-4 shadow-sm">
-                <div className="text-sm font-semibold text-neutral-800 mb-3">Bar Graph (Top Locations)</div>
-                <div className="space-y-2">
+            {/* Charts Grid */}
+            <div className="grid gap-6 lg:grid-cols-3">
+              {/* Bar Chart - Locations */}
+              <div className="bg-white rounded-2xl shadow-md border border-neutral-200 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                <div className="bg-gradient-to-r from-teal-600 to-teal-500 px-5 py-4">
+                  <h3 className="font-semibold text-white flex items-center gap-2">
+                    <MapPin className="w-5 h-5" />
+                    Top Locations
+                  </h3>
+                </div>
+                <div className="p-5 space-y-4">
                   {chartData.locations.length === 0 && (
-                    <div className="text-xs text-neutral-500">No data</div>
+                    <div className="text-sm text-neutral-500 text-center py-8">No data available</div>
                   )}
                   {chartData.locations.map((item, idx) => {
                     const maxValue = chartData.locations[0]?.value || 1;
                     const width = Math.round((item.value / maxValue) * 100);
                     return (
-                      <div key={item.label} className="flex items-center gap-2">
-                        <div className="w-24 text-xs text-neutral-700 truncate" title={item.label}>{item.label}</div>
-                        <div className="flex-1 h-2 bg-neutral-100 rounded">
+                      <div key={item.label} className="group">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <div className="flex items-center gap-2">
+                            <span className={`w-6 h-6 flex items-center justify-center rounded-lg text-xs font-bold ${
+                              idx === 0 ? 'bg-amber-100 text-amber-700' :
+                              idx === 1 ? 'bg-neutral-100 text-neutral-700' :
+                              idx === 2 ? 'bg-orange-100 text-orange-700' :
+                              'bg-neutral-50 text-neutral-600'
+                            }`}>
+                              {idx + 1}
+                            </span>
+                            <span className="text-sm font-medium text-neutral-800 truncate" title={item.label}>{item.label}</span>
+                          </div>
+                          <span className="text-sm font-bold text-neutral-900">{item.value}</span>
+                        </div>
+                        <div className="h-3 bg-neutral-100 rounded-full overflow-hidden">
                           <div
-                            className="h-2 rounded"
-                            style={{ width: `${width}%`, backgroundColor: chartPalette[idx % chartPalette.length] }}
+                            className="h-full rounded-full transition-all duration-700 ease-out group-hover:opacity-80"
+                            style={{
+                              width: `${width}%`,
+                              backgroundColor: chartPalette[idx % chartPalette.length],
+                            }}
                           ></div>
                         </div>
-                        <div className="w-8 text-xs text-neutral-700 text-right">{item.value}</div>
                       </div>
                     );
                   })}
                 </div>
               </div>
 
-              <div className="border border-teal-100 rounded-lg bg-white p-4 shadow-sm">
-                <div className="text-sm font-semibold text-neutral-800 mb-3">Pie Chart (Top Models)</div>
-                <div className="flex items-center gap-4">
-                  <div className="w-24 h-24 rounded-full border border-teal-100"
-                    style={{
-                      background: chartData.models.length
-                        ? `conic-gradient(${chartData.models
-                            .map((item, idx) => {
-                              const total = chartData.models.reduce((sum, entry) => sum + entry.value, 0) || 1;
-                              const start = chartData.models.slice(0, idx).reduce((sum, entry) => sum + entry.value, 0);
-                              const startAngle = (start / total) * 360;
-                              const endAngle = ((start + item.value) / total) * 360;
-                              return `${chartPalette[idx % chartPalette.length]} ${startAngle}deg ${endAngle}deg`;
-                            })
-                            .join(',')}`
-                        : '#f8fafc',
-                    }}
-                  ></div>
-                  <div className="space-y-1 text-xs text-neutral-700">
-                    {chartData.models.length === 0 && <div className="text-neutral-500">No data</div>}
-                    {chartData.models.map((item, idx) => (
-                      <div key={item.label} className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: chartPalette[idx % chartPalette.length] }}></span>
-                        <span className="truncate" title={item.label}>{item.label}</span>
-                        <span className="ml-auto text-neutral-800 font-semibold">{item.value}</span>
+              {/* Pie Chart - Models */}
+              <div className="bg-white rounded-2xl shadow-md border border-neutral-200 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                <div className="bg-gradient-to-r from-violet-600 to-violet-500 px-5 py-4">
+                  <h3 className="font-semibold text-white flex items-center gap-2">
+                    <Smartphone className="w-5 h-5" />
+                    Top Models
+                  </h3>
+                </div>
+                <div className="p-5">
+                  <div className="flex items-center justify-center gap-6">
+                    {/* Donut Chart */}
+                    <div className="relative">
+                      <div className="w-32 h-32 rounded-full border-4 border-neutral-100"
+                        style={{
+                          background: chartData.models.length
+                            ? `conic-gradient(${chartData.models
+                                .map((item, idx) => {
+                                  const total = chartData.models.reduce((sum, entry) => sum + entry.value, 0) || 1;
+                                  const start = chartData.models.slice(0, idx).reduce((sum, entry) => sum + entry.value, 0);
+                                  const startAngle = (start / total) * 360;
+                                  const endAngle = ((start + item.value) / total) * 360;
+                                  return `${chartPalette[idx % chartPalette.length]} ${startAngle}deg ${endAngle}deg`;
+                                })
+                                .join(',')}`
+                            : '#f1f5f9',
+                        }}
+                      ></div>
+                      <div className="absolute inset-4 rounded-full bg-white flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-neutral-900">{filteredInventory.length}</div>
+                          <div className="text-xs text-neutral-500">Total</div>
+                        </div>
                       </div>
-                    ))}
+                    </div>
+
+                    {/* Legend */}
+                    <div className="space-y-2">
+                      {chartData.models.length === 0 && <div className="text-sm text-neutral-500">No data</div>}
+                      {chartData.models.map((item, idx) => (
+                        <div key={item.label} className="flex items-center gap-2">
+                          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: chartPalette[idx % chartPalette.length] }}></span>
+                          <span className="text-xs font-medium text-neutral-700 truncate max-w-24" title={item.label}>{item.label}</span>
+                          <span className="text-xs font-bold text-neutral-900 ml-auto">{item.value}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="border border-teal-100 rounded-lg bg-white p-4 shadow-sm">
-                <div className="text-sm font-semibold text-neutral-800 mb-3">Sunburst (Top Colours)</div>
-                <div className="flex items-center gap-4">
-                  <div className="relative w-24 h-24">
-                    <div className="absolute inset-0 rounded-full border border-teal-100"
-                      style={{
-                        background: chartData.colours.length
-                          ? `conic-gradient(${chartData.colours
-                              .map((item, idx) => {
-                                const total = chartData.colours.reduce((sum, entry) => sum + entry.value, 0) || 1;
-                                const start = chartData.colours.slice(0, idx).reduce((sum, entry) => sum + entry.value, 0);
-                                const startAngle = (start / total) * 360;
-                                const endAngle = ((start + item.value) / total) * 360;
-                                return `${chartPalette[idx % chartPalette.length]} ${startAngle}deg ${endAngle}deg`;
-                              })
-                              .join(',')}`
-                          : '#f8fafc',
-                      }}
-                    ></div>
-                    <div className="absolute inset-3 rounded-full bg-white border border-teal-100"></div>
-                  </div>
-                  <div className="space-y-1 text-xs text-neutral-700">
-                    {chartData.colours.length === 0 && <div className="text-neutral-500">No data</div>}
-                    {chartData.colours.map((item, idx) => (
-                      <div key={item.label} className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: chartPalette[idx % chartPalette.length] }}></span>
-                        <span className="truncate" title={item.label}>{item.label}</span>
-                        <span className="ml-auto text-neutral-800 font-semibold">{item.value}</span>
+              {/* Doughnut Chart - Colours */}
+              <div className="bg-white rounded-2xl shadow-md border border-neutral-200 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                <div className="bg-gradient-to-r from-rose-600 to-rose-500 px-5 py-4">
+                  <h3 className="font-semibold text-white flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5" />
+                    Top Colours
+                  </h3>
+                </div>
+                <div className="p-5">
+                  <div className="flex items-center justify-center gap-6">
+                    {/* Ring Chart */}
+                    <div className="relative">
+                      <div className="w-32 h-32 rounded-full border-4 border-neutral-100"
+                        style={{
+                          background: chartData.colours.length
+                            ? `conic-gradient(${chartData.colours
+                                .map((item, idx) => {
+                                  const total = chartData.colours.reduce((sum, entry) => sum + entry.value, 0) || 1;
+                                  const start = chartData.colours.slice(0, idx).reduce((sum, entry) => sum + entry.value, 0);
+                                  const startAngle = (start / total) * 360;
+                                  const endAngle = ((start + item.value) / total) * 360;
+                                  return `${chartPalette[idx % chartPalette.length]} ${startAngle}deg ${endAngle}deg`;
+                                })
+                                .join(',')}`
+                            : '#f1f5f9',
+                        }}
+                      ></div>
+                      <div className="absolute inset-4 rounded-full bg-white flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-neutral-900">{chartData.colours.length}</div>
+                          <div className="text-xs text-neutral-500">Colours</div>
+                        </div>
                       </div>
-                    ))}
+                    </div>
+
+                    {/* Legend */}
+                    <div className="space-y-2">
+                      {chartData.colours.length === 0 && <div className="text-sm text-neutral-500">No data</div>}
+                      {chartData.colours.map((item, idx) => (
+                        <div key={item.label} className="flex items-center gap-2">
+                          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: chartPalette[idx % chartPalette.length] }}></span>
+                          <span className="text-xs font-medium text-neutral-700 truncate max-w-24" title={item.label}>{item.label}</span>
+                          <span className="text-xs font-bold text-neutral-900 ml-auto">{item.value}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>

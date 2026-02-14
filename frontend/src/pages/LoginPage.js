@@ -45,11 +45,11 @@ export const LoginPage = () => {
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-8 bg-neutral-50">
-        <Card className="w-full max-w-md shadow-sm bg-white">
+      <div className="flex-1 flex items-center justify-center p-8 bg-neutral-50/50">
+        <Card className="w-full max-w-md shadow-sm bg-white border border-neutral-200">
           <CardHeader>
             <CardTitle className="text-2xl font-bold text-neutral-900">Sign In</CardTitle>
-            <CardDescription className="text-neutral-600">Enter your credentials to access your account</CardDescription>
+            <CardDescription className="text-neutral-500">Enter your credentials to access your account</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4" data-testid="login-form">
