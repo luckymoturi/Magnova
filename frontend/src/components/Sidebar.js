@@ -42,11 +42,11 @@ export const Sidebar = () => {
 
   return (
     <div className="sidebar bg-white" data-testid="sidebar">
-      <div className="p-6 border-b border-gray-200">
-        <h1 className="text-xl font-black text-gray-900 tracking-tight">
-          MAGNOVA-NOVA
-        </h1>
-        <p className="text-xs text-gray-600 mt-1">ERP System</p>
+      <div className="p-1 border-b border-gray-200">
+        <div className="text-center flex flex-col items-center justify-center">
+          <img src={require('../assets/magnova_logo.png')} alt="Magnova Logo" className="h-40 w-auto object-contain" />
+          <p className="text-xs text-gray-600 -mt-4">ERP System</p>
+        </div>
       </div>
 
       <div className="p-4">

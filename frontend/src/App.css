@@ -1,11 +1,11 @@
 .App {
   min-height: 100vh;
-  background-color: #F5F5F5;
+  background-color: #FAFAFA;
 }
 
-/* Override any potential highlight colors */
+/* Override any potential highlight colors - white smoky theme */
 * {
-  -webkit-tap-highlight-color: rgba(245, 245, 245, 0.3) !important;
+  -webkit-tap-highlight-color: rgba(250, 250, 250, 0.5) !important;
 }
 
 /* Ensure no yellow anywhere */
@@ -15,60 +15,68 @@ select:focus {
   outline-color: #14B8A6 !important;
 }
 
+/* Sidebar styling - clean white with subtle border */
 .sidebar {
   position: fixed;
   left: 0;
   top: 0;
   height: 100vh;
-  width: 240px;
+  width: 260px;
   background: #FFFFFF;
   border-right: 1px solid #E5E5E5;
   overflow-y: auto;
   z-index: 40;
 }
 
+/* Main content */
 .main-content {
-  margin-left: 240px;
+  margin-left: 260px;
   min-height: 100vh;
+  background-color: #FAFAFA;
 }
 
+/* Header styling */
 .header {
   position: sticky;
   top: 0;
   background: white;
-  border-bottom: 1px solid #D4D4D4;
+  border-bottom: 1px solid #E5E5E5;
   z-index: 30;
 }
 
+/* Navigation items */
 .nav-item {
   transition: all 200ms ease-out;
 }
 
 .nav-item:hover {
-  background-color: #F5F5F5;
+  background-color: #FAFAFA;
 }
 
 .nav-item.active {
-  background-color: #CCFBF1;
+  background-color: #F0FDFA;
   border-left: 3px solid #14B8A6;
 }
 
+/* Card hover effect */
 .card-hover {
   transition: all 200ms ease-out;
 }
 
 .card-hover:hover {
-  border-color: #A3A3A3;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
+/* Table row hover */
 .table-row {
   transition: background-color 200ms ease-out;
 }
 
 .table-row:hover {
-  background-color: rgba(245, 245, 245, 0.5);
+  background-color: #FAFAFA;
 }
 
+/* Status badges - clean white smoky theme */
 .status-badge {
   display: inline-flex;
   align-items: center;
@@ -88,17 +96,17 @@ select:focus {
 .status-pending {
   background-color: #FAFAFA;
   color: #525252;
-  border-color: #D4D4D4;
+  border-color: #E5E5E5;
 }
 
 .status-rejected {
-  background-color: #F5F5F5;
+  background-color: #FAFAFA;
   color: #171717;
-  border-color: #A3A3A3;
+  border-color: #D4D4D4;
 }
 
 .status-created {
-  background-color: #CCFBF1;
+  background-color: #F0FDFA;
   color: #134E4A;
   border-color: #5EEAD4;
 }
