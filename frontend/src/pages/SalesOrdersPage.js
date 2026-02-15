@@ -82,13 +82,9 @@ export const SalesOrdersPage = () => {
   };
 
   return (
-    <Layout>
+    <Layout pageTitle="Sales Orders" pageDescription="Manage export sales to agencies">
       <div data-testid="sales-orders-page">
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-black text-neutral-900 tracking-tight">Sales Orders</h1>
-            <p className="text-neutral-600 mt-1">Manage export sales to agencies</p>
-          </div>
+        <div className="mb-8 flex items-center justify-end">
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button data-testid="create-sales-order-button">

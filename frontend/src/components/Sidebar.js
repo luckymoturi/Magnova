@@ -66,13 +66,13 @@ export const Sidebar = () => {
                 key={item.path}
                 to={item.path}
                 data-testid={`nav-${item.label.toLowerCase().replace(' ', '-')}`}
-                className={`nav-item flex items-center px-5 py-3.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                className={`nav-item flex items-center px-5 py-3.5 rounded-lg text-lg font-bold transition-all duration-200 ${
                   isActive
                     ? 'active text-teal-700 bg-teal-50 border-l-4 border-teal-600'
                     : 'text-neutral-700 hover:text-neutral-900 hover:bg-neutral-50'
                 }`}
               >
-                <Icon className="w-5 h-5 mr-4" strokeWidth={2.5} />
+                <Icon className="w-6 h-6 mr-4" strokeWidth={2.5} />
                 {item.label}
               </Link>
             );
@@ -84,9 +84,9 @@ export const Sidebar = () => {
         <button
           onClick={handleLogout}
           data-testid="logout-button"
-          className="flex items-center w-full px-5 py-3.5 text-sm font-semibold text-neutral-700 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 border border-transparent hover:border-red-200"
+          className="flex items-center w-full px-5 py-3.5 text-lg font-bold text-neutral-700 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 border border-transparent hover:border-red-200"
         >
-          <LogOut className="w-5 h-5 mr-4" strokeWidth={2.5} />
+          <LogOut className="w-6 h-6 mr-4" strokeWidth={2.5} />
           Logout
         </button>
       </div>

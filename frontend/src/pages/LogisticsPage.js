@@ -344,7 +344,7 @@ export const LogisticsPage = () => {
   const allLocations = getAllLocations();
 
   return (
-    <Layout>
+    <Layout pageTitle="Logistics & Shipments" pageDescription="Track shipments and e-way bills">
       <div data-testid="logistics-page">
         {/* Logistics Notifications Banner - Procurement Complete, Ready for Shipment */}
         {pendingLogistics.length > 0 && (
@@ -402,11 +402,7 @@ export const LogisticsPage = () => {
         )}
 
         <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-2xl font-black text-neutral-900 tracking-tight">Logistics & Shipments</h1>
-              <p className="text-neutral-600 mt-1">Track shipments and e-way bills</p>
-            </div>
+          <div className="flex items-center justify-end mb-4">
           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
             <DialogTrigger asChild>
               <Button data-testid="create-shipment-button" className="bg-teal-600 hover:bg-teal-700 text-white">
@@ -598,13 +594,13 @@ export const LogisticsPage = () => {
             </DialogContent>
           </Dialog>
           </div>
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400" />
+          <div className="relative max-w-xl">
+            <Search className="absolute left-3 top-2.5 w-4 h-4 text-neutral-400 pointer-events-none z-10" />
             <Input
               placeholder="Search by PO, Transporter, Vehicle, Location, Brand, Model, Status..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-white text-sm placeholder:text-sm"
+              className="pl-10 w-full"
               data-testid="search-input"
             />
           </div>

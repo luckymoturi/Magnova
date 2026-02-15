@@ -109,17 +109,10 @@ export const DashboardPage = () => {
   ];
 
   return (
-    <Layout>
+    <Layout pageTitle="Dashboard" pageDescription={`Welcome back, ${user?.name}`}>
       <div data-testid="dashboard-page" className="space-y-8">
         {/* Header Section - Enhanced */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-black text-neutral-900 tracking-tight">Dashboard</h1>
-            <p className="text-neutral-600 mt-1.5 flex items-center gap-2">
-              <span>Welcome back,</span>
-              <span className="font-semibold text-teal-600">{user?.name}</span>
-            </p>
-          </div>
+        <div className="flex items-center justify-end">
           <div className="flex items-center gap-4">
             {lastUpdated && (
               <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-neutral-200 shadow-sm">

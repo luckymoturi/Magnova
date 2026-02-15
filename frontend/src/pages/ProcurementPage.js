@@ -207,7 +207,7 @@ export const ProcurementPage = () => {
   };
 
   return (
-    <Layout>
+    <Layout pageTitle="Procurement" pageDescription="Record device procurement with IMEI tracking">
       <div data-testid="procurement-page">
         {/* Procurement Notifications Banner - Payment Complete, Ready for Procurement */}
         {pendingProcurements.length > 0 && (
@@ -263,11 +263,7 @@ export const ProcurementPage = () => {
           </div>
         )}
 
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-black text-neutral-900 tracking-tight ">Procurement</h1>
-            <p className="text-neutral-600 mt-1">Record device procurement with IMEI tracking</p>
-          </div>
+        <div className="mb-8 flex items-center justify-end">
           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
             <DialogTrigger asChild>
               <Button data-testid="create-procurement-button" className="bg-teal-600 hover:bg-teal-700 text-white">

@@ -161,23 +161,23 @@ select:focus {
 /* Responsive adjustments for smaller screens */
 @media (max-width: 1024px) {
   .sidebar {
+    width: 240px;
+  }
+
+  .main-content {
+    margin-left: 240px;
+    width: calc(100% - 240px);
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
     width: 220px;
   }
 
   .main-content {
     margin-left: 220px;
     width: calc(100% - 220px);
-  }
-}
-
-@media (max-width: 768px) {
-  .sidebar {
-    width: 200px;
-  }
-
-  .main-content {
-    margin-left: 200px;
-    width: calc(100% - 200px);
   }
 }
 

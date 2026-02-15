@@ -215,7 +215,7 @@ export const InvoicesPage = () => {
   };
 
   return (
-    <Layout>
+    <Layout pageTitle="Invoices" pageDescription="Manage store invoices and billing">
       <div data-testid="invoices-page">
         {/* Invoice Notifications Banner - Inventory Complete, Ready for Invoice */}
         {pendingInvoices.length > 0 && (
@@ -272,11 +272,7 @@ export const InvoicesPage = () => {
           </div>
         )}
 
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-black text-neutral-900 tracking-tight">Invoices</h1>
-            <p className="text-neutral-600 mt-1">Manage store invoices and billing</p>
-          </div>
+        <div className="mb-8 flex items-center justify-end">
           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
             <DialogTrigger asChild>
               <Button data-testid="create-invoice-button" className="bg-teal-600 hover:bg-neutral-700 text-white">

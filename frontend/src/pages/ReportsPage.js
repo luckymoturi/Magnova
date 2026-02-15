@@ -288,13 +288,9 @@ export const ReportsPage = () => {
   };
 
   return (
-    <Layout>
+    <Layout pageTitle="Master Report" pageDescription="Complete view of all linked data - PO, Finance, Logistics, Stores">
       <div data-testid="reports-page">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-black text-neutral-900 tracking-tight">Master Report</h1>
-            <p className="text-neutral-600 mt-1">Complete view of all linked data - PO, Finance, Logistics, Stores</p>
-          </div>
+        <div className="mb-6 flex items-center justify-end">
           <div className="flex gap-2">
             <Button onClick={fetchMasterReport} variant="outline" className="border-neutral-900 text-neutral-900">
               <RefreshCw className="w-4 h-4 mr-2" />
@@ -341,23 +337,25 @@ export const ReportsPage = () => {
 
         {/* Filters */}
         <div className="mb-4 flex gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400" />
+          <div className="flex-1 relative max-w-xl">
+            <Search className="absolute left-3 top-2.5 w-4 h-4 text-neutral-400 pointer-events-none z-10" />
             <Input
               placeholder="Search by PO, Vendor, Brand, Model, IMEI, Location..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-white"
+              className="pl-10"
             />
           </div>
           <Select value={poFilter} onValueChange={setPOFilter}>
-            <SelectTrigger className="w-64 bg-white">
+            <SelectTrigger className="w-72 bg-white">
               <SelectValue placeholder="Filter by PO" />
             </SelectTrigger>
             <SelectContent className="bg-white max-h-60">
               <SelectItem value="all">All Purchase Orders</SelectItem>
-              {uniquePOs.map(po => (
-                <SelectItem key={po} value={po}>{po}</SelectItem>
+              {uniquePOs.map((po) => (
+                <SelectItem key={po} value={po}>
+                  {po}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>

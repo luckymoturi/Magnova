@@ -5,13 +5,8 @@ import { Users } from 'lucide-react';
 
 export const UsersPage = () => {
   return (
-    <Layout>
+    <Layout pageTitle="User Management" pageDescription="Manage system users and roles">
       <div data-testid="users-page">
-        <div className="mb-8">
-          <h1 className="text-2xl font-black text-neutral-900 tracking-tight">User Management</h1>
-          <p className="text-neutral-600 mt-1">Manage system users and roles</p>
-        </div>
-
         <Card className="shadow-sm bg-neutral-50">
           <CardHeader>
             <CardTitle className="text-lg font-bold flex items-center gap-2">

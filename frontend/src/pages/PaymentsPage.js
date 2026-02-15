@@ -291,7 +291,7 @@ export const PaymentsPage = () => {
   };
 
   return (
-    <Layout>
+    <Layout pageTitle="Payments" pageDescription="Track internal and external payment transactions (Admin Only)">
       <div data-testid="payments-page">
         {/* Internal Payment Notifications Banner */}
         {pendingInternalPayments.length > 0 && (
@@ -402,11 +402,7 @@ export const PaymentsPage = () => {
         )}
 
         <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-2xl font-black text-neutral-900 tracking-tight">Payments</h1>
-              <p className="text-neutral-600 mt-1">Track internal and external payment transactions (Admin Only)</p>
-            </div>
+          <div className="flex items-center justify-end mb-4">
           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForms(); }}>
             <DialogTrigger asChild>
               <Button data-testid="create-payment-button" className="bg-teal-600 hover:bg-teal-700 text-white">
@@ -781,13 +777,13 @@ export const PaymentsPage = () => {
               </DialogContent>
             </Dialog>
           </div>
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400" />
+          <div className="relative max-w-xl">
+            <Search className="absolute left-3 top-2.5 w-4 h-4 text-neutral-400 pointer-events-none z-10" />
             <Input
               placeholder="Search by PO, Payee, Transaction/UTR, Bank..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-white text-sm placeholder:text-sm"
+              className="pl-10 w-full"
               data-testid="search-input"
             />
           </div>

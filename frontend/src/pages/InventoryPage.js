@@ -436,7 +436,7 @@ export const InventoryPage = () => {
   const chartData = useMemo(() => buildChartData(filteredInventory), [filteredInventory]);
 
   return (
-    <Layout>
+    <Layout pageTitle="IMEI Inventory" pageDescription="Track device inventory with IMEI-level visibility">
       <div data-testid="inventory-page">
         {/* Inventory Notifications Banner - Shipment Complete, Ready for Inventory */}
         {pendingInventory.length > 0 && (
@@ -493,37 +493,32 @@ export const InventoryPage = () => {
           </div>
         )}
 
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-black text-neutral-900 tracking-tight">IMEI Inventory</h1>
-            <p className="text-neutral-600 mt-1">Track device inventory with IMEI-level visibility</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              className="border-teal-200 text-teal-700 hover:bg-teal-50"
-              onClick={() => setShowDashboard((prev) => !prev)}
-              data-testid="toggle-dashboard-button"
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              {showDashboard ? 'Hide Dashboard' : 'Show Dashboard'}
-            </Button>
-            <Button
-              variant="outline"
-              className="border-teal-200 text-teal-700 hover:bg-teal-50"
-              onClick={() => setShowCharts((prev) => !prev)}
-              data-testid="toggle-charts-button"
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              {showCharts ? 'Hide Charts' : 'Show Charts'}
-            </Button>
-            <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
-              <DialogTrigger asChild>
-                <Button data-testid="scan-imei-button" className="bg-teal-600 hover:bg-teal-700 text-white">
-                  <Scan className="w-4 h-4 mr-2" />
-                  Scan IMEI
-                </Button>
-              </DialogTrigger>
+        <div className="flex items-center justify-end gap-3 mb-6">
+          <Button
+            variant="outline"
+            className="border-teal-200 text-teal-700 hover:bg-teal-50"
+            onClick={() => setShowDashboard((prev) => !prev)}
+            data-testid="toggle-dashboard-button"
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            {showDashboard ? 'Hide Dashboard' : 'Show Dashboard'}
+          </Button>
+          <Button
+            variant="outline"
+            className="border-teal-200 text-teal-700 hover:bg-teal-50"
+            onClick={() => setShowCharts((prev) => !prev)}
+            data-testid="toggle-charts-button"
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            {showCharts ? 'Hide Charts' : 'Show Charts'}
+          </Button>
+          <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
+            <DialogTrigger asChild>
+              <Button data-testid="scan-imei-button" className="bg-teal-600 hover:bg-teal-700 text-white">
+                <Scan className="w-4 h-4 mr-2" />
+                Scan IMEI
+              </Button>
+            </DialogTrigger>
             <DialogContent className="bg-white max-w-lg">
               <DialogHeader>
                 <DialogTitle className="text-teal-600">Scan IMEI</DialogTitle>
@@ -764,7 +759,6 @@ export const InventoryPage = () => {
               </form>
             </DialogContent>
             </Dialog>
-          </div>
         </div>
 
         {showDashboard && (
@@ -1172,18 +1166,18 @@ export const InventoryPage = () => {
         )}
 
         <div className="mb-6 flex gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400" />
+          <div className="flex-1 relative max-w-xl">
+            <Search className="absolute left-3 top-2.5 w-4 h-4 text-neutral-400 pointer-events-none z-10" />
             <Input
               placeholder="Search by IMEI, model or brand..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-white"
+              className="pl-10 w-full"
               data-testid="inventory-search"
             />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-48 bg-white" data-testid="status-filter">
+            <SelectTrigger className="w-56 bg-white" data-testid="status-filter">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-white">

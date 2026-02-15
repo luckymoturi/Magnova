@@ -184,13 +184,9 @@ export const PurchaseOrdersPage = () => {
   const canCreatePO = user?.organization === 'Magnova' && (user?.role === 'Purchase' || user?.role === 'Admin');
 
   return (
-    <Layout>
+    <Layout pageTitle="Purchase Orders" pageDescription="Manage procurement requests">
       <div data-testid="purchase-orders-page">
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-black text-neutral-900 tracking-tight">Purchase Orders</h1>
-            <p className="text-neutral-600 mt-1">Manage procurement requests</p>
-          </div>
+        <div className="mb-8 flex items-center justify-end">
           {canCreatePO && (
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
@@ -266,13 +262,13 @@ export const PurchaseOrdersPage = () => {
         </div>
 
         <div className="mb-6">
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400" />
+          <div className="relative max-w-xl">
+            <Search className="absolute left-3 top-2.5 w-4 h-4 text-neutral-400 pointer-events-none z-10" />
             <Input
               placeholder="Search by PO Number, Office, Vendor, Location, Brand, Model..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-white text-sm placeholder:text-sm"
+              className="pl-10 w-full"
               data-testid="search-input"
             />
           </div>
