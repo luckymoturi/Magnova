@@ -21,7 +21,7 @@ select:focus {
   left: 0;
   top: 0;
   height: 100vh;
-  width: 280px;
+  width: 260px;
   background: #FFFFFF;
   border-right: 1px solid #E5E5E5;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.02);
@@ -31,10 +31,10 @@ select:focus {
 
 /* Main content */
 .main-content {
-  margin-left: 280px;
+  margin-left: 260px;
   min-height: 100vh;
   background-color: #FAFAFA;
-  width: calc(100% - 280px);
+  width: calc(100% - 260px);
 }
 
 /* Header styling - full width aligned with content */

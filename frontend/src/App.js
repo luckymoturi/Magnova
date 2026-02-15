@@ -15,6 +15,7 @@ import { InvoicesPage } from './pages/InvoicesPage';
 import { SalesOrdersPage } from './pages/SalesOrdersPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { UsersPage } from './pages/UsersPage';
+import { MaintenancePage } from './pages/MaintenancePage';
 import './App.css';
 
 const ProtectedRoute = ({ children }) => {
@@ -123,6 +124,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/maintenance" element={<MaintenancePage />} />
           <Route path="/" element={<Navigate to="/dashboard" />} />
         </Routes>
       </BrowserRouter>
