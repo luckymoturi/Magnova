@@ -190,13 +190,13 @@ export const PurchaseOrdersPage = () => {
           {canCreatePO && (
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
-                <Button data-testid="create-po-button" className="bg-teal-600 hover:bg-teal-700 text-white">
+                <Button data-testid="create-po-button" className="bg-gray-900 hover:bg-gray-800 text-white">
                   <Plus className="w-4 h-4 mr-2" />Create Purchase Order
                 </Button>
               </DialogTrigger>
               <DialogContent className="bg-white max-w-6xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle className="text-teal-600">Create Purchase Order</DialogTitle>
+                  <DialogTitle className="text-neutral-600">Create Purchase Order</DialogTitle>
                   <DialogDescription className="text-neutral-600">Nova to Magnova PO - Add line items</DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleCreate} className="space-y-6" data-testid="create-po-form">
@@ -251,10 +251,10 @@ export const PurchaseOrdersPage = () => {
                       </table>
                     </div>
                   </div>
-                  <Button type="button" variant="outline" onClick={addLineItem} className="w-full border-teal-600 text-teal-600 hover:bg-neutral-100">
+                  <Button type="button" variant="outline" onClick={addLineItem} className="w-full border-gray-900 text-neutral-600 hover:bg-neutral-100">
                     <Plus className="w-4 h-4 mr-2" />Add Another Item
                   </Button>
-                  <Button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white" data-testid="po-submit-button">Create Purchase Order</Button>
+                  <Button type="submit" className="w-full bg-gray-900 hover:bg-gray-800 text-white" data-testid="po-submit-button">Create Purchase Order</Button>
                 </form>
               </DialogContent>
             </Dialog>
@@ -278,7 +278,7 @@ export const PurchaseOrdersPage = () => {
           <div className="overflow-x-auto">
             <table className="w-full" data-testid="po-table">
               <thead>
-                <tr className="bg-teal-600 text-white">
+                <tr className="text-gray-900" style={{ backgroundColor: '#EAEFEF' }}>
                   <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">SL No</th>
                   <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">PO_ID</th>
                   <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">P.O Date</th>
@@ -303,7 +303,7 @@ export const PurchaseOrdersPage = () => {
                 ) : filteredPos.flatMap((po, poIndex) => {
                   const items = po.items && po.items.length > 0 ? po.items : [{}];
                   return items.map((item, itemIndex) => (
-                    <tr key={`${po.po_number}-${itemIndex}`} className={`border-b border-neutral-100 ${itemIndex === 0 ? 'bg-neutral-50' : 'bg-white'} hover:bg-teal-50`} data-testid="po-row">
+                    <tr key={`${po.po_number}-${itemIndex}`} className={`border-b border-neutral-100 ${itemIndex === 0 ? 'bg-neutral-50' : 'bg-white'} hover:bg-gray-100`} data-testid="po-row">
                       <td className="px-3 py-2 text-sm text-neutral-900">{item.sl_no || itemIndex + 1}</td>
                       <td className="px-3 py-2 text-sm font-mono font-medium text-neutral-900">{itemIndex === 0 ? po.po_number : ''}</td>
                       <td className="px-3 py-2 text-sm text-neutral-900">{itemIndex === 0 ? (po.po_date ? new Date(po.po_date).toLocaleDateString() : '-') : ''}</td>
@@ -341,7 +341,7 @@ export const PurchaseOrdersPage = () => {
         <Dialog open={approvalDialog.open} onOpenChange={(open) => setApprovalDialog({ open, po: approvalDialog.po })}>
           <DialogContent className="bg-white">
             <DialogHeader>
-              <DialogTitle className="text-teal-600">Review Purchase Order</DialogTitle>
+              <DialogTitle className="text-neutral-600">Review Purchase Order</DialogTitle>
               <DialogDescription>PO: <span className="font-mono font-bold">{approvalDialog.po?.po_number}</span></DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -356,7 +356,7 @@ export const PurchaseOrdersPage = () => {
                 <Textarea value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)} rows={3} className="bg-white text-neutral-900" data-testid="rejection-reason-input" />
               </div>
               <div className="flex gap-2">
-                <Button onClick={() => handleApproval(approvalDialog.po?.po_number, 'approve')} className="flex-1 bg-teal-600 hover:bg-teal-700 text-white" data-testid="approve-button"><CheckCircle className="w-4 h-4 mr-2" />Approve</Button>
+                <Button onClick={() => handleApproval(approvalDialog.po?.po_number, 'approve')} className="flex-1 bg-gray-900 hover:bg-gray-800 text-white" data-testid="approve-button"><CheckCircle className="w-4 h-4 mr-2" />Approve</Button>
                 <Button onClick={() => handleApproval(approvalDialog.po?.po_number, 'reject')} variant="destructive" className="flex-1" data-testid="reject-button"><XCircle className="w-4 h-4 mr-2" />Reject</Button>
               </div>
             </div>
@@ -366,7 +366,7 @@ export const PurchaseOrdersPage = () => {
         <Dialog open={viewDialog.open} onOpenChange={(open) => setViewDialog({ open, po: viewDialog.po })}>
           <DialogContent className="bg-white max-w-5xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-teal-600">Purchase Order Details</DialogTitle>
+              <DialogTitle className="text-neutral-600">Purchase Order Details</DialogTitle>
               <DialogDescription>PO: <span className="font-mono font-bold text-neutral-900">{viewDialog.po?.po_number}</span></DialogDescription>
             </DialogHeader>
             <div className="space-y-6">
@@ -379,7 +379,7 @@ export const PurchaseOrdersPage = () => {
               {viewDialog.po?.items?.length > 0 ? (
                 <div className="border border-neutral-200 rounded-lg overflow-hidden">
                   <table className="w-full text-sm">
-                    <thead className="bg-teal-600 text-white">
+                    <thead className="text-gray-900" style={{ backgroundColor: '#EAEFEF' }}>
                       <tr>
                         <th className="px-3 py-2 text-left text-xs font-medium">SL</th>
                         <th className="px-3 py-2 text-left text-xs font-medium">Vendor</th>
@@ -412,7 +412,7 @@ export const PurchaseOrdersPage = () => {
                         <td colSpan="6" className="px-3 py-3 text-right font-medium text-neutral-900">Total:</td>
                         <td className="px-3 py-3 font-bold text-neutral-900">{viewDialog.po.total_quantity}</td>
                         <td></td>
-                        <td className="px-3 py-3 font-bold text-teal-600">₹{(viewDialog.po.total_value || 0).toFixed(2)}</td>
+                        <td className="px-3 py-3 font-bold text-neutral-600">₹{(viewDialog.po.total_value || 0).toFixed(2)}</td>
                       </tr>
                     </tfoot>
                   </table>

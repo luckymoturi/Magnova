@@ -405,14 +405,14 @@ export const LogisticsPage = () => {
           <div className="flex items-center justify-end mb-4">
           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
             <DialogTrigger asChild>
-              <Button data-testid="create-shipment-button" className="bg-teal-600 hover:bg-teal-700 text-white">
+              <Button data-testid="create-shipment-button" className="bg-gray-900 hover:bg-gray-800 text-white">
                 <Plus className="w-4 h-4 mr-2" />
                 Create Shipment
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-3xl bg-white">
               <DialogHeader>
-                <DialogTitle className="text-teal-600">Create Shipment</DialogTitle>
+                <DialogTitle className="text-neutral-600">Create Shipment</DialogTitle>
                 <DialogDescription className="text-neutral-600">Record new shipment details - Select PO to auto-populate</DialogDescription>
               </DialogHeader>
               <form onSubmit={handleCreate} className="space-y-4" data-testid="shipment-form">
@@ -469,7 +469,7 @@ export const LogisticsPage = () => {
                         </div>
                         <div>
                           <span className="text-neutral-500">Available:</span>
-                          <span className="ml-2 font-bold text-teal-600">{availableQty.available}</span>
+                          <span className="ml-2 font-bold text-neutral-600">{availableQty.available}</span>
                         </div>
                       </div>
                     </div>
@@ -585,7 +585,7 @@ export const LogisticsPage = () => {
                         />
                       </div>
                     </div>
-                    <Button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white" data-testid="submit-shipment">
+                    <Button type="submit" className="w-full bg-gray-900 hover:bg-gray-800 text-white" data-testid="submit-shipment">
                       Create Shipment
                     </Button>
                   </>
@@ -610,7 +610,7 @@ export const LogisticsPage = () => {
           <div className="overflow-x-auto">
             <table className="w-full" data-testid="shipments-table">
               <thead>
-                <tr className="bg-teal-600 text-white">
+                <tr className="text-gray-900" style={{ backgroundColor: '#EAEFEF' }}>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">PO Number</th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Vendor</th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Brand/Model</th>
@@ -678,7 +678,7 @@ export const LogisticsPage = () => {
         <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
           <DialogContent className="bg-white max-w-md">
             <DialogHeader>
-              <DialogTitle className="text-teal-600">Update Shipment Status</DialogTitle>
+              <DialogTitle className="text-neutral-600">Update Shipment Status</DialogTitle>
               <DialogDescription className="text-neutral-600">
                 PO: {selectedShipment?.po_number} | {selectedShipment?.vendor}
               </DialogDescription>
@@ -697,7 +697,7 @@ export const LogisticsPage = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <Button onClick={handleStatusUpdate} className="w-full bg-teal-600 hover:bg-teal-700 text-white">
+              <Button onClick={handleStatusUpdate} className="w-full bg-gray-900 hover:bg-gray-800 text-white">
                 Update Status
               </Button>
             </div>

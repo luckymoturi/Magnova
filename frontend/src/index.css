@@ -225,9 +225,21 @@ h6 {
     }
 
     /* Override any yellow/cyan colors in Radix UI components */
-    [data-state="open"],
     [data-state="checked"],
     [data-highlighted] {
+        background-color: #F0FDFA !important;
+        color: #115E59 !important;
+    }
+
+    /* For open state, be more specific to avoid affecting dialog overlay */
+    [data-radix-select-trigger][data-state="open"],
+    [data-radix-select-value][data-state="open"],
+    [role="combobox"][data-state="open"],
+    [role="listbox"][data-state="open"],
+    [role="option"][data-state="open"],
+    [role="menuitem"][data-state="open"],
+    [role="menu"][data-state="open"],
+    [data-radix-collection-item][data-state="open"] {
         background-color: #F0FDFA !important;
         color: #115E59 !important;
     }

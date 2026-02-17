@@ -300,7 +300,7 @@ export const ReportsPage = () => {
               <Download className="w-4 h-4 mr-2" />
               CSV
             </Button>
-            <Button onClick={handleExportExcel} className="bg-teal-600 hover:bg-teal-700 text-white">
+            <Button onClick={handleExportExcel} className="bg-gray-900 hover:bg-gray-800 text-white">
               <FileSpreadsheet className="w-4 h-4 mr-2" />
               Export Excel
             </Button>
@@ -323,7 +323,7 @@ export const ReportsPage = () => {
           </div>
           <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-sm">
             <p className="text-xs text-neutral-500 mb-1">Available</p>
-            <p className="text-2xl font-bold text-teal-600">{stats?.available_inventory || 0}</p>
+            <p className="text-2xl font-bold text-neutral-600">{stats?.available_inventory || 0}</p>
           </div>
           <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-sm">
             <p className="text-xs text-neutral-500 mb-1">Sales Orders</p>
@@ -331,7 +331,7 @@ export const ReportsPage = () => {
           </div>
           <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-sm">
             <p className="text-xs text-neutral-500 mb-1">Payments</p>
-            <p className="text-2xl font-bold text-teal-600">{formatCurrency(stats?.total_payment_amount)}</p>
+            <p className="text-2xl font-bold text-neutral-600">{formatCurrency(stats?.total_payment_amount)}</p>
           </div>
         </div>
 
