@@ -70,7 +70,7 @@ return (
                             </button>
                         </div>
                         {subscribed && (
-                            <p className="mt-3 text-sm text-teal-600 font-medium">
+                            <p className="mt-3 text-sm text-neutral-600 font-medium">
                                 ✓ Thank you! We'll notify you when we're back.
                             </p>
                         )}

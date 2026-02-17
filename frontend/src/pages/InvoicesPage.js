@@ -221,7 +221,7 @@ export const InvoicesPage = () => {
         {pendingInvoices.length > 0 && (
           <div className="mb-6 bg-gradient-to-r from-teal-50 to-teal-50 border border-teal-200 rounded-lg p-4" data-testid="invoice-notifications">
             <div className="flex items-center gap-2 mb-3">
-              <Bell className="w-5 h-5 text-teal-600 animate-pulse" />
+              <Bell className="w-5 h-5 text-neutral-600 animate-pulse" />
               <h3 className="font-semibold text-teal-800">Inventory Updated - Ready for Invoice</h3>
               <span className="bg-teal-500 text-white text-xs px-2 py-0.5 rounded-full">{pendingInvoices.length}</span>
             </div>
@@ -229,13 +229,13 @@ export const InvoicesPage = () => {
               {pendingInvoices.map((notif, index) => (
                 <div 
                   key={`invoice-${notif.po_number}-${notif.imei}-${index}`}
-                  className="flex items-center justify-between bg-white rounded-lg p-3 border border-teal-100 hover:border-teal-300 transition-colors cursor-pointer"
+                  className="flex items-center justify-between bg-white rounded-lg p-3 border border-gray-100 hover:border-gray-300 transition-colors cursor-pointer"
                   onClick={() => handleNotificationClick(notif)}
                   data-testid="invoice-notification-item"
                 >
                   <div className="flex items-center gap-4">
                     <div className="bg-teal-100 p-2 rounded-lg">
-                      <Receipt className="w-5 h-5 text-teal-600" />
+                      <Receipt className="w-5 h-5 text-neutral-600" />
                     </div>
                     <div>
                       <div className="font-medium text-neutral-900">
@@ -251,7 +251,7 @@ export const InvoicesPage = () => {
                   <div className="flex items-center gap-2">
                     <Button
                       size="sm"
-                      className="bg-teal-600 hover:bg-teal-700 text-white"
+                      className="bg-gray-900 hover:bg-gray-800 text-white"
                       onClick={(e) => { e.stopPropagation(); handleNotificationClick(notif); }}
                     >
                       <FileText className="w-4 h-4 mr-1" />
@@ -282,7 +282,7 @@ export const InvoicesPage = () => {
             </DialogTrigger>
             <DialogContent className="max-w-2xl bg-white">
               <DialogHeader>
-                <DialogTitle className="text-teal-600">Create Invoice</DialogTitle>
+                <DialogTitle className="text-neutral-600">Create Invoice</DialogTitle>
                 <DialogDescription className="text-neutral-600">Generate new store invoice</DialogDescription>
               </DialogHeader>
               <form onSubmit={handleCreate} className="space-y-4" data-testid="invoice-form">
@@ -394,14 +394,14 @@ export const InvoicesPage = () => {
                         {/* GST Amount */}
                         <div className="bg-white p-3 rounded-lg border border-neutral-200">
                           <Label className="text-neutral-500 text-xs">GST Amount ({formData.gst_percentage}%)</Label>
-                          <p className="text-lg font-bold text-teal-600" data-testid="gst-amount-display">
+                          <p className="text-lg font-bold text-neutral-600" data-testid="gst-amount-display">
                             + ₹{parseFloat(formData.gst_amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                           </p>
                         </div>
                         
                         {/* Total (Selling Price) */}
                         <div className="bg-teal-50 p-3 rounded-lg border border-teal-200">
-                          <Label className="text-teal-600 text-xs">Total (Incl. GST)</Label>
+                          <Label className="text-neutral-600 text-xs">Total (Incl. GST)</Label>
                           <p className="text-lg font-bold text-teal-700" data-testid="total-price-display">
                             ₹{parseFloat(formData.selling_price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                           </p>
@@ -447,7 +447,7 @@ export const InvoicesPage = () => {
           <div className="overflow-x-auto">
             <table className="w-full" data-testid="invoices-table">
               <thead>
-                <tr className="bg-teal-600 text-white">
+                <tr className="text-gray-900" style={{ backgroundColor: '#EAEFEF' }}>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Invoice No.</th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">From → To</th>
                   <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider">Base Price</th>
@@ -481,7 +481,7 @@ export const InvoicesPage = () => {
                       <td className="px-4 py-3 text-sm text-neutral-600">{invoice.from_organization} → {invoice.to_organization}</td>
                       <td className="px-4 py-3 text-sm text-right text-neutral-900">₹{invoice.amount?.toLocaleString()}</td>
                       <td className="px-4 py-3 text-sm text-right text-neutral-600">{invoice.gst_percentage || 18}%</td>
-                      <td className="px-4 py-3 text-sm text-right text-teal-600">₹{invoice.gst_amount?.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-sm text-right text-neutral-600">₹{invoice.gst_amount?.toLocaleString()}</td>
                       <td className="px-4 py-3 text-sm text-right font-bold text-teal-700">₹{invoice.total_amount?.toLocaleString()}</td>
                       <td className="px-4 py-3 text-sm text-neutral-600">{new Date(invoice.invoice_date).toLocaleDateString()}</td>
                       <td className="px-4 py-3 text-sm space-x-1">
@@ -541,7 +541,7 @@ export const InvoicesPage = () => {
                       <p className="text-neutral-500 text-sm">Phone: +91 98765 43210</p>
                     </div>
                     <div className="text-right">
-                      <h2 className="text-4xl font-black text-teal-600">INVOICE</h2>
+                      <h2 className="text-4xl font-black text-neutral-600">INVOICE</h2>
                       <p className="text-neutral-600 mt-2 font-mono text-lg">{selectedInvoice.invoice_number}</p>
                       <p className="text-neutral-500 text-sm mt-1">Date: {formatDate(selectedInvoice.invoice_date)}</p>
                     </div>
@@ -550,12 +550,12 @@ export const InvoicesPage = () => {
                   {/* Bill To */}
                   <div className="grid grid-cols-2 gap-8 mb-8">
                     <div>
-                      <h3 className="text-sm font-bold text-teal-600 uppercase tracking-wider border-b border-neutral-200 pb-2 mb-3">Bill To</h3>
+                      <h3 className="text-sm font-bold text-neutral-600 uppercase tracking-wider border-b border-neutral-200 pb-2 mb-3">Bill To</h3>
                       <p className="text-lg font-semibold text-neutral-900">{selectedInvoice.to_organization}</p>
                       <p className="text-neutral-600 text-sm mt-1">{selectedInvoice.billing_address || 'Address not provided'}</p>
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-teal-600 uppercase tracking-wider border-b border-neutral-200 pb-2 mb-3">Invoice Details</h3>
+                      <h3 className="text-sm font-bold text-neutral-600 uppercase tracking-wider border-b border-neutral-200 pb-2 mb-3">Invoice Details</h3>
                       <div className="space-y-1 text-sm">
                         <div className="flex justify-between">
                           <span className="text-neutral-500">Invoice No:</span>
@@ -576,7 +576,7 @@ export const InvoicesPage = () => {
                   {/* Items Table */}
                   <table className="w-full mb-6">
                     <thead>
-                      <tr className="bg-teal-600 text-white">
+                      <tr className="text-gray-900" style={{ backgroundColor: '#EAEFEF' }}>
                         <th className="px-4 py-3 text-left text-xs font-medium uppercase">S.No</th>
                         <th className="px-4 py-3 text-left text-xs font-medium uppercase">Description</th>
                         <th className="px-4 py-3 text-center text-xs font-medium uppercase">HSN</th>

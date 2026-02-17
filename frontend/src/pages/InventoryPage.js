@@ -514,14 +514,14 @@ export const InventoryPage = () => {
           </Button>
           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
             <DialogTrigger asChild>
-              <Button data-testid="scan-imei-button" className="bg-teal-600 hover:bg-teal-700 text-white">
+              <Button data-testid="scan-imei-button" className="bg-gray-900 hover:bg-gray-800 text-white">
                 <Scan className="w-4 h-4 mr-2" />
                 Scan IMEI
               </Button>
             </DialogTrigger>
             <DialogContent className="bg-white max-w-lg">
               <DialogHeader>
-                <DialogTitle className="text-teal-600">Scan IMEI</DialogTitle>
+                <DialogTitle className="text-neutral-600">Scan IMEI</DialogTitle>
                 <DialogDescription className="text-neutral-600">Enter IMEI to auto-populate details and update status</DialogDescription>
               </DialogHeader>
               <form onSubmit={handleScan} className="space-y-4" data-testid="scan-form">
@@ -572,12 +572,12 @@ export const InventoryPage = () => {
                               <p className="text-teal-700">
                                 <span className="font-medium">From Procurement:</span> {imeiLookup.brand} {imeiLookup.model}
                               </p>
-                              <p className="text-teal-600">
+                              <p className="text-neutral-600">
                                 <span className="font-medium">Vendor:</span> {imeiLookup.vendor} | 
                                 <span className="font-medium ml-2">PO:</span> {imeiLookup.po_number}
                               </p>
                               {imeiLookup.colour && (
-                                <p className="text-teal-600">
+                                <p className="text-neutral-600">
                                   <span className="font-medium">Colour:</span> {imeiLookup.colour}
                                 </p>
                               )}
@@ -732,7 +732,7 @@ export const InventoryPage = () => {
 
                 <Button 
                   type="submit" 
-                  className="w-full bg-teal-600 hover:bg-teal-700 text-white" 
+                  className="w-full bg-gray-900 hover:bg-gray-800 text-white" 
                   data-testid="submit-scan"
                   disabled={
                     !scanData.imei ||
@@ -767,7 +767,7 @@ export const InventoryPage = () => {
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-neutral-900">Inventory Dashboard</h2>
               <div className="flex items-center gap-3 text-sm">
-                <span className="font-semibold text-neutral-700">Total: <span className="text-teal-600">{filteredInventory.length}</span></span>
+                <span className="font-semibold text-neutral-700">Total: <span className="text-neutral-600">{filteredInventory.length}</span></span>
                 <span className="text-neutral-300">|</span>
                 <span className="font-semibold text-neutral-700">Locations: <span className="text-cyan-600">{inventoryStats.locationCount}</span></span>
               </div>
@@ -1198,7 +1198,7 @@ export const InventoryPage = () => {
           <div className="overflow-x-auto">
             <table className="w-full" data-testid="inventory-table">
               <thead>
-                <tr className="bg-teal-600 text-white">
+                <tr className="text-gray-900" style={{ backgroundColor: '#EAEFEF' }}>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">IMEI</th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Brand</th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Model</th>

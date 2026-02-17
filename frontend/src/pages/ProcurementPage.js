@@ -266,24 +266,24 @@ export const ProcurementPage = () => {
         <div className="mb-8 flex items-center justify-end">
           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
             <DialogTrigger asChild>
-              <Button data-testid="create-procurement-button" className="bg-teal-600 hover:bg-teal-700 text-white">
+              <Button data-testid="create-procurement-button" className="bg-gray-900 hover:bg-black text-white">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Procurement
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl bg-white">
+            <DialogContent className="max-w-2xl bg-white">
               <DialogHeader>
-                <DialogTitle className="text-teal-600">Add Procurement Record</DialogTitle>
-                <DialogDescription className="text-neutral-600">Record new device procurement - Select PO to auto-populate details</DialogDescription>
+                <DialogTitle className="text-gray-900">Add Procurement Record</DialogTitle>
+                <DialogDescription className="text-neutral-600">Record new device procurement. Select PO to auto-populate details.</DialogDescription>
               </DialogHeader>
-              <form onSubmit={handleCreate} className="space-y-4" data-testid="procurement-form">
+              <form onSubmit={handleCreate} className="space-y-3" data-testid="procurement-form">
                 {/* PO Selection */}
-                <div className="p-4 bg-neutral-50 rounded-lg border border-neutral-200">
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 bg-neutral-50 rounded-lg border border-neutral-200">
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-neutral-700 font-medium">PO Number *</Label>
+                      <Label className="text-neutral-700 font-medium text-xs">PO Number *</Label>
                       <Select value={formData.po_number} onValueChange={handlePOSelect} required>
-                        <SelectTrigger data-testid="po-select" className="bg-white">
+                        <SelectTrigger data-testid="po-select" className="bg-white h-8 text-sm">
                           <SelectValue placeholder="Select PO" />
                         </SelectTrigger>
                         <SelectContent className="bg-white max-h-60">
@@ -301,9 +301,9 @@ export const ProcurementPage = () => {
                     </div>
                     {poItems.length > 1 && (
                       <div>
-                        <Label className="text-neutral-700 font-medium">Select Line Item *</Label>
+                        <Label className="text-neutral-700 font-medium text-xs">Select Line Item *</Label>
                         <Select value={selectedItemIndex} onValueChange={handleItemSelect} required>
-                          <SelectTrigger className="bg-white">
+                          <SelectTrigger className="bg-white h-8 text-sm">
                             <SelectValue placeholder="Select item" />
                           </SelectTrigger>
                           <SelectContent className="bg-white max-h-60">
@@ -320,95 +320,95 @@ export const ProcurementPage = () => {
                 </div>
 
                 {/* Auto-populated Fields */}
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <Label className="text-neutral-700">Vendor Name</Label>
+                    <Label className="text-neutral-700 text-xs">Vendor Name</Label>
                     <Input
                       value={formData.vendor_name}
                       onChange={(e) => setFormData({ ...formData, vendor_name: e.target.value })}
                       required
-                      className="bg-neutral-100 text-neutral-900"
+                      className="bg-neutral-100 text-neutral-900 h-8 text-sm"
                       data-testid="vendor-input"
                       readOnly
                     />
                   </div>
                   <div>
-                    <Label className="text-neutral-700">Store Location</Label>
+                    <Label className="text-neutral-700 text-xs">Store Location</Label>
                     <Input
                       value={formData.store_location}
                       onChange={(e) => setFormData({ ...formData, store_location: e.target.value })}
                       required
-                      className="bg-neutral-100 text-neutral-900"
+                      className="bg-neutral-100 text-neutral-900 h-8 text-sm"
                       data-testid="location-input"
                       readOnly
                     />
                   </div>
                   <div>
-                    <Label className="text-neutral-700">Brand</Label>
+                    <Label className="text-neutral-700 text-xs">Brand</Label>
                     <Input
                       value={formData.brand}
                       onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
                       required
-                      className="bg-neutral-100 text-neutral-900"
+                      className="bg-neutral-100 text-neutral-900 h-8 text-sm"
                       readOnly
                     />
                   </div>
                   <div>
-                    <Label className="text-neutral-700">Device Model</Label>
+                    <Label className="text-neutral-700 text-xs">Device Model</Label>
                     <Input
                       value={formData.device_model}
                       onChange={(e) => setFormData({ ...formData, device_model: e.target.value })}
                       required
-                      className="bg-neutral-100 text-neutral-900"
+                      className="bg-neutral-100 text-neutral-900 h-8 text-sm"
                       data-testid="model-input"
                       readOnly
                     />
                   </div>
                   <div>
-                    <Label className="text-neutral-700">Storage</Label>
+                    <Label className="text-neutral-700 text-xs">Storage</Label>
                     <Input
                       value={formData.storage}
                       onChange={(e) => setFormData({ ...formData, storage: e.target.value })}
-                      className="bg-neutral-100 text-neutral-900"
+                      className="bg-neutral-100 text-neutral-900 h-8 text-sm"
                       readOnly
                     />
                   </div>
                   <div>
-                    <Label className="text-neutral-700">Colour</Label>
+                    <Label className="text-neutral-700 text-xs">Colour</Label>
                     <Input
                       value={formData.colour}
                       onChange={(e) => setFormData({ ...formData, colour: e.target.value })}
-                      className="bg-white text-neutral-900"
+                      className="bg-white text-neutral-900 h-8 text-sm"
                       placeholder="Enter colour"
                     />
                   </div>
                   <div>
-                    <Label className="text-neutral-700">PO Quantity</Label>
+                    <Label className="text-neutral-700 text-xs">PO Quantity</Label>
                     <Input
                       type="number"
                       value={formData.quantity}
                       onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                       required
-                      className="bg-neutral-100 text-neutral-900"
+                      className="bg-neutral-100 text-neutral-900 h-8 text-sm"
                       placeholder="Enter PO quantity"
                       min="1"
                       readOnly
                     />
                   </div>
                   <div>
-                    <Label className="text-neutral-700">Purchase Quantity *</Label>
+                    <Label className="text-neutral-700 text-xs">Purchase Quantity *</Label>
                     <Input
                       type="number"
                       value={formData.purchase_quantity}
                       onChange={(e) => setFormData({ ...formData, purchase_quantity: e.target.value })}
                       required
-                      className="bg-white text-neutral-900"
+                      className="bg-white text-neutral-900 h-8 text-sm"
                       placeholder="Enter purchase quantity"
                       min="1"
                     />
                   </div>
                   <div>
-                    <Label className="text-neutral-700">Purchase Price</Label>
+                    <Label className="text-neutral-700 text-xs">Purchase Price</Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -416,22 +416,22 @@ export const ProcurementPage = () => {
                       onChange={(e) => setFormData({ ...formData, purchase_price: e.target.value })}
                       required
                       data-testid="price-input"
-                      className="bg-white text-neutral-900"
+                      className="bg-white text-neutral-900 h-8 text-sm"
                       placeholder="Enter price"
                     />
                   </div>
                   <div>
-                    <Label className="text-neutral-700">Serial Number</Label>
+                    <Label className="text-neutral-700 text-xs">Serial Number</Label>
                     <Input
                       value={formData.serial_number}
                       onChange={(e) => setFormData({ ...formData, serial_number: e.target.value })}
                       data-testid="serial-input"
-                      className="font-mono bg-white text-neutral-900"
+                      className="font-mono bg-white text-neutral-900 h-8 text-sm"
                       placeholder="Enter serial number"
                     />
                   </div>
                 </div>
-                <Button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white" data-testid="submit-procurement">
+                <Button type="submit" className="w-full bg-gray-900 hover:bg-black text-white h-9 text-sm" data-testid="submit-procurement">
                   Add Procurement Record
                 </Button>
               </form>
@@ -474,7 +474,7 @@ export const ProcurementPage = () => {
           <div className="overflow-x-auto">
             <table className="w-full" data-testid="procurement-table">
               <thead>
-                <tr className="bg-teal-600 text-white">
+                <tr className="text-gray-900" style={{ backgroundColor: '#EAEFEF' }}>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">PO Number</th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Device Model</th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Vendor</th>
