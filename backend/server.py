@@ -14,6 +14,9 @@ import jwt
 from passlib.context import CryptContext
 import io
 import xlsxwriter
+import google.generativeai as genai
+import json
+import re
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -22,6 +25,9 @@ load_dotenv(ROOT_DIR / '.env')
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
+
+# Configure Gemini
+genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
 # Create indexes
 async def create_indexes():
@@ -307,6 +313,10 @@ class SalesOrderCreate(BaseModel):
     total_quantity: int
     total_amount: float
     imei_list: List[str]
+
+class ChatRequest(BaseModel):
+    message: str
+    history: Optional[List[Dict[str, str]]] = []
 
 class AuditLog(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -1566,6 +1576,88 @@ async def delete_sales_order(so_number: str, current_user: User = Depends(get_cu
     
     await create_audit_log("DELETE", "SalesOrder", so_number, current_user, {})
     return {"message": "Sales order deleted successfully"}
+
+# Chatbot Logic
+SYSTEM_PROMPT = """
+You are "Magnova AI", a professional assistant for the Magnova & Nova logistics system.
+You have access to a MongoDB database with these collections:
+- purchase_orders: {po_number, po_date, purchase_office, status, total_quantity, total_value, items: [{vendor, brand, model, qty, rate}], approval_status}
+- procurement: {po_number, vendor_name, imei, device_model, purchase_price, procurement_date}
+- imei_inventory: {imei, brand, model, status, current_location, organization, po_number}
+- logistics_shipments: {shipment_id, po_number, transporter_name, status, from_location, to_location, pickup_quantity}
+- payments: {po_number, payment_type, payee_name, amount, status, payment_date}
+- invoices: {invoice_number, po_number, total_amount, invoice_date}
+
+Step 1: Convert the user's question into a MongoDB query.
+Return ONLY a JSON object like this:
+{
+  "collection": "name", 
+  "query": {}, 
+  "type": "find" or "aggregate",
+  "explanation": "Briefly what you are looking for"
+}
+If the question is just a greeting or general talk, return:
+{"type": "chat", "response": "Your friendly response"}
+"""
+
+@api_router.post("/chat")
+async def handle_chat(request: ChatRequest, current_user: User = Depends(get_current_user)):
+    try:
+        model = genai.GenerativeModel('gemini-flash-latest')
+        
+        # Step 1: Query Generation
+        chat_prompt = f"{SYSTEM_PROMPT}\n\nUser: {request.message}"
+        response = model.generate_content(chat_prompt)
+        
+        if not response.text:
+             return {"response": "I received an empty response from the AI. Please try rephrasing."}
+
+        # Extract JSON (strip markdown code blocks if present)
+        text = response.text
+        text = re.sub(r'```json\s*', '', text)
+        text = re.sub(r'```\s*', '', text)
+        
+        json_match = re.search(r'\{.*\}', text, re.DOTALL)
+        if not json_match:
+            return {"response": text}
+            
+        try:
+            data = json.loads(json_match.group())
+        except json.JSONDecodeError:
+            return {"response": text}
+        
+        if data.get("type") == "chat":
+            return {"response": data.get("response")}
+            
+        # Step 2: DB Execution
+        collection = data.get("collection")
+        query = data.get("query", {})
+        query_type = data.get("type", "find")
+        
+        # Validate collection
+        existing_collections = await db.list_collection_names()
+        if not collection or collection not in existing_collections:
+             return {"response": f"I'm sorry, I couldn't find the relevant data in our {collection} records."}
+        
+        results = []
+        if query_type == "aggregate":
+            results = await db[collection].aggregate(query).to_list(10)
+        else:
+            # For find queries, ensure we don't return sensitive IDs
+            results = await db[collection].find(query, {"_id": 0, "password": 0}).limit(10).to_list(10)
+            
+        if not results:
+             return {"response": "I found no records matching your request."}
+
+        # Step 3: Humanize Results
+        humanize_prompt = f"User asked: {request.message}\nDatabase results: {json.dumps(results, default=str)}\n\nProvide a professional and helpful answer based on these results. Mention specific details from the data. If the data is a list of items, summarize them clearly."
+        human_response = model.generate_content(humanize_prompt)
+        
+        return {"response": human_response.text}
+        
+    except Exception as e:
+        logger.error(f"Chatbot error: {str(e)}", exc_info=True)
+        return {"response": "I'm sorry, I'm having trouble accessing the data right now. Please try again later."}
 
 app.include_router(api_router)
 
