@@ -1,9 +1,21 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Bell, Clock, Search, X } from 'lucide-react';
+import { useDataRefresh } from '../context/DataRefreshContext';
+import { useNavigate } from 'react-router-dom';
 
 export const Header = ({ pageTitle, pageDescription }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { 
+    allProcurements,
+    allInternalPayments,
+    allExternalPayments,
+    allLogisticsNotifications,
+    pendingInventory,
+    pendingInvoices,
+    dbNotifications
+  } = useDataRefresh();
   const [currentTime, setCurrentTime] = React.useState(new Date());
   const [showNotifications, setShowNotifications] = useState(false);
   const notifRef = useRef(null);
@@ -24,13 +36,97 @@ export const Header = ({ pageTitle, pageDescription }) => {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
-  const notifications = [
-    { id: 1, message: 'New PO #2024 needs approval', time: '2m ago', read: false },
-    { id: 2, message: 'Payment for PO #2018 processed', time: '1h ago', read: false },
-    { id: 3, message: 'Inventory stock updated', time: '3h ago', read: true },
-  ];
+  // Filter notifications based on user role to match their "category page"
+  const getRoleBasedNotifications = () => {
+    let all = [];
+    const role = user?.role;
+    const isAdmin = role === 'Admin';
+    
+    // Purchase Team / Procurement Page
+    if (isAdmin || role === 'Purchase') {
+      all = [...all, ...allProcurements.map(n => ({ 
+        id: `proc-${n.po_number}-${n.timestamp || 'derived'}`, 
+        message: `PO ${n.po_number} is ready for procurement`, 
+        time: 'Pending Procurement', 
+        type: 'procurement' 
+      }))];
+    }
+    
+    // Internal Payments Page
+    if (isAdmin || role === 'InternalPayments') {
+      all = [...all, ...allInternalPayments.map(n => ({ 
+        id: `int-${n.po_number}-${n.timestamp || 'derived'}`, 
+        message: `PO ${n.po_number} requires Internal Payment`, 
+        time: 'Internal Payment', 
+        type: 'internal_payment' 
+      }))];
+    }
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+    // External Payments Page
+    if (isAdmin || role === 'ExternalPayments') {
+      all = [...all, ...allExternalPayments.map(n => ({ 
+        id: `ext-${n.po_number}-${n.timestamp || 'derived'}`, 
+        message: `PO ${n.po_number} requires External Payment`, 
+        time: 'External Payment', 
+        type: 'external_payment' 
+      }))];
+    }
+
+    // Logistics Page
+    if (isAdmin || role === 'Logistics') {
+      all = [...all, ...allLogisticsNotifications.map(n => ({ 
+        id: `log-${n.po_number}-${n.timestamp || 'derived'}`, 
+        message: `PO ${n.po_number} is ready for shipment`, 
+        time: 'Ready for Logistics', 
+        type: 'logistics' 
+      }))];
+    }
+
+    // Inventory Page
+    if (isAdmin || role === 'Inventory') {
+      all = [...all, ...pendingInventory.map(n => ({ 
+        id: `inv-${n.po_number}-${n.timestamp || 'derived'}`, 
+        message: `PO ${n.po_number} shipment received`, 
+        time: 'Inventory Inward', 
+        type: 'inventory' 
+      }))];
+    }
+
+    // Persistent Database Notifications (e.g. Gap Reversals)
+    all = [...all, ...dbNotifications.map(n => ({
+      id: `db-${n.procurement_id || Math.random()}`,
+      message: n.message,
+      time: n.is_escalated ? 'URGENT - 48h Over' : 'Pending Action',
+      type: n.type === 'gap_reverse' ? 'procurement' : 'other',
+      color: n.color || 'red'
+    }))];
+
+    return all;
+  };
+
+  const notifications = getRoleBasedNotifications();
+  const unreadCount = notifications.length;
+
+  const handleNotificationClick = (notif) => {
+    setShowNotifications(false);
+    switch (notif.type) {
+      case 'procurement':
+        navigate('/procurement');
+        break;
+      case 'internal_payment':
+      case 'external_payment':
+        navigate('/payments');
+        break;
+      case 'logistics':
+        navigate('/logistics');
+        break;
+      case 'inventory':
+        navigate('/inventory');
+        break;
+      default:
+        break;
+    }
+  };
 
   return (
     <header className="bg-white border-b border-neutral-200" style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }} data-testid="app-header">
@@ -49,17 +145,30 @@ export const Header = ({ pageTitle, pageDescription }) => {
 
         {/* Right - Search, Time, Notifications, User */}
         <div className="flex items-center gap-3">
-          {/* Search */}
-          <div className="hidden md:block relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Search..."
-              className="w-40 lg:w-56 pl-8 pr-8 py-1.5 text-xs bg-neutral-50 border border-neutral-200 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-all"
-            />
-            <kbd className="hidden lg:inline-flex absolute right-2 top-1/2 -translate-y-1/2 px-1 py-0.5 text-[10px] font-semibold text-neutral-400 bg-white border border-neutral-200 rounded">
-              ⌘F
-            </kbd>
+          {/* Search Area with Toast */}
+          <div className="hidden md:flex items-center gap-3">
+            {/* Critical Toast Alert */}
+            {dbNotifications.some(n => n.color === 'red') && (
+              <div 
+                className="bg-red-600 text-white text-[10px] px-3 py-1.5 rounded-full flex items-center gap-1 font-bold border border-red-500 cursor-pointer hover:bg-red-700 transition-colors whitespace-nowrap"
+                onClick={() => navigate('/procurement')}
+              >
+                <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                {dbNotifications.find(n => n.color === 'red')?.message || 'Urgent Issue Detected'}
+              </div>
+            )}
+            
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search..."
+                className="w-40 lg:w-56 pl-8 pr-8 py-1.5 text-xs bg-neutral-50 border border-neutral-200 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-all"
+              />
+              <kbd className="hidden lg:inline-flex absolute right-2 top-1/2 -translate-y-1/2 px-1 py-0.5 text-[10px] font-semibold text-neutral-400 bg-white border border-neutral-200 rounded">
+                ⌘F
+              </kbd>
+            </div>
           </div>
 
           {/* Time */}
@@ -92,17 +201,26 @@ export const Header = ({ pageTitle, pageDescription }) => {
                     <X className="w-3.5 h-3.5 text-neutral-400" />
                   </button>
                 </div>
+                
                 <div className="max-h-64 overflow-y-auto divide-y divide-neutral-50">
-                  {notifications.map((notif) => (
-                    <div
-                      key={notif.id}
-                      className={`px-3 py-2.5 hover:bg-neutral-50 cursor-pointer transition-colors ${!notif.read ? 'bg-gray-50' : ''}`}
-                    >
-                      <p className="text-xs text-neutral-700 font-medium leading-snug">{notif.message}</p>
-                      <p className="text-[10px] text-neutral-400 mt-0.5">{notif.time}</p>
+                  {notifications.length > 0 ? (
+                    notifications.map((notif) => (
+                      <div
+                        key={notif.id}
+                        onClick={() => handleNotificationClick(notif)}
+                        className={`px-3 py-2.5 hover:bg-neutral-50 cursor-pointer transition-colors border-l-2 hover:border-gray-800 ${notif.color === 'red' ? 'border-red-500 bg-red-50/30' : 'border-transparent'}`}
+                      >
+                        <p className={`text-xs font-medium leading-snug ${notif.color === 'red' ? 'text-red-900' : 'text-neutral-700'}`}>{notif.message}</p>
+                        <p className="text-[10px] text-neutral-400 mt-0.5">{notif.time}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-3 py-8 text-center">
+                      <p className="text-xs text-neutral-400 italic">No new notifications</p>
                     </div>
-                  ))}
+                  )}
                 </div>
+
                 <div className="px-3 py-2 border-t border-neutral-100 text-center">
                   <button className="text-xs text-gray-700 hover:text-gray-900 font-medium">View all</button>
                 </div>

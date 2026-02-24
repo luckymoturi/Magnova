@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { Scan, Search, Trash2, CheckCircle, AlertCircle, Bell, X, Package, FileText, MapPin, Smartphone, CheckCircle2, BarChart3, TrendingUp, Layers } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useDataRefresh } from '../context/DataRefreshContext';
+import { Navigate } from 'react-router-dom';
 
 export const InventoryPage = () => {
   const [inventory, setInventory] = useState([]);
@@ -32,6 +33,7 @@ export const InventoryPage = () => {
     addInvoiceNotification,
   } = useDataRefresh();
   const isAdmin = user?.role === 'Admin';
+  const hasAccess = user?.role === 'Admin' || user?.role === 'Inventory';
   const [scanData, setScanData] = useState({
     imei: '',
     action: '',
@@ -434,6 +436,10 @@ export const InventoryPage = () => {
   };
 
   const chartData = useMemo(() => buildChartData(filteredInventory), [filteredInventory]);
+
+  if (!hasAccess) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return (
     <Layout pageTitle="IMEI Inventory" pageDescription="Track device inventory with IMEI-level visibility">

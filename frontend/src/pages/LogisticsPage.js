@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Layout } from '../components/Layout';
 import api from '../utils/api';
 import { Button } from '../components/ui/button';
@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { Plus, Package, Edit, Trash2, Bell, X, Truck, Box, Search } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useDataRefresh } from '../context/DataRefreshContext';
+import { Navigate } from 'react-router-dom';
 
 export const LogisticsPage = () => {
   const [shipments, setShipments] = useState([]);
@@ -17,6 +18,7 @@ export const LogisticsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [pos, setPOs] = useState([]);
   const [procurements, setProcurements] = useState([]);
+  const [payments, setPayments] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [selectedShipment, setSelectedShipment] = useState(null);
@@ -28,11 +30,12 @@ export const LogisticsPage = () => {
   const { 
     refreshTimestamps, 
     refreshAfterLogisticsChange, 
-    pendingLogistics, 
+    allLogisticsNotifications, 
     clearLogisticsNotification,
     addInventoryNotification,
   } = useDataRefresh();
   const isAdmin = user?.role === 'Admin';
+  const hasAccess = user?.role === 'Admin' || user?.role === 'Logistics';
   const [formData, setFormData] = useState({
     po_number: '',
     transporter_name: '',
@@ -53,7 +56,8 @@ export const LogisticsPage = () => {
     fetchShipments();
     fetchPOs();
     fetchProcurements();
-  }, [refreshTimestamps.logistics, refreshTimestamps.purchaseOrders, refreshTimestamps.procurement]);
+    fetchPayments();
+  }, [refreshTimestamps.logistics, refreshTimestamps.purchaseOrders, refreshTimestamps.procurement, refreshTimestamps.payments]);
 
   useEffect(() => {
     if (searchTerm.trim() === '') {
@@ -99,6 +103,15 @@ export const LogisticsPage = () => {
       setProcurements(response.data);
     } catch (error) {
       console.error('Error fetching procurements:', error);
+    }
+  };
+
+  const fetchPayments = async () => {
+    try {
+      const response = await api.get('/payments');
+      setPayments(response.data);
+    } catch (error) {
+      console.error('Error fetching payments:', error);
     }
   };
 
@@ -342,23 +355,27 @@ export const LogisticsPage = () => {
 
   const allLocations = getAllLocations();
 
+  if (!hasAccess) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return (
     <Layout pageTitle="Logistics & Shipments" pageDescription="Track shipments and e-way bills">
       <div data-testid="logistics-page">
-        {/* Logistics Notifications Banner - Procurement Complete, Ready for Shipment */}
-        {pendingLogistics.length > 0 && (
+        {/* Logistics Notifications Banner - External Payment Complete, Ready for Shipment */}
+        {allLogisticsNotifications.length > 0 && (
           <div className="mb-6 bg-neutral-50 border border-neutral-300 rounded-lg p-4" data-testid="logistics-notifications">
             <div className="flex items-center gap-2 mb-3">
               <Bell className="w-5 h-5 text-neutral-600 animate-pulse" />
-              <h3 className="font-semibold text-neutral-800">Procurement Complete - Ready for Shipment</h3>
-              <span className="bg-neutral-800 text-white text-xs px-2 py-0.5 rounded-full">{pendingLogistics.length}</span>
+              <h3 className="font-semibold text-neutral-800">External Payment Complete - Ready for Shipment</h3>
+              <span className="bg-neutral-800 text-white text-xs px-2 py-0.5 rounded-full">{allLogisticsNotifications.length}</span>
             </div>
             <div className="space-y-2">
-              {pendingLogistics.map((proc, index) => (
+              {allLogisticsNotifications.map((notif, index) => (
                 <div 
-                  key={`logistics-${proc.po_number}-${proc.imei}-${index}`}
+                  key={`logistics-${notif.po_number}-${index}`}
                   className="flex items-center justify-between bg-white rounded-lg p-3 border border-neutral-200 hover:border-neutral-400 transition-colors cursor-pointer"
-                  onClick={() => handleNotificationClick(proc)}
+                  onClick={() => handleNotificationClick(notif)}
                   data-testid="logistics-notification-item"
                 >
                   <div className="flex items-center gap-4">
@@ -367,12 +384,12 @@ export const LogisticsPage = () => {
                     </div>
                     <div>
                       <div className="font-medium text-neutral-900">
-                        <span className="font-mono text-neutral-900">{proc.po_number}</span>
+                        <span className="font-mono text-neutral-900">{notif.po_number}</span>
                         <span className="mx-2 text-neutral-400">|</span>
-                        <span>{proc.brand} {proc.model}</span>
+                        <span>{notif.brand} {notif.model}</span>
                       </div>
                       <div className="text-sm text-neutral-500">
-                        Vendor: {proc.vendor_name} • Location: {proc.store_location} • IMEI: {proc.imei}
+                        Vendor: {notif.vendor_name || notif.vendor} • Location: {notif.store_location || notif.location}
                       </div>
                     </div>
                   </div>
@@ -380,7 +397,7 @@ export const LogisticsPage = () => {
                     <Button
                       size="sm"
                       className="bg-neutral-700 hover:bg-neutral-800"
-                      onClick={(e) => { e.stopPropagation(); handleNotificationClick(proc); }}
+                      onClick={(e) => { e.stopPropagation(); handleNotificationClick(notif); }}
                     >
                       <Truck className="w-4 h-4 mr-1" />
                       Create Shipment
@@ -389,7 +406,7 @@ export const LogisticsPage = () => {
                       size="sm"
                       variant="ghost"
                       className="text-neutral-400 hover:text-neutral-600"
-                      onClick={(e) => { e.stopPropagation(); clearLogisticsNotification(proc.po_number, proc.imei); }}
+                      onClick={(e) => { e.stopPropagation(); clearLogisticsNotification(notif.po_number); }}
                     >
                       <X className="w-4 h-4" />
                     </Button>

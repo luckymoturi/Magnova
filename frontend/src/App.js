@@ -16,6 +16,7 @@ import { SalesOrdersPage } from './pages/SalesOrdersPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { UsersPage } from './pages/UsersPage';
 import { MaintenancePage } from './pages/MaintenancePage';
+import { ManagerPage } from './pages/ManagerPage';
 import './App.css';
 
 const ProtectedRoute = ({ children }) => {
@@ -69,7 +70,23 @@ function App() {
             }
           />
           <Route
+            path="/manager"
+            element={
+              <ProtectedRoute>
+                <ManagerPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/payments"
+            element={
+              <ProtectedRoute>
+                <PaymentsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/external-payments"
             element={
               <ProtectedRoute>
                 <PaymentsPage />
@@ -135,3 +152,4 @@ function App() {
 }
 
 export default App;
+

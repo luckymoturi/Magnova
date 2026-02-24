@@ -41,7 +41,7 @@ export const PurchaseOrdersPage = () => {
   const [purchaseOffice, setPurchaseOffice] = useState('Magnova Head Office');
   const [lineItems, setLineItems] = useState([{ ...emptyItem }]);
   const { user } = useAuth();
-  const { refreshTimestamps, triggerGlobalRefresh, refreshAfterPOChange, addInternalPaymentNotification } = useDataRefresh();
+  const { refreshTimestamps, triggerGlobalRefresh, refreshAfterPOChange, addProcurementNotification } = useDataRefresh();
   const isAdmin = user?.role === 'Admin';
 
   useEffect(() => { fetchPOs(); }, [refreshTimestamps.purchaseOrders]);
@@ -96,24 +96,7 @@ export const PurchaseOrdersPage = () => {
       }));
       const response = await api.post('/purchase-orders', { po_date: new Date(poDate).toISOString(), purchase_office: purchaseOffice, items, notes: null });
       
-      // Calculate total value for notification
-      const totalValue = items.reduce((sum, item) => sum + (item.po_value || 0), 0);
-      const totalQty = items.reduce((sum, item) => sum + (item.qty || 0), 0);
-      
-      // Trigger notification to Payments page for Internal Payment
-      addInternalPaymentNotification({
-        po_number: response.data.po_number,
-        po_date: poDate,
-        purchase_office: purchaseOffice,
-        total_value: totalValue,
-        total_qty: totalQty,
-        items: items,
-        vendor: items[0]?.vendor || '',
-        brand: items[0]?.brand || '',
-        model: items[0]?.model || '',
-      });
-      
-      toast.success('Purchase order created successfully - Notification sent to Payments');
+      toast.success('Purchase order created successfully - Awaiting approval');
       setDialogOpen(false);
       resetForm();
       refreshAfterPOChange();
@@ -143,6 +126,19 @@ export const PurchaseOrdersPage = () => {
       toast.success(`PO ${action}d successfully`);
       setApprovalDialog({ open: false, po: null });
       setRejectionReason('');
+      if (action === 'approve') {
+        const po = pos.find(p => p.po_number === poNumber);
+        if (po) {
+          addProcurementNotification({
+            po_number: po.po_number,
+            vendor: po.items?.[0]?.vendor || '',
+            brand: po.items?.[0]?.brand || '',
+            model: po.items?.[0]?.model || '',
+            location: po.items?.[0]?.location || '',
+            items: po.items || [],
+          });
+        }
+      }
       refreshAfterPOChange(); // Trigger refresh across all related modules
     } catch (error) {
       toast.error(error.response?.data?.detail || `Failed to ${action} PO`);
@@ -321,7 +317,7 @@ export const PurchaseOrdersPage = () => {
                         {itemIndex === 0 && (
                           <>
                             <Button size="sm" variant="ghost" onClick={() => setViewDialog({ open: true, po })} className="text-neutral-900 h-6 w-6 p-0" data-testid="view-po-button"><Eye className="w-3 h-3" /></Button>
-                            {po.approval_status === 'Pending' && (user?.role === 'Approver' || user?.role === 'Admin') && (
+                            {po.approval_status === 'Pending' && (user?.role === 'Approver' || user?.role === 'Admin' || user?.role === 'Manager') && (
                               <Button size="sm" variant="outline" onClick={() => setApprovalDialog({ open: true, po })} className="h-6 text-xs px-2" data-testid="approve-po-button">Review</Button>
                             )}
                             {isAdmin && (

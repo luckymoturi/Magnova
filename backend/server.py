@@ -44,6 +44,16 @@ ALGORITHM = "HS256"
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
+# CORS — open for all origins in development
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 # Models
 class User(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -128,6 +138,12 @@ class ProcurementRecord(BaseModel):
     purchase_price: float
     procurement_date: datetime
     created_by: str
+    gap_qty: int = 0
+    gap_amt: float = 0.0
+    settlement_amount: Optional[float] = None
+    settlement_utr: Optional[str] = None
+    settlement_date: Optional[datetime] = None
+    gap_resolved: bool = False
     created_at: datetime
 
 class ProcurementCreate(BaseModel):
@@ -515,8 +531,8 @@ async def get_purchase_order(po_number: str, current_user: User = Depends(get_cu
 
 @api_router.post("/purchase-orders/{po_number}/approve")
 async def approve_purchase_order(po_number: str, approval: POApproval, current_user: User = Depends(get_current_user)):
-    if current_user.role not in ["Approver", "Admin"]:
-        raise HTTPException(status_code=403, detail="Only approvers can approve POs")
+    if current_user.role not in ["Approver", "Admin", "Manager"]:
+        raise HTTPException(status_code=403, detail="Only managers or approvers can approve POs")
     
     po = await db.purchase_orders.find_one({"po_number": po_number})
     if not po:
@@ -557,6 +573,9 @@ async def create_procurement(proc_data: ProcurementCreate, current_user: User = 
         raise HTTPException(status_code=400, detail="IMEI already exists")
     
     proc_id = str(uuid4())
+    gap_qty = (proc_data.po_quantity or 1) - proc_data.purchase_quantity
+    gap_amt = gap_qty * proc_data.purchase_price
+
     proc_doc = {
         "procurement_id": proc_id,
         "po_number": proc_data.po_number,
@@ -570,6 +589,12 @@ async def create_procurement(proc_data: ProcurementCreate, current_user: User = 
         "purchase_price": proc_data.purchase_price,
         "procurement_date": datetime.now(timezone.utc).isoformat(),
         "created_by": current_user.user_id,
+        "gap_qty": gap_qty,
+        "gap_amt": gap_amt,
+        "settlement_amount": None,
+        "settlement_utr": None,
+        "settlement_date": None,
+        "gap_resolved": False,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
@@ -591,9 +616,56 @@ async def create_procurement(proc_data: ProcurementCreate, current_user: User = 
     }
     await db.imei_inventory.insert_one(imei_doc)
     
-    await create_audit_log("CREATE", "Procurement", proc_id, current_user, {"imei": imei})
+    await create_audit_log("CREATE", "Procurement", proc_id, current_user, {"imei": imei, "gap_qty": gap_qty})
     
     return ProcurementRecord(**{k: v for k, v in proc_doc.items() if k != "_id"})
+
+class GapResolution(BaseModel):
+    action: str  # 'reverse' or 'update'
+    settlement_amount: Optional[float] = None
+    settlement_utr: Optional[str] = None
+
+@api_router.post("/procurement/{procurement_id}/resolve-gap")
+async def resolve_gap(procurement_id: str, resolution: GapResolution, current_user: User = Depends(get_current_user)):
+    proc = await db.procurement.find_one({"procurement_id": procurement_id})
+    if not proc:
+        raise HTTPException(status_code=404, detail="Procurement record not found")
+    
+    update_data = {"updated_at": datetime.now(timezone.utc).isoformat()}
+    
+    if resolution.action == "reverse":
+        # Create a notification for the creator
+        notification = {
+            "type": "gap_reverse",
+            "procurement_id": procurement_id,
+            "po_number": proc["po_number"],
+            "message": "Resolve the issue in 48 hours",
+            "target_user_id": proc["created_by"],
+            "status": "pending",
+            "color": "red",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "deadline": (datetime.now(timezone.utc) + timedelta(hours=48)).isoformat()
+        }
+        await db.notifications.insert_one(notification)
+        await create_audit_log("GAP_REVERSE", "Procurement", procurement_id, current_user, {"message": "Reverse requested"})
+        return {"message": "Reverse notification sent to purchase team"}
+        
+    elif resolution.action == "update":
+        # Resolve the gap
+        update_data.update({
+            "gap_qty": 0,
+            "gap_amt": 0,
+            "purchase_quantity": proc["po_quantity"],
+            "gap_resolved": True,
+            "settlement_amount": resolution.settlement_amount,
+            "settlement_utr": resolution.settlement_utr,
+            "settlement_date": datetime.now(timezone.utc).isoformat()
+        })
+        await db.procurement.update_one({"procurement_id": procurement_id}, {"$set": update_data})
+        await create_audit_log("GAP_UPDATE", "Procurement", procurement_id, current_user, {"settlement_amount": resolution.settlement_amount})
+        return {"message": "Gap resolved and quantities updated"}
+
+    return {"message": "Resolution completed"}
 
 @api_router.get("/procurement", response_model=List[ProcurementRecord])
 async def get_procurement_records(po_number: Optional[str] = None, current_user: User = Depends(get_current_user)):
@@ -765,7 +837,37 @@ async def get_payments(po_number: Optional[str] = None, payment_type: Optional[s
                 payment[field] = None
     return [Payment(**payment) for payment in payments]
 
-# IMEI Inventory Endpoints
+@api_router.get("/notifications")
+async def get_notifications(current_user: User = Depends(get_current_user)):
+    # Find notifications for this user or their role
+    query = {
+        "$or": [
+            {"target_user_id": current_user.user_id},
+            {"role": current_user.role}
+        ]
+    }
+    
+    # Also include Manager notifications for escalated issues
+    if current_user.role in ["Manager", "Admin"]:
+        # Find escalated notifications (older than 48h)
+        escalated_query = {
+            "type": "gap_reverse",
+            "status": "pending",
+            "created_at": {"$lt": (datetime.now(timezone.utc) - timedelta(hours=48)).isoformat()}
+        }
+        query["$or"].append(escalated_query)
+
+    notifications = await db.notifications.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
+    
+    # Process notifications for escalation
+    for n in notifications:
+        if n.get("type") == "gap_reverse" and n.get("status") == "pending":
+            created_at = datetime.fromisoformat(n["created_at"])
+            if (datetime.now(timezone.utc) - created_at).total_seconds() > 48 * 3600:
+                n["is_escalated"] = True
+                n["message"] = f"URGENT: {n['message']} (Escalated to Manager)"
+                
+    return notifications
 @api_router.get("/inventory/lookup/{imei}")
 async def lookup_imei(imei: str, current_user: User = Depends(get_current_user)):
     """Lookup IMEI details - always returns found: true to allow any IMEI without procurement linking"""
@@ -1588,6 +1690,8 @@ You have access to a MongoDB database with these collections:
 - payments: {po_number, payment_type, payee_name, amount, status, payment_date}
 - invoices: {invoice_number, po_number, total_amount, invoice_date}
 
+If the user asks a question in a specific language (like Telugu, Hindi, etc.), respond in that same language. Maintain the same professional tone.
+
 Step 1: Convert the user's question into a MongoDB query.
 Return ONLY a JSON object like this:
 {
@@ -1597,7 +1701,7 @@ Return ONLY a JSON object like this:
   "explanation": "Briefly what you are looking for"
 }
 If the question is just a greeting or general talk, return:
-{"type": "chat", "response": "Your friendly response"}
+{"type": "chat", "response": "Your friendly response in the user's language"}
 """
 
 @api_router.post("/chat")
@@ -1650,7 +1754,7 @@ async def handle_chat(request: ChatRequest, current_user: User = Depends(get_cur
              return {"response": "I found no records matching your request."}
 
         # Step 3: Humanize Results
-        humanize_prompt = f"User asked: {request.message}\nDatabase results: {json.dumps(results, default=str)}\n\nProvide a professional and helpful answer based on these results. Mention specific details from the data. If the data is a list of items, summarize them clearly."
+        humanize_prompt = f"User asked (might be in any language): {request.message}\nDatabase results: {json.dumps(results, default=str)}\n\nProvide a professional and helpful answer based on these results. IMPORTANT: Respond in the SAME LANGUAGE that the user used for their question (e.g., if they asked in Telugu, answer in Telugu). Mention specific details from the data."
         human_response = model.generate_content(humanize_prompt)
         
         return {"response": human_response.text}
@@ -1682,3 +1786,7 @@ async def startup_db():
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=True)

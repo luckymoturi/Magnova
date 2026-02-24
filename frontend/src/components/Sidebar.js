@@ -42,15 +42,32 @@ export const Sidebar = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Role display names for the welcome card
+  const roleDisplayNames = {
+    'Admin': 'Administrator',
+    'Purchase': 'Purchase Team',
+    'Manager': 'Manager',
+    'InternalPayments': 'Internal Payments',
+    'ExternalPayments': 'External Payments',
+    'Logistics': 'Logistics',
+    'Inventory': 'Inventory',
+    // Legacy roles for backward compatibility
+    'Approver': 'Approver',
+    'Accounts': 'Accounts',
+    'Stores': 'Stores',
+    'Sales': 'Sales',
+  };
+
   const menuItems = [
-    { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['Admin', 'Purchase', 'Approver', 'Accounts', 'Stores', 'Logistics', 'Sales'] },
-    { path: '/purchase-orders', icon: ShoppingCart, label: 'Purchase Orders', roles: ['Admin', 'Purchase', 'Approver'] },
-    { path: '/payments', icon: CreditCard, label: 'Payments', roles: ['Admin', 'Accounts'] },
-    { path: '/procurement', icon: Package, label: 'Procurement', roles: ['Admin', 'Stores'] },
+    { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['Admin', 'Purchase', 'Manager', 'InternalPayments', 'ExternalPayments', 'Logistics', 'Inventory', 'Approver', 'Accounts', 'Stores', 'Sales'] },
+    { path: '/purchase-orders', icon: ShoppingCart, label: 'Purchase Orders', roles: ['Admin', 'Purchase', 'Manager'] },
+    { path: '/procurement', icon: Package, label: 'Procurement', roles: ['Admin', 'Purchase'] },
+    { path: '/manager', icon: Users, label: 'Approvals', roles: ['Admin', 'Manager'] },
+    { path: '/payments', icon: CreditCard, label: 'Internal Payments', roles: ['Admin', 'InternalPayments'] },
+    { path: '/external-payments', icon: CreditCard, label: 'External Payments', roles: ['Admin', 'ExternalPayments'] },
     { path: '/logistics', icon: Truck, label: 'Logistics', roles: ['Admin', 'Logistics'] },
-    { path: '/inventory', icon: Boxes, label: 'Inventory', roles: ['Admin', 'Stores', 'Logistics'] },
-    { path: '/invoices', icon: FileText, label: 'Invoices', roles: ['Admin', 'Accounts'] },
-    { path: '/reports', icon: BarChart3, label: 'Reports', roles: ['Admin', 'Approver'] },
+    { path: '/inventory', icon: Boxes, label: 'Inventory', roles: ['Admin', 'Inventory'] },
+    { path: '/reports', icon: BarChart3, label: 'Reports', roles: ['Admin', 'Purchase', 'Manager', 'InternalPayments', 'ExternalPayments', 'Logistics', 'Inventory'] },
     { path: '/users', icon: Users, label: 'Users', roles: ['Admin'] },
   ];
 
@@ -83,7 +100,7 @@ export const Sidebar = () => {
             <div className="flex-1 min-w-0">
               <p className="text-xs text-gray-500 font-medium">Welcome back,</p>
               <p className="text-sm font-bold text-gray-900 truncate" title={user?.name}>{user?.name}</p>
-              <p className="text-xs text-gray-600 font-semibold">{user?.role}</p>
+              <p className="text-xs text-gray-600 font-semibold">{roleDisplayNames[user?.role] || user?.role}</p>
             </div>
           </div>
         </div>

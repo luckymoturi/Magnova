@@ -1,4 +1,5 @@
-import React, { createContext, useState, useContext, useCallback } from 'react';
+import React, { createContext, useState, useContext, useCallback, useEffect, useMemo } from 'react';
+import api from '../utils/api';
 
 const DataRefreshContext = createContext();
 
@@ -23,78 +24,134 @@ export const DataRefreshProvider = ({ children }) => {
     reports: Date.now(),
   });
 
-  // ========== WORKFLOW NOTIFICATIONS ==========
-  // Stage 1: PO → Internal Payment
+  // Base Data for derivation
+  const [pos, setPOs] = useState([]);
+  const [procurements, setProcurements] = useState([]);
+  const [payments, setPayments] = useState([]);
+  const [shipments, setShipments] = useState([]);
+  const [dbNotifications, setDbNotifications] = useState([]);
+
+  // Fetch data on relevant timestamp changes
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [poRes, procRes, payRes, shipRes, notifRes] = await Promise.all([
+          api.get('/purchase-orders'),
+          api.get('/procurement'),
+          api.get('/payments'),
+          api.get('/logistics/shipments'),
+          api.get('/notifications').catch(() => ({ data: [] }))
+        ]);
+        setPOs(poRes.data);
+        setProcurements(procRes.data);
+        setPayments(payRes.data);
+        setShipments(shipRes.data);
+        setDbNotifications(notifRes.data);
+      } catch (error) {
+        console.error('Error fetching data for notifications:', error);
+      }
+    };
+    fetchData();
+  }, [refreshTimestamps.purchaseOrders, refreshTimestamps.procurement, refreshTimestamps.payments, refreshTimestamps.logistics]);
+
+  // ========== WORKFLOW NOTIFICATIONS (Ephemeral) ==========
   const [pendingInternalPayments, setPendingInternalPayments] = useState([]);
-  
-  // Stage 2: Internal Payment Complete → External Payment
   const [pendingExternalPayments, setPendingExternalPayments] = useState([]);
-  
-  // Stage 3: External Payment Complete → Procurement
   const [pendingProcurements, setPendingProcurements] = useState([]);
-  
-  // Stage 4: Procurement → Logistics (already implemented)
   const [pendingLogistics, setPendingLogistics] = useState([]);
-  
-  // Stage 5: Logistics → Inventory
   const [pendingInventory, setPendingInventory] = useState([]);
-  
-  // Stage 6: Inventory → Invoice
   const [pendingInvoices, setPendingInvoices] = useState([]);
 
-  // ========== STAGE 1: PO → Internal Payment ==========
-  const addInternalPaymentNotification = useCallback((po) => {
-    setPendingInternalPayments(prev => {
-      if (prev.some(p => p.po_number === po.po_number)) return prev;
-      return [...prev, { ...po, timestamp: Date.now(), stage: 'internal_payment' }];
-    });
-  }, []);
+  // ========== STAGE 1: PO Approved → Procurement (Purchase Team) ==========
+  const derivedProcurements = useMemo(() => {
+    return pos
+      .filter(po => po.approval_status === 'Approved' || po.status === 'Approved')
+      .filter(po => !procurements.some(p => p.po_number === po.po_number))
+      .map(po => ({
+        po_number: po.po_number,
+        brand: po.items?.[0]?.brand || '',
+        model: po.items?.[0]?.model || '',
+        vendor: po.items?.[0]?.vendor || '',
+        location: po.items?.[0]?.location || '',
+        isDerived: true,
+        type: 'procurement'
+      }));
+  }, [pos, procurements]);
 
-  const clearInternalPaymentNotification = useCallback((poNumber) => {
-    setPendingInternalPayments(prev => prev.filter(p => p.po_number !== poNumber));
-  }, []);
+  const allProcurements = useMemo(() => {
+    const ephemeral = pendingProcurements.filter(p => !derivedProcurements.some(d => d.po_number === p.po_number));
+    return [...derivedProcurements, ...ephemeral];
+  }, [derivedProcurements, pendingProcurements]);
 
-  // ========== STAGE 2: Internal Payment → External Payment ==========
-  const addExternalPaymentNotification = useCallback((payment) => {
-    setPendingExternalPayments(prev => {
-      if (prev.some(p => p.po_number === payment.po_number)) return prev;
-      return [...prev, { ...payment, timestamp: Date.now(), stage: 'external_payment' }];
-    });
-  }, []);
+  // ========== STAGE 2: Procurement Done → Internal Payment (Internal Payments Team) ==========
+  const derivedInternalPayments = useMemo(() => {
+    return pos
+      .filter(po => po.approval_status === 'Approved' || po.status === 'Approved')
+      .filter(po => procurements.some(p => p.po_number === po.po_number))
+      .filter(po => !payments.some(pay => pay.po_number === po.po_number && pay.payment_type === 'internal'))
+      .map(po => ({
+        po_number: po.po_number,
+        brand: po.items?.[0]?.brand || '',
+        model: po.items?.[0]?.model || '',
+        vendor: po.items?.[0]?.vendor || '',
+        total_value: po.total_value,
+        isDerived: true,
+        type: 'internal_payment'
+      }));
+  }, [pos, procurements, payments]);
 
-  const clearExternalPaymentNotification = useCallback((poNumber) => {
-    setPendingExternalPayments(prev => prev.filter(p => p.po_number !== poNumber));
-  }, []);
+  const allInternalPayments = useMemo(() => {
+    const ephemeral = pendingInternalPayments.filter(p => !derivedInternalPayments.some(d => d.po_number === p.po_number));
+    return [...derivedInternalPayments, ...ephemeral];
+  }, [derivedInternalPayments, pendingInternalPayments]);
 
-  // ========== STAGE 3: External Payment → Procurement ==========
-  const addProcurementNotification = useCallback((data) => {
-    setPendingProcurements(prev => {
-      if (prev.some(p => p.po_number === data.po_number)) return prev;
-      return [...prev, { ...data, timestamp: Date.now(), stage: 'procurement' }];
-    });
-  }, []);
+  // ========== STAGE 3: Internal Payment Done → External Payment (External Payments Team) ==========
+  const derivedExternalPayments = useMemo(() => {
+    return pos
+      .filter(po => payments.some(pay => pay.po_number === po.po_number && pay.payment_type === 'internal'))
+      .filter(po => !payments.some(pay => pay.po_number === po.po_number && pay.payment_type === 'external'))
+      .map(po => ({
+        po_number: po.po_number,
+        brand: po.items?.[0]?.brand || '',
+        model: po.items?.[0]?.model || '',
+        vendor: po.items?.[0]?.vendor || '',
+        isDerived: true,
+        type: 'external_payment'
+      }));
+  }, [pos, payments]);
 
-  const clearProcurementNotification = useCallback((poNumber) => {
-    setPendingProcurements(prev => prev.filter(p => p.po_number !== poNumber));
-  }, []);
+  const allExternalPayments = useMemo(() => {
+    const ephemeral = pendingExternalPayments.filter(p => !derivedExternalPayments.some(d => d.po_number === p.po_number));
+    return [...derivedExternalPayments, ...ephemeral];
+  }, [derivedExternalPayments, pendingExternalPayments]);
 
-  // ========== STAGE 4: Procurement → Logistics ==========
-  const addLogisticsNotification = useCallback((procurement) => {
-    setPendingLogistics(prev => {
-      if (prev.some(p => p.po_number === procurement.po_number && p.imei === procurement.imei)) return prev;
-      return [...prev, { ...procurement, timestamp: Date.now(), stage: 'logistics' }];
-    });
-  }, []);
+  // ========== STAGE 4: External Payment Done → Logistics (Logistics Team) ==========
+  const derivedLogisticsNotifications = useMemo(() => {
+    return pos
+      .filter(po => (po.approval_status === 'Approved' || po.status === 'Approved'))
+      .filter(po => payments.some(pay => pay.po_number === po.po_number && pay.payment_type === 'external'))
+      .filter(po => !shipments.some(ship => ship.po_number === po.po_number))
+      .map(po => ({
+        po_number: po.po_number,
+        brand: po.items?.[0]?.brand || '',
+        model: po.items?.[0]?.model || '',
+        vendor: po.items?.[0]?.vendor || '',
+        location: po.items?.[0]?.location || '',
+        isDerived: true,
+        type: 'logistics'
+      }));
+  }, [pos, payments, shipments]);
 
-  const clearLogisticsNotification = useCallback((poNumber, imei) => {
-    setPendingLogistics(prev => prev.filter(p => !(p.po_number === poNumber && (imei ? p.imei === imei : true))));
-  }, []);
+  const allLogisticsNotifications = useMemo(() => {
+    const ephemeral = pendingLogistics.filter(p => !derivedLogisticsNotifications.some(d => d.po_number === p.po_number));
+    return [...derivedLogisticsNotifications, ...ephemeral];
+  }, [derivedLogisticsNotifications, pendingLogistics]);
 
   // ========== STAGE 5: Logistics → Inventory ==========
   const addInventoryNotification = useCallback((shipment) => {
     setPendingInventory(prev => {
       if (prev.some(p => p.po_number === shipment.po_number && p.shipment_id === shipment.shipment_id)) return prev;
-      return [...prev, { ...shipment, timestamp: Date.now(), stage: 'inventory' }];
+      return [...prev, { ...shipment, timestamp: Date.now(), stage: 'inventory', type: 'inventory' }];
     });
   }, []);
 
@@ -106,7 +163,7 @@ export const DataRefreshProvider = ({ children }) => {
   const addInvoiceNotification = useCallback((inventory) => {
     setPendingInvoices(prev => {
       if (prev.some(p => p.po_number === inventory.po_number && p.imei === inventory.imei)) return prev;
-      return [...prev, { ...inventory, timestamp: Date.now(), stage: 'invoice' }];
+      return [...prev, { ...inventory, timestamp: Date.now(), stage: 'invoice', type: 'invoice' }];
     });
   }, []);
 
@@ -114,7 +171,54 @@ export const DataRefreshProvider = ({ children }) => {
     setPendingInvoices(prev => prev.filter(p => !(p.po_number === poNumber && (imei ? p.imei === imei : true))));
   }, []);
 
-  // ========== Clear all notifications for a PO ==========
+  // ========== Ephemeral Handlers (kept for legacy support/immediate feedback) ==========
+  const addInternalPaymentNotification = useCallback((po) => {
+    setPendingInternalPayments(prev => {
+      if (prev.some(p => p.po_number === po.po_number)) return prev;
+      return [...prev, { ...po, timestamp: Date.now(), stage: 'internal_payment', type: 'internal_payment' }];
+    });
+  }, []);
+
+  const clearInternalPaymentNotification = useCallback((poNumber) => {
+    setPendingInternalPayments(prev => prev.filter(p => p.po_number !== poNumber));
+  }, []);
+
+  const addExternalPaymentNotification = useCallback((payment) => {
+    setPendingExternalPayments(prev => {
+      if (prev.some(p => p.po_number === payment.po_number)) return prev;
+      return [...prev, { ...payment, timestamp: Date.now(), stage: 'external_payment', type: 'external_payment' }];
+    });
+  }, []);
+
+  const clearExternalPaymentNotification = useCallback((poNumber) => {
+    setPendingExternalPayments(prev => prev.filter(p => p.po_number !== poNumber));
+  }, []);
+
+  const addProcurementNotification = useCallback((data) => {
+    setPendingProcurements(prev => {
+      if (prev.some(p => p.po_number === data.po_number)) return prev;
+      return [...prev, { ...data, timestamp: Date.now(), stage: 'procurement', type: 'procurement' }];
+    });
+  }, []);
+
+  const clearProcurementNotification = useCallback((poNumber) => {
+    setPendingProcurements(prev => prev.filter(p => p.po_number !== poNumber));
+  }, []);
+
+  const addLogisticsNotification = useCallback((procurement) => {
+    setPendingLogistics(prev => {
+      const isDuplicate = procurement.imei 
+        ? prev.some(p => p.po_number === procurement.po_number && p.imei === procurement.imei)
+        : prev.some(p => p.po_number === procurement.po_number);
+      if (isDuplicate) return prev;
+      return [...prev, { ...procurement, timestamp: Date.now(), stage: 'logistics', type: 'logistics' }];
+    });
+  }, []);
+
+  const clearLogisticsNotification = useCallback((poNumber, imei) => {
+    setPendingLogistics(prev => prev.filter(p => !(p.po_number === poNumber && (imei ? p.imei === imei : true))));
+  }, []);
+
   const clearAllNotificationsForPO = useCallback((poNumber) => {
     setPendingInternalPayments(prev => prev.filter(p => p.po_number !== poNumber));
     setPendingExternalPayments(prev => prev.filter(p => p.po_number !== poNumber));
@@ -124,103 +228,52 @@ export const DataRefreshProvider = ({ children }) => {
     setPendingInvoices(prev => prev.filter(p => p.po_number !== poNumber));
   }, []);
 
-  // Trigger refresh for specific data types
   const triggerRefresh = useCallback((dataTypes = []) => {
     const now = Date.now();
     setRefreshTimestamps(prev => {
       const updated = { ...prev };
-      dataTypes.forEach(type => {
-        if (type in updated) {
-          updated[type] = now;
-        }
-      });
+      dataTypes.forEach(type => { if (type in updated) updated[type] = now; });
       return updated;
     });
   }, []);
 
-  // Trigger refresh for ALL data types (used after cascade delete)
   const triggerGlobalRefresh = useCallback(() => {
     const now = Date.now();
     setRefreshTimestamps({
-      purchaseOrders: now,
-      procurement: now,
-      payments: now,
-      logistics: now,
-      inventory: now,
-      invoices: now,
-      dashboard: now,
-      reports: now,
+      purchaseOrders: now, procurement: now, payments: now, logistics: now,
+      inventory: now, invoices: now, dashboard: now, reports: now,
     });
   }, []);
 
-  // Specific refresh triggers for common operations
-  const refreshAfterPOChange = useCallback(() => {
-    triggerRefresh(['purchaseOrders', 'procurement', 'payments', 'logistics', 'inventory', 'invoices', 'dashboard', 'reports']);
-  }, [triggerRefresh]);
-
-  const refreshAfterProcurementChange = useCallback(() => {
-    triggerRefresh(['procurement', 'inventory', 'dashboard', 'reports', 'logistics']);
-  }, [triggerRefresh]);
-
-  const refreshAfterPaymentChange = useCallback(() => {
-    triggerRefresh(['payments', 'dashboard', 'reports']);
-  }, [triggerRefresh]);
-
-  const refreshAfterLogisticsChange = useCallback(() => {
-    triggerRefresh(['logistics', 'dashboard', 'reports', 'inventory']);
-  }, [triggerRefresh]);
-
-  const refreshAfterInventoryChange = useCallback(() => {
-    triggerRefresh(['inventory', 'dashboard', 'reports', 'invoices']);
-  }, [triggerRefresh]);
-
-  const refreshAfterInvoiceChange = useCallback(() => {
-    triggerRefresh(['invoices', 'dashboard', 'reports']);
-  }, [triggerRefresh]);
+  const refreshAfterPOChange = useCallback(() => triggerRefresh(['purchaseOrders', 'procurement', 'payments', 'logistics', 'inventory', 'invoices', 'dashboard', 'reports']), [triggerRefresh]);
+  const refreshAfterProcurementChange = useCallback(() => triggerRefresh(['procurement', 'inventory', 'dashboard', 'reports', 'logistics']), [triggerRefresh]);
+  const refreshAfterPaymentChange = useCallback(() => triggerRefresh(['payments', 'dashboard', 'reports']), [triggerRefresh]);
+  const refreshAfterLogisticsChange = useCallback(() => triggerRefresh(['logistics', 'dashboard', 'reports', 'inventory']), [triggerRefresh]);
+  const refreshAfterInventoryChange = useCallback(() => triggerRefresh(['inventory', 'dashboard', 'reports', 'invoices']), [triggerRefresh]);
+  const refreshAfterInvoiceChange = useCallback(() => triggerRefresh(['invoices', 'dashboard', 'reports']), [triggerRefresh]);
 
   return (
     <DataRefreshContext.Provider value={{ 
-      refreshTimestamps,
-      triggerRefresh,
-      triggerGlobalRefresh,
-      refreshAfterPOChange,
-      refreshAfterProcurementChange,
-      refreshAfterPaymentChange,
-      refreshAfterLogisticsChange,
-      refreshAfterInventoryChange,
-      refreshAfterInvoiceChange,
+      refreshTimestamps, triggerRefresh, triggerGlobalRefresh,
+      refreshAfterPOChange, refreshAfterProcurementChange, refreshAfterPaymentChange,
+      refreshAfterLogisticsChange, refreshAfterInventoryChange, refreshAfterInvoiceChange,
       
-      // Stage 1: PO → Internal Payment
-      pendingInternalPayments,
-      addInternalPaymentNotification,
-      clearInternalPaymentNotification,
-      
-      // Stage 2: Internal Payment → External Payment
-      pendingExternalPayments,
-      addExternalPaymentNotification,
-      clearExternalPaymentNotification,
-      
-      // Stage 3: External Payment → Procurement
-      pendingProcurements,
-      addProcurementNotification,
-      clearProcurementNotification,
-      
-      // Stage 4: Procurement → Logistics
-      pendingLogistics,
-      addLogisticsNotification,
-      clearLogisticsNotification,
-      
-      // Stage 5: Logistics → Inventory
+      // All Notifications (Persistent + Ephemeral)
+      allProcurements,
+      allInternalPayments,
+      allExternalPayments,
+      allLogisticsNotifications,
       pendingInventory,
-      addInventoryNotification,
-      clearInventoryNotification,
-      
-      // Stage 6: Inventory → Invoice
       pendingInvoices,
-      addInvoiceNotification,
-      clearInvoiceNotification,
+      dbNotifications,
       
-      // Utility
+      // Ephemeral Handlers
+      addInternalPaymentNotification, clearInternalPaymentNotification,
+      addExternalPaymentNotification, clearExternalPaymentNotification,
+      addProcurementNotification, clearProcurementNotification,
+      addLogisticsNotification, clearLogisticsNotification,
+      addInventoryNotification, clearInventoryNotification,
+      addInvoiceNotification, clearInvoiceNotification,
       clearAllNotificationsForPO,
     }}>
       {children}

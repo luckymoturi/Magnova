@@ -340,4 +340,41 @@ h6 {
         border-top-color: inherit;
         border-bottom-color: inherit;
     }
+
+    /* Toast/Sonner styling - white background */
+    [data-sonner-toast] {
+        background-color: white !important;
+        border-color: white !important;
+        color: #171717 !important;
+    }
+
+    .toast {
+        background-color: white !important;
+        border-color: white !important;
+        color: #171717 !important;
+    }
+
+    .toaster .sonner-toast {
+        background-color: white !important;
+        border-color: white !important;
+        color: #171717 !important;
+    }
+
+    /* Override any yellow/amber from sonner defaults */
+    [data-sonner-toast][data-type="info"],
+    [data-sonner-toast][data-type="success"],
+    [data-sonner-toast][data-type="warning"],
+    [data-sonner-toast][data-type="error"],
+    [data-sonner-toast][data-type="loading"] {
+        background-color: white !important;
+        border-color: white !important;
+        color: #171717 !important;
+    }
+
+    /* Ensure toast text and all child elements are black */
+    [data-sonner-toast] *,
+    .toast *,
+    .toaster .sonner-toast * {
+        color: #171717 !important;
+    }
 }

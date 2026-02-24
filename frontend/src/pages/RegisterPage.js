@@ -107,12 +107,12 @@ export const RegisterPage = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Admin">Admin</SelectItem>
-                  <SelectItem value="Purchase">Purchase Officer</SelectItem>
-                  <SelectItem value="Approver">Approver</SelectItem>
-                  <SelectItem value="Accounts">Accounts</SelectItem>
-                  <SelectItem value="Stores">Stores</SelectItem>
+                  <SelectItem value="Purchase">Purchase Team</SelectItem>
+                  <SelectItem value="Manager">Manager</SelectItem>
+                  <SelectItem value="InternalPayments">Internal Payments</SelectItem>
+                  <SelectItem value="ExternalPayments">External Payments</SelectItem>
                   <SelectItem value="Logistics">Logistics</SelectItem>
-                  <SelectItem value="Sales">Sales</SelectItem>
+                  <SelectItem value="Inventory">Inventory</SelectItem>
                 </SelectContent>
               </Select>
             </div>
