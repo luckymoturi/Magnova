@@ -313,17 +313,15 @@ export const PurchaseOrdersPage = () => {
                       <td className="px-2 py-1.5 text-xs text-neutral-900">{item.rate ? `₹${item.rate.toFixed(2)}` : '-'}</td>
                       <td className="px-2 py-1.5 text-xs font-medium text-neutral-900">{item.po_value ? `₹${item.po_value.toFixed(2)}` : '-'}</td>
                       <td className="px-2 py-1.5 text-xs">{itemIndex === 0 ? getStatusBadge(po.approval_status) : ''}</td>
-                      <td className="px-2 py-1.5 text-xs space-x-1">
+                      <td className="px-2 py-1.5 text-xs">
                         {itemIndex === 0 && (
-                          <>
-                            <Button size="sm" variant="ghost" onClick={() => setViewDialog({ open: true, po })} className="text-neutral-900 h-6 w-6 p-0" data-testid="view-po-button"><Eye className="w-3 h-3" /></Button>
+                          <div className="flex flex-row items-center gap-1">
+                            <Button size="sm" variant="ghost" onClick={() => setViewDialog({ open: true, po })} className="text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100 h-7 w-7 p-0" data-testid="view-po-button" title="View PO"><Eye className="w-4 h-4" /></Button>
+                            <Button size="sm" variant="ghost" onClick={() => handleDelete(po.po_number)} className="text-red-500 hover:text-red-700 hover:bg-red-50 h-7 w-7 p-0" data-testid="delete-po-button" title="Delete PO"><Trash2 className="w-4 h-4" /></Button>
                             {po.approval_status === 'Pending' && (user?.role === 'Approver' || user?.role === 'Admin' || user?.role === 'Manager') && (
                               <Button size="sm" variant="outline" onClick={() => setApprovalDialog({ open: true, po })} className="h-6 text-xs px-2" data-testid="approve-po-button">Review</Button>
                             )}
-                            {isAdmin && (
-                              <Button size="sm" variant="ghost" onClick={() => handleDelete(po.po_number)} className="text-neutral-800 hover:text-neutral-900 hover:bg-neutral-100 h-6 w-6 p-0" data-testid="delete-po-button"><Trash2 className="w-3 h-3" /></Button>
-                            )}
-                          </>
+                          </div>
                         )}
                       </td>
                     </tr>

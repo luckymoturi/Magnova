@@ -399,29 +399,29 @@ export const ReportsPage = () => {
               <table className="w-full text-xs" data-testid="purchase-report-table">
                 <thead>
                   <tr>
-                    <th colSpan="10" className="px-3 py-2 text-left text-sm font-bold text-white border-r border-neutral-500" style={{ backgroundColor: '#374151' }}>
+                    <th colSpan="10" className="px-3 py-2 text-left text-sm font-bold text-neutral-900 border-r border-neutral-400" style={{ backgroundColor: '#BFC9D1' }}>
                       <span className="flex items-center gap-2"><ShoppingCart className="w-4 h-4" /> PURCHASE ORDERS</span>
                     </th>
-                    <th colSpan="4" className="px-3 py-2 text-left text-sm font-bold text-white" style={{ backgroundColor: '#1f2937' }}>
+                    <th colSpan="4" className="px-3 py-2 text-left text-sm font-bold text-neutral-900" style={{ backgroundColor: '#a8b5be' }}>
                       <span className="flex items-center gap-2"><Package className="w-4 h-4" /> PROCUREMENT</span>
                     </th>
                   </tr>
-                  <tr className="bg-neutral-100">
-                    <th className="px-2 py-2 text-left font-semibold text-neutral-700 border-b border-neutral-200 whitespace-nowrap">SL No</th>
-                    <th className="px-2 py-2 text-left font-semibold text-neutral-700 border-b border-neutral-200 whitespace-nowrap">PO ID</th>
-                    <th className="px-2 py-2 text-left font-semibold text-neutral-700 border-b border-neutral-200 whitespace-nowrap">PO Date</th>
-                    <th className="px-2 py-2 text-left font-semibold text-neutral-700 border-b border-neutral-200 whitespace-nowrap">Purchase Office</th>
-                    <th className="px-2 py-2 text-left font-semibold text-neutral-700 border-b border-neutral-200 whitespace-nowrap">Created By</th>
-                    <th className="px-2 py-2 text-left font-semibold text-neutral-700 border-b border-neutral-200 whitespace-nowrap">Vendor</th>
-                    <th className="px-2 py-2 text-left font-semibold text-neutral-700 border-b border-neutral-200 whitespace-nowrap">Location</th>
-                    <th className="px-2 py-2 text-left font-semibold text-neutral-700 border-b border-neutral-200 whitespace-nowrap">Brand / Model</th>
-                    <th className="px-2 py-2 text-right font-semibold text-neutral-700 border-b border-neutral-200 whitespace-nowrap">Qty</th>
-                    <th className="px-2 py-2 text-right font-semibold text-neutral-700 border-b border-neutral-200 border-r border-neutral-300 whitespace-nowrap">PO Value</th>
+                  <tr className="bg-white">
+                    <th className="px-2 py-2 text-left font-semibold text-neutral-800 border-b-2 border-neutral-400 whitespace-nowrap">SL NO</th>
+                    <th className="px-2 py-2 text-left font-semibold text-neutral-800 border-b-2 border-neutral-400 whitespace-nowrap">PO ID</th>
+                    <th className="px-2 py-2 text-left font-semibold text-neutral-800 border-b-2 border-neutral-400 whitespace-nowrap">PO DATE</th>
+                    <th className="px-2 py-2 text-left font-semibold text-neutral-800 border-b-2 border-neutral-400 whitespace-nowrap">PURCHASE OFFICE</th>
+                    <th className="px-2 py-2 text-left font-semibold text-neutral-800 border-b-2 border-neutral-400 whitespace-nowrap">CREATED BY</th>
+                    <th className="px-2 py-2 text-left font-semibold text-neutral-800 border-b-2 border-neutral-400 whitespace-nowrap">VENDOR</th>
+                    <th className="px-2 py-2 text-left font-semibold text-neutral-800 border-b-2 border-neutral-400 whitespace-nowrap">LOCATION</th>
+                    <th className="px-2 py-2 text-left font-semibold text-neutral-800 border-b-2 border-neutral-400 whitespace-nowrap">BRAND / MODEL</th>
+                    <th className="px-2 py-2 text-right font-semibold text-neutral-800 border-b-2 border-neutral-400 whitespace-nowrap">QTY</th>
+                    <th className="px-2 py-2 text-right font-semibold text-neutral-800 border-b-2 border-neutral-400 border-r-2 border-r-neutral-300 whitespace-nowrap">PO VALUE</th>
                     {/* Procurement */}
-                    <th className="px-2 py-2 text-left font-semibold text-neutral-700 border-b border-neutral-200 whitespace-nowrap">GRN No</th>
-                    <th className="px-2 py-2 text-left font-semibold text-neutral-700 border-b border-neutral-200 whitespace-nowrap">Procurement Date</th>
-                    <th className="px-2 py-2 text-left font-semibold text-neutral-700 border-b border-neutral-200 whitespace-nowrap">Serial No</th>
-                    <th className="px-2 py-2 text-left font-semibold text-neutral-700 border-b border-neutral-200 whitespace-nowrap">Approval</th>
+                    <th className="px-2 py-2 text-left font-semibold text-neutral-800 border-b-2 border-neutral-400 whitespace-nowrap">GRN NO</th>
+                    <th className="px-2 py-2 text-left font-semibold text-neutral-800 border-b-2 border-neutral-400 whitespace-nowrap">PROCUREMENT DATE</th>
+                    <th className="px-2 py-2 text-left font-semibold text-neutral-800 border-b-2 border-neutral-400 whitespace-nowrap">SERIAL NO</th>
+                    <th className="px-2 py-2 text-left font-semibold text-neutral-800 border-b-2 border-neutral-400 whitespace-nowrap">APPROVAL</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -602,44 +602,44 @@ export const ReportsPage = () => {
                     </th>
                   )}
                 </tr>
-                <tr className="bg-neutral-100">
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">SL No</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">PO ID</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">PO Date</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Purchase Office</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Vendor</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Location</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Brand</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Model</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Storage</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Colour</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">IMEI</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Qty</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Rate</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">PO Value</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200 border-r border-neutral-300">GRN No</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Payment#</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Bank Acc#</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">IFSC</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Payment Dt</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">UTR No</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200 border-r border-neutral-300">Amount</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Payment#</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Payee Name</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Payee Type</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Bank Acc#</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Payment Dt</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">UTR No</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200 border-r border-neutral-300">Amount</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Courier</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Dispatch Dt</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">POD No</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200 border-r border-neutral-300">Status</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Received Dt</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Rcvd Qty</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Warehouse</th>
-                  <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Status</th>
-                  {isAdmin && <th className="px-2 py-2 text-left font-medium text-neutral-700 border-b border-neutral-200">Delete</th>}
+                <tr style={{ backgroundColor: '#BFC9D1' }}>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">SL No</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">PO ID</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">PO Date</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">Purchase Office</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">Vendor</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">Location</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">Brand</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">Model</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">Storage</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">Colour</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">IMEI</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">Qty</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">Rate</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">PO Value</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 border-r border-neutral-500 whitespace-nowrap">GRN No</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">Payment#</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">Bank Acc#</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">IFSC</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">Payment Dt</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">UTR No</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 border-r border-neutral-500 whitespace-nowrap">Amount</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">Payment#</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">Payee Name</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">Payee Type</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">Bank Acc#</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">Payment Dt</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">UTR No</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 border-r border-neutral-500 whitespace-nowrap">Amount</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">Courier</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">Dispatch Dt</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">POD No</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 border-r border-neutral-500 whitespace-nowrap">Status</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">Received Dt</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">Rcvd Qty</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">Warehouse</th>
+                  <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">Status</th>
+                  {isAdmin && <th className="px-2 py-2 text-left font-semibold text-neutral-900 border-b border-neutral-400 whitespace-nowrap">Delete</th>}
                 </tr>
               </thead>
               <tbody>

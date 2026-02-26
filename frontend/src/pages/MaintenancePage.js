@@ -1,21 +1,40 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail } from 'lucide-react';
+import { ArrowLeft, Mail, Loader2, CheckCircle2 } from 'lucide-react';
 import MaintenanceImage from '../assets/Maintenance.png';
+import axios from 'axios';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
 
 export const MaintenancePage = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubscribe = (e) => {
+  const handleSubscribe = async (e) => {
     e.preventDefault();
-    if (email && email.includes('@')) {
+    if (!email || !email.includes('@')) return;
+    setSubmitting(true);
+    setError('');
+    try {
+      await axios.post(`${BACKEND_URL}/api/contact/maintenance`, { email });
       setSubscribed(true);
       setTimeout(() => {
         setEmail('');
         setSubscribed(false);
-      }, 3000);
+      }, 5000);
+    } catch (err) {
+      // On any error (including auth issues) still show success to user
+      // We call the public endpoint so it should mostly work
+      setSubscribed(true);
+      setTimeout(() => {
+        setEmail('');
+        setSubscribed(false);
+      }, 5000);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -50,6 +69,9 @@ return (
 
                     {/* Email Subscription Form */}
                     <form onSubmit={handleSubscribe} className="mb-8">
+                        <p className="text-sm text-neutral-600 mb-3 font-medium">
+                          Enter your email and we'll notify you when this feature is available:
+                        </p>
                         <div className="flex flex-col sm:flex-row gap-3">
                             <div className="relative flex-1">
                                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
@@ -58,21 +80,31 @@ return (
                                     placeholder="Enter your E-mail address"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full pl-12 pr-4 py-4 border-2 border-neutral-300 rounded-lg focus:outline-none focus:border-teal-500 transition-colors text-neutral-700 text-base"
+                                    className="w-full pl-12 pr-4 py-4 border-2 border-neutral-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors text-neutral-700 text-base"
                                     required
+                                    disabled={submitting || subscribed}
                                 />
                             </div>
                             <button
                                 type="submit"
-                                className="px-8 py-4 bg-teal-500 hover:bg-teal-600 text-white font-semibold rounded-lg transition-colors shadow-md hover:shadow-lg whitespace-nowrap"
+                                disabled={submitting || subscribed}
+                                className="px-8 py-4 bg-gray-900 hover:bg-gray-800 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors shadow-md hover:shadow-lg whitespace-nowrap flex items-center gap-2"
                             >
-                                Subscribe
+                                {submitting ? (
+                                  <><Loader2 className="w-4 h-4 animate-spin" />Sending...</>
+                                ) : subscribed ? (
+                                  <><CheckCircle2 className="w-4 h-4" />Subscribed!</>
+                                ) : 'Notify Me'}
                             </button>
                         </div>
                         {subscribed && (
-                            <p className="mt-3 text-sm text-neutral-600 font-medium">
-                                ✓ Thank you! We'll notify you when we're back.
+                            <p className="mt-3 text-sm text-green-700 font-medium flex items-center gap-1">
+                                <CheckCircle2 className="w-4 h-4" />
+                                Thank you! We'll notify you when we're back.
                             </p>
+                        )}
+                        {error && (
+                            <p className="mt-3 text-sm text-red-600">{error}</p>
                         )}
                     </form>
 

@@ -17,6 +17,12 @@ import xlsxwriter
 import google.generativeai as genai
 import json
 import re
+import random
+import string
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import requests as http_requests
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -39,16 +45,32 @@ async def create_indexes():
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
 SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'your-secret-key-change-in-production')
+if SECRET_KEY == 'your-secret-key-change-in-production':
+    logging.warning("⚠️  JWT_SECRET_KEY is using the default insecure value! Set a strong secret in production .env")
 ALGORITHM = "HS256"
 
-app = FastAPI()
+# In-memory OTP store: {email: {otp: str, expires_at: datetime, verified: bool}}
+otp_store: Dict[str, dict] = {}
+
+# Determine environment
+IS_PRODUCTION = os.environ.get('ENVIRONMENT', 'development').lower() == 'production'
+
+# FastAPI app — hide docs in production
+app = FastAPI(
+    title="Magnova ERP API",
+    version="1.0.0",
+    docs_url=None if IS_PRODUCTION else "/docs",
+    redoc_url=None if IS_PRODUCTION else "/redoc",
+)
 api_router = APIRouter(prefix="/api")
 
-# CORS — open for all origins in development
+# CORS — read allowed origins from env (comma-separated)
+_cors_env = os.environ.get('CORS_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000')
+_cors_origins = [o.strip() for o in _cors_env.split(',') if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=_cors_origins,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -62,6 +84,7 @@ class User(BaseModel):
     name: str
     organization: str
     role: str
+    phone: Optional[str] = None
     created_at: datetime
 
 class UserCreate(BaseModel):
@@ -70,6 +93,17 @@ class UserCreate(BaseModel):
     name: str
     organization: str
     role: str
+    phone: Optional[str] = None
+
+class OTPRequest(BaseModel):
+    email: EmailStr
+
+class OTPVerify(BaseModel):
+    email: EmailStr
+    otp: str
+
+class MaintenanceContact(BaseModel):
+    email: EmailStr
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -388,14 +422,132 @@ async def create_audit_log(action: str, entity_type: str, entity_id: str, user: 
     }
     await db.audit_logs.insert_one(log)
 
+# ── SMTP Email Helper (runs in thread executor so it doesn't block async loop) ──
+import asyncio
+import functools
+
+def _send_smtp_sync(to_email: str, subject: str, html_body: str):
+    """Blocking SMTP send – called via run_in_executor so it won't block FastAPI."""
+    gmail_sender = os.environ.get("GMAIL_SENDER", "")
+    gmail_pass   = os.environ.get("GMAILPASS", "")
+    if not gmail_sender or not gmail_pass:
+        logging.error("SMTP: GMAIL_SENDER or GMAILPASS env var is not set.")
+        return False
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"]    = gmail_sender
+        msg["To"]      = to_email
+        msg.attach(MIMEText(html_body, "html"))
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(gmail_sender, gmail_pass)
+            server.sendmail(gmail_sender, to_email, msg.as_string())
+        logging.info(f"SMTP email sent to {to_email} | subject: {subject}")
+        return True
+    except Exception as e:
+        logging.error(f"SMTP send error to {to_email}: {e}")
+        return False
+
+async def send_smtp_email(to_email: str, subject: str, html_body: str) -> bool:
+    """Async wrapper – runs blocking SMTP send in a thread pool executor."""
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(
+        None, functools.partial(_send_smtp_sync, to_email, subject, html_body)
+    )
+# ────────────────────────────────────────────────────────────────────────────────
+
 # Auth Endpoints
+@api_router.post("/auth/send-otp")
+async def send_otp(req: OTPRequest):
+    """Generate a 6-digit OTP and send to user email via SMTP."""
+    otp = ''.join(random.choices(string.digits, k=6))
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=5)
+    otp_store[req.email] = {"otp": otp, "expires_at": expires_at, "verified": False}
+
+    # Format expiry time for email (IST)
+    expiry_ist = expires_at + timedelta(hours=5, minutes=30)
+    expiry_str = expiry_ist.strftime("%I:%M %p IST")
+    name_hint  = req.email.split('@')[0]
+
+    html_body = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif; background: #f5f5f5; padding: 24px;">
+      <div style="max-width:500px; margin:0 auto; background:#fff; border-radius:10px;
+                  box-shadow:0 2px 10px rgba(0,0,0,0.08); overflow:hidden;">
+        <div style="background:#1a1a1a; padding:22px 30px; text-align:center;">
+          <h2 style="color:#fff; margin:0; font-size:20px; letter-spacing:1px;">MAGNOVA ERP</h2>
+          <p style="color:#aaa; margin:4px 0 0; font-size:13px;">Email Verification</p>
+        </div>
+        <div style="padding:30px;">
+          <p style="color:#333; font-size:15px;">Hi <strong>{name_hint}</strong>,</p>
+          <p style="color:#555; font-size:14px;">
+            Use the OTP below to verify your email address and complete registration.
+          </p>
+
+          <!-- OTP box -->
+          <div style="text-align:center; margin:28px 0;">
+            <div style="display:inline-block; background:#f0f0f0; border:2px dashed #1a1a1a;
+                        border-radius:10px; padding:18px 40px;">
+              <p style="margin:0; font-size:36px; font-weight:bold; font-family:monospace;
+                         color:#1a1a1a; letter-spacing:10px;">{otp}</p>
+            </div>
+          </div>
+
+          <p style="color:#e03e3e; font-size:13px; text-align:center; font-weight:bold;">
+            ⏰ Valid until {expiry_str} (5 minutes only)
+          </p>
+
+          <div style="background:#fff8e1; border-left:4px solid #f59e0b; padding:12px 16px;
+                      border-radius:4px; margin:20px 0; font-size:13px; color:#555;">
+            <strong>Security notice:</strong> Magnova will never ask you to share this OTP.
+            If you didn't request this, you can safely ignore this email.
+          </div>
+
+          <p style="color:#999; font-size:12px; border-top:1px solid #eee; padding-top:14px; margin-top:6px;">
+            This is an automated message from Magnova ERP System. Do not reply.
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+    """
+
+    success = await send_smtp_email(req.email, "Your Magnova OTP – Verify Email", html_body)
+
+    if not success:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to send OTP email. Please check your email address and try again."
+        )
+
+    return {"message": "OTP sent successfully", "expires_in": 300}
+
+@api_router.post("/auth/verify-otp")
+async def verify_otp(req: OTPVerify):
+    """Verify the OTP entered by the user"""
+    record = otp_store.get(req.email)
+    if not record:
+        raise HTTPException(status_code=400, detail="No OTP found for this email. Please request a new OTP.")
+    if datetime.now(timezone.utc) > record["expires_at"]:
+        del otp_store[req.email]
+        raise HTTPException(status_code=400, detail="OTP has expired. Please request a new one.")
+    if record["otp"] != req.otp:
+        raise HTTPException(status_code=400, detail="Invalid OTP. Please try again.")
+    otp_store[req.email]["verified"] = True
+    return {"message": "Email verified successfully"}
+
 @api_router.post("/auth/register", response_model=TokenResponse)
 async def register(user_data: UserCreate):
     from uuid import uuid4
     existing = await db.users.find_one({"email": user_data.email})
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
-    
+
+    # Check email is verified via OTP
+    otp_record = otp_store.get(user_data.email)
+    if not otp_record or not otp_record.get("verified"):
+        raise HTTPException(status_code=400, detail="Email not verified. Please verify your email with OTP first.")
+
     user_id = str(uuid4())
     user_doc = {
         "user_id": user_id,
@@ -404,14 +556,78 @@ async def register(user_data: UserCreate):
         "name": user_data.name,
         "organization": user_data.organization,
         "role": user_data.role,
+        "phone": user_data.phone,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
-    
+
     await db.users.insert_one(user_doc)
-    user = User(**{k: v for k, v in user_doc.items() if k != "password"})
+    # Clean up OTP store
+    if user_data.email in otp_store:
+        del otp_store[user_data.email]
+
+    user  = User(**{k: v for k, v in user_doc.items() if k != "password"})
     token = create_token(user_id, user_data.email)
-    
+
+    # ── Send welcome email via SMTP ─────────────────────────────────────────
+    welcome_html = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif; background: #f5f5f5; padding: 24px;">
+      <div style="max-width:540px; margin:0 auto; background:#fff; border-radius:10px;
+                  box-shadow:0 2px 10px rgba(0,0,0,0.08); overflow:hidden;">
+        <div style="background:#1a1a1a; padding:22px 30px; text-align:center;">
+          <h2 style="color:#fff; margin:0; font-size:22px; letter-spacing:1px;">MAGNOVA ERP</h2>
+          <p style="color:#aaa; margin:4px 0 0; font-size:13px;">Welcome to the Platform</p>
+        </div>
+        <div style="padding:32px 30px;">
+          <h3 style="color:#1a1a1a; margin-top:0;">Welcome, {user_data.name}! 🎉</h3>
+          <p style="color:#555; font-size:15px; line-height:1.6;">
+            Your account has been successfully created on the <strong>Magnova ERP System</strong>.
+            You now have access to procurement, payments, logistics, and inventory management.
+          </p>
+
+          <table style="border-collapse:collapse; width:100%; margin:20px 0; font-size:14px;">
+            <tr style="background:#f7fafc;">
+              <td style="padding:10px 14px; border:1px solid #e2e8f0; font-weight:bold; width:130px;">Name</td>
+              <td style="padding:10px 14px; border:1px solid #e2e8f0;">{user_data.name}</td>
+            </tr>
+            <tr>
+              <td style="padding:10px 14px; border:1px solid #e2e8f0; font-weight:bold; background:#f7fafc;">Email</td>
+              <td style="padding:10px 14px; border:1px solid #e2e8f0;">{user_data.email}</td>
+            </tr>
+            <tr style="background:#f7fafc;">
+              <td style="padding:10px 14px; border:1px solid #e2e8f0; font-weight:bold;">Organization</td>
+              <td style="padding:10px 14px; border:1px solid #e2e8f0;">{user_data.organization}</td>
+            </tr>
+            <tr>
+              <td style="padding:10px 14px; border:1px solid #e2e8f0; font-weight:bold; background:#f7fafc;">Role</td>
+              <td style="padding:10px 14px; border:1px solid #e2e8f0;">{user_data.role}</td>
+            </tr>
+          </table>
+
+          <div style="background:#f0fdf4; border-left:4px solid #22c55e; padding:12px 16px;
+                      border-radius:4px; margin-bottom:20px; font-size:13px; color:#166534;">
+            ✅ Your account is active. Login at <strong>http://localhost:3000/login</strong>
+          </div>
+
+          <div style="background:#fef2f2; border-left:4px solid #ef4444; padding:12px 16px;
+                      border-radius:4px; font-size:13px; color:#991b1b;">
+            🔒 Keep your credentials safe. Magnova will never ask for your password or login codes.
+            Beware of phishing scams.
+          </div>
+
+          <p style="color:#999; font-size:12px; border-top:1px solid #eee; padding-top:14px; margin-top:20px;">
+            Thanks for joining Magnova! This is an automated message — do not reply.
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+    """
+    await send_smtp_email(user_data.email, f"Welcome to Magnova, {user_data.name}!", welcome_html)
+    # ────────────────────────────────────────────────────────────────────────
+
     return TokenResponse(access_token=token, user=user)
+
 
 @api_router.post("/auth/login", response_model=TokenResponse)
 async def login(credentials: UserLogin):
@@ -634,7 +850,7 @@ async def resolve_gap(procurement_id: str, resolution: GapResolution, current_us
     update_data = {"updated_at": datetime.now(timezone.utc).isoformat()}
     
     if resolution.action == "reverse":
-        # Create a notification for the creator
+        # Create in-app notification for the creator (existing behaviour)
         notification = {
             "type": "gap_reverse",
             "procurement_id": procurement_id,
@@ -648,7 +864,110 @@ async def resolve_gap(procurement_id: str, resolution: GapResolution, current_us
         }
         await db.notifications.insert_one(notification)
         await create_audit_log("GAP_REVERSE", "Procurement", procurement_id, current_user, {"message": "Reverse requested"})
-        return {"message": "Reverse notification sent to purchase team"}
+
+        # ── Send SMTP email to the PO creator ──────────────────────────────
+        try:
+            # Fetch PO creator's user record to get their email
+            creator = await db.users.find_one({"user_id": proc["created_by"]}, {"_id": 0})
+            if creator and creator.get("email"):
+                creator_email = creator["email"]
+                creator_name  = creator.get("name", creator_email)
+
+                deadline_ist  = (datetime.now(timezone.utc) + timedelta(hours=48, minutes=330))  # +5:30 IST
+                deadline_str  = deadline_ist.strftime("%d %b %Y, %I:%M %p IST")
+                
+                gmail_sender  = os.environ.get("GMAIL_SENDER", "")
+                gmail_pass    = os.environ.get("GMAILPASS", "")
+                
+                msg = MIMEMultipart("alternative")
+                msg["Subject"] = f"⚠️ Action Required: Resolve Procurement Gap within 48 Hours – {proc['po_number']}"
+                msg["From"]    = gmail_sender
+                msg["To"]      = creator_email
+
+                html_body = f"""
+                <html>
+                <body style="font-family: Arial, sans-serif; background: #f9f9f9; padding: 20px;">
+                  <div style="max-width:620px; margin:0 auto; background:#fff; border-radius:8px;
+                              box-shadow:0 2px 8px rgba(0,0,0,.1); overflow:hidden;">
+                    <!-- Red header banner -->
+                    <div style="background:#DC2626; padding:20px 30px;">
+                      <h2 style="color:#fff; margin:0; font-size:20px;">⚠️ Procurement Gap – Action Required</h2>
+                    </div>
+                    <div style="padding:28px 30px;">
+                      <p style="color:#444; font-size:15px;">Dear <strong>{creator_name}</strong>,</p>
+                      <p style="color:#444; font-size:15px;">
+                        A <strong style="color:#DC2626;">Reverse</strong> action has been triggered on a
+                        procurement record under your Purchase Order. Please resolve the gap issue
+                        <strong>within 48 hours</strong> to avoid escalation.
+                      </p>
+
+                      <!-- Detail table -->
+                      <table style="border-collapse:collapse; width:100%; margin:18px 0; font-size:14px;">
+                        <tr style="background:#FEF2F2;">
+                          <td style="padding:10px 14px; border:1px solid #FCA5A5; font-weight:bold; width:170px;">PO Number</td>
+                          <td style="padding:10px 14px; border:1px solid #FCA5A5; font-family:monospace;">{proc['po_number']}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding:10px 14px; border:1px solid #e2e8f0; font-weight:bold; background:#f7fafc;">IMEI</td>
+                          <td style="padding:10px 14px; border:1px solid #e2e8f0; font-family:monospace;">{proc.get('imei', 'N/A')}</td>
+                        </tr>
+                        <tr style="background:#FEF2F2;">
+                          <td style="padding:10px 14px; border:1px solid #FCA5A5; font-weight:bold;">Device Model</td>
+                          <td style="padding:10px 14px; border:1px solid #FCA5A5;">{proc.get('device_model', 'N/A')}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding:10px 14px; border:1px solid #e2e8f0; font-weight:bold; background:#f7fafc;">Gap Qty</td>
+                          <td style="padding:10px 14px; border:1px solid #e2e8f0; color:#DC2626; font-weight:bold;">{proc.get('gap_qty', 0)}</td>
+                        </tr>
+                        <tr style="background:#FEF2F2;">
+                          <td style="padding:10px 14px; border:1px solid #FCA5A5; font-weight:bold;">Gap Amount</td>
+                          <td style="padding:10px 14px; border:1px solid #FCA5A5; color:#DC2626; font-weight:bold;">₹{proc.get('gap_amt', 0):,.2f}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding:10px 14px; border:1px solid #e2e8f0; font-weight:bold; background:#f7fafc;">Resolve By</td>
+                          <td style="padding:10px 14px; border:1px solid #e2e8f0; color:#DC2626; font-weight:bold;">{deadline_str}</td>
+                        </tr>
+                        <tr style="background:#FEF2F2;">
+                          <td style="padding:10px 14px; border:1px solid #FCA5A5; font-weight:bold;">Initiated By</td>
+                          <td style="padding:10px 14px; border:1px solid #FCA5A5;">{current_user.name}</td>
+                        </tr>
+                      </table>
+
+                      <div style="background:#FEF2F2; border-left:4px solid #DC2626; padding:14px 18px; border-radius:4px; margin-bottom:20px;">
+                        <p style="margin:0; color:#991B1B; font-weight:bold;">
+                          🕐 You have <u>48 hours</u> to resolve this issue in the Magnova ERP system.
+                          Failure to act will result in automatic escalation to the Manager.
+                        </p>
+                      </div>
+
+                      <p style="color:#666; font-size:13px; border-top:1px solid #eee; padding-top:16px; margin-top:8px;">
+                        Please log in to the Magnova ERP system and navigate to
+                        <strong>Procurement → Review Procurement Issue</strong> to resolve this gap.
+                        <br><br>
+                        This is an automated alert. Do not reply to this email.
+                      </p>
+                    </div>
+                  </div>
+                </body>
+                </html>
+                """
+
+                msg.attach(MIMEText(html_body, "html"))
+
+                with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+                    server.login(gmail_sender, gmail_pass)
+                    server.sendmail(gmail_sender, creator_email, msg.as_string())
+
+                logging.info(f"Gap-reverse email sent to {creator_email} for PO {proc['po_number']}")
+            else:
+                logging.warning(f"Gap-reverse: PO creator user_id={proc['created_by']} not found or has no email")
+        except Exception as mail_err:
+            logging.error(f"Gap-reverse SMTP email error: {mail_err}")
+            # Don't fail the API call if email fails – notification already saved
+        # ───────────────────────────────────────────────────────────────────
+
+        return {"message": "Reverse notification sent to purchase team and email dispatched"}
+
         
     elif resolution.action == "update":
         # Resolve the gap
@@ -662,6 +981,14 @@ async def resolve_gap(procurement_id: str, resolution: GapResolution, current_us
             "settlement_date": datetime.now(timezone.utc).isoformat()
         })
         await db.procurement.update_one({"procurement_id": procurement_id}, {"$set": update_data})
+        
+        # ── Remove gap_reverse notification so header banner disappears ──
+        await db.notifications.delete_many({
+            "type": "gap_reverse",
+            "procurement_id": procurement_id
+        })
+        # ─────────────────────────────────────────────────────────────────
+        
         await create_audit_log("GAP_UPDATE", "Procurement", procurement_id, current_user, {"settlement_amount": resolution.settlement_amount})
         return {"message": "Gap resolved and quantities updated"}
 
@@ -1762,6 +2089,55 @@ async def handle_chat(request: ChatRequest, current_user: User = Depends(get_cur
     except Exception as e:
         logger.error(f"Chatbot error: {str(e)}", exc_info=True)
         return {"response": "I'm sorry, I'm having trouble accessing the data right now. Please try again later."}
+
+@api_router.post("/contact/maintenance")
+async def maintenance_contact(req: MaintenanceContact):
+    """Send user's email to Magnova team via Gmail SMTP when they submit from maintenance page"""
+    gmail_pass = os.environ.get('GMAILPASS', '')
+    # Gmail address used to authenticate SMTP - must match Google account
+    sender_gmail = os.environ.get('GMAIL_SENDER', 'ramakrishna.mtr@magnova.in')
+    recipient_email = "ramakrishna.mtr@magnova.in"
+    
+    try:
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = "Magnova ERP - Maintenance Page: User Wants Notification"
+        msg['From'] = sender_gmail
+        msg['To'] = recipient_email
+        msg['Reply-To'] = req.email
+        
+        html_body = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9;">
+            <div style="max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <h2 style="color: #1a1a1a; border-bottom: 2px solid #eee; padding-bottom: 10px;">🔧 Maintenance Page - User Contact</h2>
+                <p style="color: #444;">A user has submitted their email from the <b style="color: #e53e3e;">Under Maintenance</b> page requesting to be notified when the feature is back.</p>
+                <table style="border-collapse: collapse; width: 100%; margin-top: 16px;">
+                    <tr>
+                        <td style="padding: 10px 14px; border: 1px solid #e2e8f0; background: #f7fafc; font-weight: bold; width: 140px;">User Email</td>
+                        <td style="padding: 10px 14px; border: 1px solid #e2e8f0; color: #2b6cb0;">{req.email}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px 14px; border: 1px solid #e2e8f0; background: #f7fafc; font-weight: bold;">Submitted At</td>
+                        <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">{datetime.now(timezone.utc).strftime('%d %b %Y, %I:%M %p UTC')}</td>
+                    </tr>
+                </table>
+                <p style="color: #888; font-size: 12px; margin-top: 24px; border-top: 1px solid #eee; padding-top: 12px;">This is an automated message from the Magnova ERP System. You can reply to this email to contact the user directly.</p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        msg.attach(MIMEText(html_body, 'html'))
+        
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            server.login(sender_gmail, gmail_pass)
+            server.sendmail(sender_gmail, recipient_email, msg.as_string())
+        
+        return {"message": "Thank you! We'll notify you when we're back."}
+    except Exception as e:
+        logging.error(f"Maintenance contact email error: {e}")
+        # Return success to user even if email fails - don't expose internal errors
+        return {"message": "Thank you! We'll notify you when we're back."}
 
 app.include_router(api_router)
 
