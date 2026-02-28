@@ -24,6 +24,7 @@ RUN pip install --no-cache-dir --upgrade pip \
 
 # Copy the backend app source
 COPY backend/server.py .
+COPY backend/start.py .
 
 # Railway injects $PORT at runtime; default to 8000 for local docker run
 ENV PORT=8000
@@ -32,6 +33,5 @@ ENV PYTHONUNBUFFERED=1
 # Expose the port (documentation only — Railway reads $PORT automatically)
 EXPOSE 8000
 
-# Use exec form with explicit shell so $PORT is ALWAYS expanded by /bin/sh
-# This works even if Railway's dashboard overrides the start command
-CMD ["/bin/sh", "-c", "uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]
+# Use Python entrypoint — reads PORT via os.environ (no shell expansion issues)
+CMD ["python", "start.py"]
