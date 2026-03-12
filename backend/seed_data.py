@@ -16,8 +16,16 @@ from uuid import uuid4
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection
+# MongoDB connection - use connection string with ssl=true parameter
 mongo_url = os.environ['MONGO_URL']
+
+# Add SSL parameters to connection string if not present
+if 'ssl=' not in mongo_url and 'tls=' not in mongo_url:
+    if '?' in mongo_url:
+        mongo_url = mongo_url + '&ssl=true&ssl_cert_reqs=CERT_NONE'
+    else:
+        mongo_url = mongo_url + '?ssl=true&ssl_cert_reqs=CERT_NONE'
+
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
@@ -69,14 +77,14 @@ async def seed_users():
     """Create sample users"""
     print("Seeding users...")
     users = []
-    
+
     # Create admin users
     admin_users = [
         {"name": "Admin User", "email": "admin@magnova.com", "role": "admin", "organization": "Magnova"},
         {"name": "Manager User", "email": "manager@magnova.com", "role": "manager", "organization": "Magnova"},
         {"name": "Nova Admin", "email": "admin@nova.com", "role": "admin", "organization": "Nova"},
     ]
-    
+
     for user_data in admin_users:
         user = {
             "user_id": str(uuid4()),
@@ -88,7 +96,7 @@ async def seed_users():
             "created_at": random_date(365, 180).isoformat()
         }
         users.append(user)
-    
+
     # Create additional random users
     for i in range(17):
         user = {
@@ -101,34 +109,34 @@ async def seed_users():
             "created_at": random_date(365, 30).isoformat()
         }
         users.append(user)
-    
+
     await db.users.delete_many({})
     await db.users.insert_many(users)
-    print(f"✓ Inserted {len(users)} users")
+    print(f"[OK] Inserted {len(users)} users")
     return users
 
 async def seed_purchase_orders(users):
     """Create sample purchase orders"""
     print("Seeding purchase orders...")
     pos = []
-    
+
     for i in range(50):
         created_by = random.choice([u for u in users if u['organization'] == 'Magnova'])
         po_date = random_date(120, 10)
-        
+
         # Generate 3-10 line items per PO
         num_items = random.randint(3, 10)
         items = []
         total_quantity = 0
         total_value = 0
-        
+
         for j in range(num_items):
             brand = random.choice(BRANDS)
             model = random.choice(MODELS[brand])
             rate = random.uniform(15000, 85000)
             qty = random.randint(1, 5)
             po_value = rate * qty
-            
+
             item = {
                 "sl_no": j + 1,
                 "vendor": random.choice(VENDORS),
@@ -145,11 +153,11 @@ async def seed_purchase_orders(users):
             items.append(item)
             total_quantity += qty
             total_value += po_value
-        
+
         statuses = ["draft", "pending_approval", "approved", "completed"]
         status = random.choice(statuses)
         approval_status = "approved" if status in ["approved", "completed"] else random.choice(["pending", "approved", "rejected"])
-        
+
         po = {
             "po_id": str(uuid4()),
             "po_number": generate_po_number(),
@@ -171,26 +179,26 @@ async def seed_purchase_orders(users):
             "updated_at": (po_date + timedelta(days=random.randint(1, 5))).isoformat()
         }
         pos.append(po)
-    
+
     await db.purchase_orders.delete_many({})
     await db.purchase_orders.insert_many(pos)
-    print(f"✓ Inserted {len(pos)} purchase orders")
+    print(f"[OK] Inserted {len(pos)} purchase orders")
     return pos
 
 async def seed_imei_inventory(pos, users):
     """Create IMEI inventory entries"""
     print("Seeding IMEI inventory...")
     inventory = []
-    
+
     approved_pos = [po for po in pos if po['approval_status'] == 'approved']
-    
+
     for po in approved_pos[:30]:  # Process first 30 approved POs
         for item in po['items']:
             for _ in range(item['qty']):
                 inward_date = datetime.fromisoformat(po['po_date']) + timedelta(days=random.randint(5, 15))
                 status_options = ["at_nova", "in_transit_to_magnova", "at_magnova", "dispatched", "sold"]
                 status = random.choice(status_options)
-                
+
                 imei_entry = {
                     "imei": generate_imei(),
                     "procurement_id": str(uuid4()),
@@ -213,28 +221,28 @@ async def seed_imei_inventory(pos, users):
                     "updated_at": datetime.now(timezone.utc).isoformat()
                 }
                 inventory.append(imei_entry)
-    
+
     await db.imei_inventory.delete_many({})
     await db.imei_inventory.insert_many(inventory)
-    print(f"✓ Inserted {len(inventory)} IMEI inventory entries")
+    print(f"[OK] Inserted {len(inventory)} IMEI inventory entries")
     return inventory
 
 async def seed_payments(pos, users):
     """Create payment records"""
     print("Seeding payments...")
     payments = []
-    
+
     approved_pos = [po for po in pos if po['approval_status'] == 'approved']
-    
+
     for po in approved_pos[:40]:
         # Create 1-3 payments per PO
         num_payments = random.randint(1, 3)
         payment_date = datetime.fromisoformat(po['po_date']) + timedelta(days=random.randint(1, 20))
-        
+
         for _ in range(num_payments):
             payment_type = random.choice(["internal", "external"])
             created_by = random.choice([u for u in users if u['organization'] == po['organization']])
-            
+
             if payment_type == "internal":
                 payment = {
                     "payment_id": str(uuid4()),
@@ -282,34 +290,34 @@ async def seed_payments(pos, users):
                     "created_by": created_by["user_id"],
                     "created_at": payment_date.isoformat()
                 }
-            
+
             payments.append(payment)
-    
+
     await db.payments.delete_many({})
     await db.payments.insert_many(payments)
-    print(f"✓ Inserted {len(payments)} payments")
+    print(f"[OK] Inserted {len(payments)} payments")
     return payments
 
 async def seed_logistics(pos, inventory, users):
     """Create logistics shipments"""
     print("Seeding logistics shipments...")
     shipments = []
-    
+
     approved_pos = [po for po in pos if po['approval_status'] == 'approved']
-    
+
     for po in approved_pos[:25]:
         # Get some IMEIs for this PO
         po_imeis = [item['imei'] for item in inventory if item['po_number'] == po['po_number']][:random.randint(5, 15)]
-        
+
         if not po_imeis:
             continue
-        
+
         pickup_date = datetime.fromisoformat(po['po_date']) + timedelta(days=random.randint(5, 10))
         expected_delivery = pickup_date + timedelta(days=random.randint(2, 7))
         status = random.choice(["pending", "in_transit", "delivered", "delayed"])
-        
+
         created_by = random.choice([u for u in users if u['organization'] == po['organization']])
-        
+
         shipment = {
             "shipment_id": str(uuid4()),
             "po_number": po['po_number'],
@@ -332,35 +340,35 @@ async def seed_logistics(pos, inventory, users):
             "updated_at": datetime.now(timezone.utc).isoformat()
         }
         shipments.append(shipment)
-    
+
     await db.logistics_shipments.delete_many({})
     await db.logistics_shipments.insert_many(shipments)
-    print(f"✓ Inserted {len(shipments)} logistics shipments")
+    print(f"[OK] Inserted {len(shipments)} logistics shipments")
     return shipments
 
 async def seed_invoices(pos, inventory, users):
     """Create invoices"""
     print("Seeding invoices...")
     invoices = []
-    
+
     approved_pos = [po for po in pos if po['approval_status'] == 'approved']
-    
+
     for po in approved_pos[:35]:
         # Get some IMEIs for this PO
         po_imeis = [item['imei'] for item in inventory if item['po_number'] == po['po_number']][:random.randint(3, 10)]
-        
+
         if not po_imeis:
             continue
-        
+
         invoice_date = datetime.fromisoformat(po['po_date']) + timedelta(days=random.randint(10, 30))
         invoice_type = random.choice(["purchase", "sale", "transfer"])
         amount = round(random.uniform(50000, 800000), 2)
         gst_percentage = 18
         gst_amount = round(amount * gst_percentage / 100, 2)
         total_amount = amount + gst_amount
-        
+
         created_by = random.choice([u for u in users if u['organization'] == po['organization']])
-        
+
         invoice = {
             "invoice_id": str(uuid4()),
             "invoice_number": generate_invoice_number(),
@@ -382,34 +390,34 @@ async def seed_invoices(pos, inventory, users):
             "created_at": invoice_date.isoformat()
         }
         invoices.append(invoice)
-    
+
     await db.invoices.delete_many({})
     await db.invoices.insert_many(invoices)
-    print(f"✓ Inserted {len(invoices)} invoices")
+    print(f"[OK] Inserted {len(invoices)} invoices")
     return invoices
 
 async def seed_sales_orders(inventory, users):
     """Create sales orders"""
     print("Seeding sales orders...")
     sales_orders = []
-    
+
     sold_items = [item for item in inventory if item['status'] == 'sold']
-    
+
     # Group sold items into sales orders
     for i in range(30):
         if not sold_items:
             break
-        
+
         num_items = min(random.randint(1, 5), len(sold_items))
         selected_items = sold_items[:num_items]
         sold_items = sold_items[num_items:]
-        
+
         imei_list = [item['imei'] for item in selected_items]
         total_amount = sum([item['purchase_price'] * 1.15 for item in selected_items])  # 15% markup
-        
+
         created_by = random.choice([u for u in users if u['organization'] == 'Magnova'])
         created_at = random_date(60, 0)
-        
+
         so = {
             "sales_order_id": str(uuid4()),
             "so_number": generate_so_number(),
@@ -424,25 +432,25 @@ async def seed_sales_orders(inventory, users):
             "updated_at": (created_at + timedelta(days=random.randint(1, 5))).isoformat()
         }
         sales_orders.append(so)
-    
+
     await db.sales_orders.delete_many({})
     if sales_orders:
         await db.sales_orders.insert_many(sales_orders)
-    print(f"✓ Inserted {len(sales_orders)} sales orders")
+    print(f"[OK] Inserted {len(sales_orders)} sales orders")
     return sales_orders
 
 async def seed_audit_logs(users):
     """Create audit log entries"""
     print("Seeding audit logs...")
     logs = []
-    
+
     actions = ["create", "update", "delete", "approve", "reject", "scan", "dispatch"]
     entity_types = ["purchase_order", "payment", "shipment", "invoice", "sales_order", "imei"]
-    
+
     for i in range(200):
         user = random.choice(users)
         timestamp = random_date(120, 0)
-        
+
         log = {
             "log_id": str(uuid4()),
             "action": random.choice(actions),
@@ -458,10 +466,10 @@ async def seed_audit_logs(users):
             "timestamp": timestamp.isoformat()
         }
         logs.append(log)
-    
+
     await db.audit_logs.delete_many({})
     await db.audit_logs.insert_many(logs)
-    print(f"✓ Inserted {len(logs)} audit logs")
+    print(f"[OK] Inserted {len(logs)} audit logs")
     return logs
 
 async def main():
@@ -469,13 +477,13 @@ async def main():
     print("=" * 60)
     print("Starting database seeding...")
     print("=" * 60)
-    
+
     try:
         # Create indexes
         await db.users.create_index("email", unique=True)
         await db.imei_inventory.create_index("imei", unique=True)
         await db.purchase_orders.create_index("po_number", unique=True)
-        
+
         # Seed data in order
         users = await seed_users()
         pos = await seed_purchase_orders(users)
@@ -485,9 +493,9 @@ async def main():
         invoices = await seed_invoices(pos, inventory, users)
         sales_orders = await seed_sales_orders(inventory, users)
         audit_logs = await seed_audit_logs(users)
-        
+
         print("=" * 60)
-        print("✓ Database seeding completed successfully!")
+        print("[OK] Database seeding completed successfully!")
         print("=" * 60)
         print("\nSummary:")
         print(f"  Users: {len(users)}")
@@ -504,9 +512,9 @@ async def main():
         print("  manager@magnova.com / password123")
         print("  admin@nova.com / password123")
         print("=" * 60)
-        
+
     except Exception as e:
-        print(f"\n✗ Error during seeding: {e}")
+        print(f"\n[ERROR] Error during seeding: {e}")
         import traceback
         traceback.print_exc()
     finally:

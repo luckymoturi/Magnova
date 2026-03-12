@@ -5,7 +5,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner';
-import { Download, Search, RefreshCw, Trash2, FileSpreadsheet, ShoppingCart, Package } from 'lucide-react';
+import { Download, Search, RefreshCw, Trash2, FileSpreadsheet, ShoppingCart, Package, CreditCard, Truck, Boxes, Users } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useDataRefresh } from '../context/DataRefreshContext';
 
@@ -22,6 +22,11 @@ export const ReportsPage = () => {
   const { refreshTimestamps, triggerGlobalRefresh } = useDataRefresh();
   const isAdmin = user?.role === 'Admin';
   const isPurchaseTeam = user?.role === 'Purchase';
+  const isManager = user?.role === 'Manager';
+  const isInternalPayments = user?.role === 'InternalPayments';
+  const isExternalPayments = user?.role === 'ExternalPayments';
+  const isLogistics = user?.role === 'Logistics';
+  const isInventory = user?.role === 'Inventory';
 
   useEffect(() => {
     fetchStats();
@@ -46,26 +51,18 @@ export const ReportsPage = () => {
   const fetchMasterReport = async () => {
     setLoading(true);
     try {
-      // Fetch POs and procurement always; payments/logistics/inventory only for non-Purchase roles
-      const fetchList = [
+      const [posRes, procRes, payRes, shipRes, invRes] = await Promise.all([
         api.get('/purchase-orders'),
-        api.get('/procurement'),
-      ];
-
-      if (!isPurchaseTeam) {
-        fetchList.push(
-          api.get('/payments'),
-          api.get('/logistics/shipments'),
-          api.get('/inventory'),
-        );
-      }
-
-      const results = await Promise.all(fetchList);
-      const pos = results[0].data;
-      const procurements = results[1].data;
-      const payments = isPurchaseTeam ? [] : results[2].data;
-      const shipments = isPurchaseTeam ? [] : results[3].data;
-      const inventory = isPurchaseTeam ? [] : results[4].data;
+        (isAdmin || isPurchaseTeam) ? api.get('/procurement') : Promise.resolve({ data: [] }),
+        (isAdmin || isInternalPayments || isExternalPayments) ? api.get('/payments') : Promise.resolve({ data: [] }),
+        (isAdmin || isLogistics) ? api.get('/logistics/shipments') : Promise.resolve({ data: [] }),
+        (isAdmin || isInventory) ? api.get('/inventory') : Promise.resolve({ data: [] }),
+      ]);
+      const pos = posRes.data;
+      const procurements = procRes.data;
+      const payments = payRes.data;
+      const shipments = shipRes.data;
+      const inventory = invRes.data;
 
       // Separate internal and external payments
       const internalPayments = payments.filter(p => p.payment_type === 'internal' || !p.payment_type);
@@ -206,6 +203,123 @@ export const ReportsPage = () => {
     link.click();
     link.remove();
     toast.success('Purchase report exported successfully');
+  };
+
+  // ─── Manager CSV Export ──────────────────────────────────────
+  const handleExportManagerCSV = () => {
+    if (filteredReport.length === 0) { toast.error('No data to export'); return; }
+    const headers = ['SL No', 'PO ID', 'PO Date', 'Purchase Office', 'Created By', 'Vendor', 'Location', 'Brand', 'Model', 'Qty', 'PO Value (₹)', 'Approval Status'];
+    const csvContent = [
+      headers.join(','),
+      ...filteredReport.map(row => [
+        row.sl_no, row.po_id,
+        row.po_date ? new Date(row.po_date).toLocaleDateString() : '-',
+        row.purchase_office, row.created_by, row.vendor, row.location, row.brand, row.model,
+        row.qty, row.po_value, row.po_status,
+      ].join(','))
+    ].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `manager_report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link); link.click(); link.remove();
+    toast.success('Manager report exported successfully');
+  };
+
+  // ─── Internal Payments CSV Export ───────────────────────────
+  const handleExportInternalPaymentsCSV = () => {
+    if (filteredReport.length === 0) { toast.error('No data to export'); return; }
+    const headers = ['SL No', 'PO ID', 'PO Date', 'Vendor', 'Brand', 'Model', 'Qty', 'PO Value (₹)', 'Payment#', 'Bank Account', 'IFSC', 'Payment Date', 'UTR No', 'Amount (₹)'];
+    const csvContent = [
+      headers.join(','),
+      ...filteredReport.map(row => [
+        row.sl_no, row.po_id,
+        row.po_date ? new Date(row.po_date).toLocaleDateString() : '-',
+        row.vendor, row.brand, row.model, row.qty, row.po_value,
+        row.payment_no, row.bank_account, row.ifsc_code,
+        row.payment_date !== '-' ? new Date(row.payment_date).toLocaleDateString() : '-',
+        row.utr_no, row.payment_amount,
+      ].join(','))
+    ].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `internal_payments_report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link); link.click(); link.remove();
+    toast.success('Internal Payments report exported successfully');
+  };
+
+  // ─── External Payments CSV Export ───────────────────────────
+  const handleExportExternalPaymentsCSV = () => {
+    if (filteredReport.length === 0) { toast.error('No data to export'); return; }
+    const headers = ['SL No', 'PO ID', 'PO Date', 'Vendor', 'Brand', 'Model', 'Qty', 'PO Value (₹)', 'Ext Payment#', 'Payee Name', 'Payee Type', 'Bank Acc#', 'Payment Date', 'UTR No', 'Amount (₹)'];
+    const csvContent = [
+      headers.join(','),
+      ...filteredReport.map(row => [
+        row.sl_no, row.po_id,
+        row.po_date ? new Date(row.po_date).toLocaleDateString() : '-',
+        row.vendor, row.brand, row.model, row.qty, row.po_value,
+        row.ext_payment_no, row.ext_payee_name, row.ext_payee_type, row.ext_bank_account,
+        row.ext_payment_date !== '-' ? new Date(row.ext_payment_date).toLocaleDateString() : '-',
+        row.ext_utr_no, row.ext_payment_amount,
+      ].join(','))
+    ].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `external_payments_report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link); link.click(); link.remove();
+    toast.success('External Payments report exported successfully');
+  };
+
+  // ─── Logistics CSV Export ────────────────────────────────────
+  const handleExportLogisticsCSV = () => {
+    if (filteredReport.length === 0) { toast.error('No data to export'); return; }
+    const headers = ['SL No', 'PO ID', 'PO Date', 'Vendor', 'Location', 'Brand', 'Model', 'Qty', 'Courier', 'Dispatch Date', 'POD No', 'Shipment Status'];
+    const csvContent = [
+      headers.join(','),
+      ...filteredReport.map(row => [
+        row.sl_no, row.po_id,
+        row.po_date ? new Date(row.po_date).toLocaleDateString() : '-',
+        row.vendor, row.location, row.brand, row.model, row.qty,
+        row.courier_name,
+        row.dispatch_date !== '-' ? new Date(row.dispatch_date).toLocaleDateString() : '-',
+        row.pod_number, row.shipment_status,
+      ].join(','))
+    ].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `logistics_report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link); link.click(); link.remove();
+    toast.success('Logistics report exported successfully');
+  };
+
+  // ─── Inventory CSV Export ────────────────────────────────────
+  const handleExportInventoryCSV = () => {
+    if (filteredReport.length === 0) { toast.error('No data to export'); return; }
+    const headers = ['SL No', 'PO ID', 'PO Date', 'Vendor', 'Brand', 'Model', 'IMEI', 'Qty', 'Received Date', 'Received Qty', 'Warehouse', 'Stock Status'];
+    const csvContent = [
+      headers.join(','),
+      ...filteredReport.map(row => [
+        row.sl_no, row.po_id,
+        row.po_date ? new Date(row.po_date).toLocaleDateString() : '-',
+        row.vendor, row.brand, row.model, row.imei, row.qty,
+        row.stock_received_date !== '-' ? new Date(row.stock_received_date).toLocaleDateString() : '-',
+        row.received_qty, row.warehouse, row.stock_status,
+      ].join(','))
+    ].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `inventory_report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link); link.click(); link.remove();
+    toast.success('Inventory report exported successfully');
   };
 
   // ─── Master (Admin) CSV Export ──────────────────────────────
@@ -495,6 +609,357 @@ export const ReportsPage = () => {
               </div>
             </div>
           )}
+        </div>
+      </Layout>
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────
+  // MANAGER VIEW (Purchase Orders + Approvals)
+  // ────────────────────────────────────────────────────────────
+  if (isManager) {
+    return (
+      <Layout pageTitle="Approval Report" pageDescription="Purchase Orders and Approval status for your team">
+        <div data-testid="reports-page">
+          <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-neutral-100 rounded-lg"><Users className="w-5 h-5 text-neutral-700" /></div>
+              <div>
+                <h2 className="text-base font-bold text-neutral-900">PO &amp; Approvals Report</h2>
+                <p className="text-xs text-neutral-500">{filteredReport.length} record(s)</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={fetchMasterReport} variant="outline" className="border-neutral-300 text-neutral-700"><RefreshCw className="w-4 h-4 mr-2" />Refresh</Button>
+              <Button onClick={handleExportManagerCSV} className="bg-gray-900 hover:bg-gray-800 text-white"><Download className="w-4 h-4 mr-2" />Export CSV</Button>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+            <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-sm"><p className="text-xs text-neutral-500 mb-1">Total POs</p><p className="text-2xl font-bold text-neutral-900">{stats?.total_pos || 0}</p></div>
+            <div className="bg-white border border-amber-200 rounded-lg p-4 shadow-sm"><p className="text-xs text-neutral-500 mb-1">Pending Approval</p><p className="text-2xl font-bold text-amber-600">{masterReport.filter(r => r.po_status === 'Pending').length}</p></div>
+            <div className="bg-white border border-emerald-200 rounded-lg p-4 shadow-sm"><p className="text-xs text-neutral-500 mb-1">Approved</p><p className="text-2xl font-bold text-emerald-600">{masterReport.filter(r => r.po_status === 'Approved').length}</p></div>
+            <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-sm"><p className="text-xs text-neutral-500 mb-1">Total PO Value</p><p className="text-lg font-bold text-neutral-900">{formatCurrency(masterReport.reduce((s, r) => s + (r.po_value || 0), 0))}</p></div>
+          </div>
+          <div className="mb-4 flex flex-wrap gap-3">
+            <div className="flex-1 relative min-w-[240px] max-w-xl"><Search className="absolute left-3 top-2.5 w-4 h-4 text-neutral-400 pointer-events-none z-10" /><Input placeholder="Search PO, Vendor, Brand, Model..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" /></div>
+            <Select value={poFilter} onValueChange={setPOFilter}><SelectTrigger className="w-56 bg-white"><SelectValue placeholder="Filter by PO" /></SelectTrigger><SelectContent className="bg-white max-h-60"><SelectItem value="all">All Purchase Orders</SelectItem>{uniquePOs.map((po) => (<SelectItem key={po} value={po}>{po}</SelectItem>))}</SelectContent></Select>
+            <Select value={approvalFilter} onValueChange={setApprovalFilter}><SelectTrigger className="w-44 bg-white"><SelectValue placeholder="Approval Status" /></SelectTrigger><SelectContent className="bg-white"><SelectItem value="all">All Statuses</SelectItem><SelectItem value="Pending">Pending</SelectItem><SelectItem value="Approved">Approved</SelectItem><SelectItem value="Rejected">Rejected</SelectItem></SelectContent></Select>
+          </div>
+          <div className="bg-white border border-neutral-200 rounded-lg shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr><th colSpan="10" className="px-3 py-2 text-left text-sm font-bold text-neutral-900" style={{ backgroundColor: '#BFC9D1' }}><span className="flex items-center gap-2"><ShoppingCart className="w-4 h-4" /> PURCHASE ORDERS &amp; APPROVALS</span></th></tr>
+                  <tr className="bg-white">
+                    {['SL NO','PO ID','PO DATE','PURCHASE OFFICE','CREATED BY','VENDOR','BRAND / MODEL','QTY','PO VALUE','APPROVAL'].map(h => (<th key={h} className="px-2 py-2 text-left font-semibold text-neutral-800 border-b-2 border-neutral-400 whitespace-nowrap">{h}</th>))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? <tr><td colSpan={10} className="px-4 py-8 text-center text-neutral-500">Loading...</td></tr>
+                  : filteredReport.length === 0 ? <tr><td colSpan={10} className="px-4 py-8 text-center text-neutral-500">No data found</td></tr>
+                  : filteredReport.map((row, i) => (
+                    <tr key={i} className={`border-b border-neutral-100 hover:bg-neutral-50 ${i % 2 === 0 ? 'bg-white' : 'bg-neutral-50/50'}`}>
+                      <td className="px-2 py-2 text-neutral-500">{row.sl_no}</td>
+                      <td className="px-2 py-2 font-mono font-semibold text-neutral-900">{row.po_id}</td>
+                      <td className="px-2 py-2 text-neutral-700 whitespace-nowrap">{formatDate(row.po_date)}</td>
+                      <td className="px-2 py-2 text-neutral-700">{row.purchase_office || '-'}</td>
+                      <td className="px-2 py-2 text-neutral-700">{row.created_by || '-'}</td>
+                      <td className="px-2 py-2 text-neutral-900 font-medium">{row.vendor || '-'}</td>
+                      <td className="px-2 py-2 text-neutral-900"><div className="font-medium">{row.brand} {row.model}</div>{row.storage && <div className="text-neutral-400 text-[10px]">{row.storage}{row.colour && ` · ${row.colour}`}</div>}</td>
+                      <td className="px-2 py-2 text-right font-semibold text-neutral-900">{row.qty}</td>
+                      <td className="px-2 py-2 text-right font-bold text-neutral-900">{formatCurrency(row.po_value)}</td>
+                      <td className="px-2 py-2">{getApprovalBadge(row.po_status)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────
+  // INTERNAL PAYMENTS VIEW
+  // ────────────────────────────────────────────────────────────
+  if (isInternalPayments) {
+    return (
+      <Layout pageTitle="Internal Payments Report" pageDescription="Internal payment records for your team">
+        <div data-testid="reports-page">
+          <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-neutral-100 rounded-lg"><CreditCard className="w-5 h-5 text-neutral-700" /></div>
+              <div>
+                <h2 className="text-base font-bold text-neutral-900">Internal Payments Report</h2>
+                <p className="text-xs text-neutral-500">{filteredReport.length} record(s)</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={fetchMasterReport} variant="outline" className="border-neutral-300 text-neutral-700"><RefreshCw className="w-4 h-4 mr-2" />Refresh</Button>
+              <Button onClick={handleExportInternalPaymentsCSV} className="bg-gray-900 hover:bg-gray-800 text-white"><Download className="w-4 h-4 mr-2" />Export CSV</Button>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+            <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-sm"><p className="text-xs text-neutral-500 mb-1">Total POs</p><p className="text-2xl font-bold text-neutral-900">{stats?.total_pos || 0}</p></div>
+            <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-sm"><p className="text-xs text-neutral-500 mb-1">Payments Made</p><p className="text-2xl font-bold text-neutral-900">{masterReport.filter(r => r.payment_no !== '-').length}</p></div>
+            <div className="bg-white border border-amber-200 rounded-lg p-4 shadow-sm"><p className="text-xs text-neutral-500 mb-1">Pending Payment</p><p className="text-2xl font-bold text-amber-600">{masterReport.filter(r => r.payment_no === '-').length}</p></div>
+            <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-sm"><p className="text-xs text-neutral-500 mb-1">Total Paid</p><p className="text-lg font-bold text-neutral-900">{formatCurrency(masterReport.reduce((s, r) => s + (r.payment_amount || 0), 0))}</p></div>
+          </div>
+          <div className="mb-4 flex flex-wrap gap-3">
+            <div className="flex-1 relative min-w-[240px] max-w-xl"><Search className="absolute left-3 top-2.5 w-4 h-4 text-neutral-400 pointer-events-none z-10" /><Input placeholder="Search PO, Vendor, Brand, UTR..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" /></div>
+            <Select value={poFilter} onValueChange={setPOFilter}><SelectTrigger className="w-56 bg-white"><SelectValue placeholder="Filter by PO" /></SelectTrigger><SelectContent className="bg-white max-h-60"><SelectItem value="all">All Purchase Orders</SelectItem>{uniquePOs.map((po) => (<SelectItem key={po} value={po}>{po}</SelectItem>))}</SelectContent></Select>
+          </div>
+          <div className="bg-white border border-neutral-200 rounded-lg shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr>
+                    <th colSpan="8" className="px-3 py-2 text-left text-sm font-bold text-neutral-900 border-r border-neutral-400" style={{ backgroundColor: '#BFC9D1' }}><span className="flex items-center gap-2"><ShoppingCart className="w-4 h-4" /> PURCHASE ORDERS</span></th>
+                    <th colSpan="6" className="px-3 py-2 text-left text-sm font-bold text-white" style={{ backgroundColor: '#374151' }}><span className="flex items-center gap-2"><CreditCard className="w-4 h-4" /> INTERNAL PAYMENTS</span></th>
+                  </tr>
+                  <tr className="bg-white">
+                    {['SL NO','PO ID','PO DATE','VENDOR','BRAND / MODEL','STORAGE','QTY','PO VALUE','PAYMENT #','BANK ACCOUNT','IFSC','PAYMENT DATE','UTR NO','AMOUNT'].map(h => (<th key={h} className="px-2 py-2 text-left font-semibold text-neutral-800 border-b-2 border-neutral-400 whitespace-nowrap">{h}</th>))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? <tr><td colSpan={14} className="px-4 py-8 text-center text-neutral-500">Loading...</td></tr>
+                  : filteredReport.length === 0 ? <tr><td colSpan={14} className="px-4 py-8 text-center text-neutral-500">No data found</td></tr>
+                  : filteredReport.map((row, i) => (
+                    <tr key={i} className={`border-b border-neutral-100 hover:bg-neutral-50 ${i % 2 === 0 ? 'bg-white' : 'bg-neutral-50/50'}`}>
+                      <td className="px-2 py-2 text-neutral-500">{row.sl_no}</td>
+                      <td className="px-2 py-2 font-mono font-semibold text-neutral-900">{row.po_id}</td>
+                      <td className="px-2 py-2 text-neutral-700 whitespace-nowrap">{formatDate(row.po_date)}</td>
+                      <td className="px-2 py-2 text-neutral-900 font-medium">{row.vendor || '-'}</td>
+                      <td className="px-2 py-2 text-neutral-900"><div className="font-medium">{row.brand} {row.model}</div></td>
+                      <td className="px-2 py-2 text-neutral-600">{row.storage || '-'}</td>
+                      <td className="px-2 py-2 text-right font-semibold text-neutral-900">{row.qty}</td>
+                      <td className="px-2 py-2 text-right font-bold text-neutral-900 border-r border-neutral-200">{formatCurrency(row.po_value)}</td>
+                      <td className="px-2 py-2 font-mono text-neutral-700">{row.payment_no}</td>
+                      <td className="px-2 py-2 text-neutral-700">{row.bank_account}</td>
+                      <td className="px-2 py-2 text-neutral-700">{row.ifsc_code}</td>
+                      <td className="px-2 py-2 text-neutral-700 whitespace-nowrap">{formatDate(row.payment_date)}</td>
+                      <td className="px-2 py-2 font-mono text-neutral-700">{row.utr_no}</td>
+                      <td className="px-2 py-2 font-bold text-neutral-900">{formatCurrency(row.payment_amount)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────
+  // EXTERNAL PAYMENTS VIEW
+  // ────────────────────────────────────────────────────────────
+  if (isExternalPayments) {
+    return (
+      <Layout pageTitle="External Payments Report" pageDescription="External payment records for your team">
+        <div data-testid="reports-page">
+          <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-neutral-100 rounded-lg"><CreditCard className="w-5 h-5 text-neutral-700" /></div>
+              <div>
+                <h2 className="text-base font-bold text-neutral-900">External Payments Report</h2>
+                <p className="text-xs text-neutral-500">{filteredReport.length} record(s)</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={fetchMasterReport} variant="outline" className="border-neutral-300 text-neutral-700"><RefreshCw className="w-4 h-4 mr-2" />Refresh</Button>
+              <Button onClick={handleExportExternalPaymentsCSV} className="bg-gray-900 hover:bg-gray-800 text-white"><Download className="w-4 h-4 mr-2" />Export CSV</Button>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+            <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-sm"><p className="text-xs text-neutral-500 mb-1">Total POs</p><p className="text-2xl font-bold text-neutral-900">{stats?.total_pos || 0}</p></div>
+            <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-sm"><p className="text-xs text-neutral-500 mb-1">Ext Payments Made</p><p className="text-2xl font-bold text-neutral-900">{masterReport.filter(r => r.ext_payment_no !== '-').length}</p></div>
+            <div className="bg-white border border-amber-200 rounded-lg p-4 shadow-sm"><p className="text-xs text-neutral-500 mb-1">Pending</p><p className="text-2xl font-bold text-amber-600">{masterReport.filter(r => r.ext_payment_no === '-').length}</p></div>
+            <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-sm"><p className="text-xs text-neutral-500 mb-1">Total Ext Paid</p><p className="text-lg font-bold text-neutral-900">{formatCurrency(masterReport.reduce((s, r) => s + (r.ext_payment_amount || 0), 0))}</p></div>
+          </div>
+          <div className="mb-4 flex flex-wrap gap-3">
+            <div className="flex-1 relative min-w-[240px] max-w-xl"><Search className="absolute left-3 top-2.5 w-4 h-4 text-neutral-400 pointer-events-none z-10" /><Input placeholder="Search PO, Vendor, Payee, UTR..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" /></div>
+            <Select value={poFilter} onValueChange={setPOFilter}><SelectTrigger className="w-56 bg-white"><SelectValue placeholder="Filter by PO" /></SelectTrigger><SelectContent className="bg-white max-h-60"><SelectItem value="all">All Purchase Orders</SelectItem>{uniquePOs.map((po) => (<SelectItem key={po} value={po}>{po}</SelectItem>))}</SelectContent></Select>
+          </div>
+          <div className="bg-white border border-neutral-200 rounded-lg shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr>
+                    <th colSpan="8" className="px-3 py-2 text-left text-sm font-bold text-neutral-900 border-r border-neutral-400" style={{ backgroundColor: '#BFC9D1' }}><span className="flex items-center gap-2"><ShoppingCart className="w-4 h-4" /> PURCHASE ORDERS</span></th>
+                    <th colSpan="7" className="px-3 py-2 text-left text-sm font-bold text-white" style={{ backgroundColor: '#7c3aed' }}><span className="flex items-center gap-2"><CreditCard className="w-4 h-4" /> EXTERNAL PAYMENTS</span></th>
+                  </tr>
+                  <tr className="bg-white">
+                    {['SL NO','PO ID','PO DATE','VENDOR','BRAND / MODEL','STORAGE','QTY','PO VALUE','EXT PAYMENT #','PAYEE NAME','PAYEE TYPE','BANK ACC #','PAYMENT DATE','UTR NO','AMOUNT'].map(h => (<th key={h} className="px-2 py-2 text-left font-semibold text-neutral-800 border-b-2 border-neutral-400 whitespace-nowrap">{h}</th>))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? <tr><td colSpan={15} className="px-4 py-8 text-center text-neutral-500">Loading...</td></tr>
+                  : filteredReport.length === 0 ? <tr><td colSpan={15} className="px-4 py-8 text-center text-neutral-500">No data found</td></tr>
+                  : filteredReport.map((row, i) => (
+                    <tr key={i} className={`border-b border-neutral-100 hover:bg-neutral-50 ${i % 2 === 0 ? 'bg-white' : 'bg-neutral-50/50'}`}>
+                      <td className="px-2 py-2 text-neutral-500">{row.sl_no}</td>
+                      <td className="px-2 py-2 font-mono font-semibold text-neutral-900">{row.po_id}</td>
+                      <td className="px-2 py-2 text-neutral-700 whitespace-nowrap">{formatDate(row.po_date)}</td>
+                      <td className="px-2 py-2 text-neutral-900 font-medium">{row.vendor || '-'}</td>
+                      <td className="px-2 py-2 text-neutral-900"><div className="font-medium">{row.brand} {row.model}</div></td>
+                      <td className="px-2 py-2 text-neutral-600">{row.storage || '-'}</td>
+                      <td className="px-2 py-2 text-right font-semibold text-neutral-900">{row.qty}</td>
+                      <td className="px-2 py-2 text-right font-bold text-neutral-900 border-r border-neutral-200">{formatCurrency(row.po_value)}</td>
+                      <td className="px-2 py-2 font-mono text-neutral-700">{row.ext_payment_no}</td>
+                      <td className="px-2 py-2 text-neutral-700">{row.ext_payee_name}</td>
+                      <td className="px-2 py-2"><span className={`px-1.5 py-0.5 rounded text-xs font-medium ${row.ext_payee_type === 'vendor' ? 'bg-teal-100 text-teal-700' : 'bg-purple-100 text-purple-700'}`}>{row.ext_payee_type}</span></td>
+                      <td className="px-2 py-2 text-neutral-700">{row.ext_bank_account}</td>
+                      <td className="px-2 py-2 text-neutral-700 whitespace-nowrap">{formatDate(row.ext_payment_date)}</td>
+                      <td className="px-2 py-2 font-mono text-neutral-700">{row.ext_utr_no}</td>
+                      <td className="px-2 py-2 font-bold text-purple-700">{formatCurrency(row.ext_payment_amount)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────
+  // LOGISTICS VIEW
+  // ────────────────────────────────────────────────────────────
+  if (isLogistics) {
+    return (
+      <Layout pageTitle="Logistics Report" pageDescription="Shipment and logistics records for your team">
+        <div data-testid="reports-page">
+          <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-neutral-100 rounded-lg"><Truck className="w-5 h-5 text-neutral-700" /></div>
+              <div>
+                <h2 className="text-base font-bold text-neutral-900">Logistics Report</h2>
+                <p className="text-xs text-neutral-500">{filteredReport.length} record(s)</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={fetchMasterReport} variant="outline" className="border-neutral-300 text-neutral-700"><RefreshCw className="w-4 h-4 mr-2" />Refresh</Button>
+              <Button onClick={handleExportLogisticsCSV} className="bg-gray-900 hover:bg-gray-800 text-white"><Download className="w-4 h-4 mr-2" />Export CSV</Button>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+            <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-sm"><p className="text-xs text-neutral-500 mb-1">Total Shipments</p><p className="text-2xl font-bold text-neutral-900">{masterReport.filter(r => r.courier_name !== '-').length}</p></div>
+            <div className="bg-white border border-teal-200 rounded-lg p-4 shadow-sm"><p className="text-xs text-neutral-500 mb-1">Delivered</p><p className="text-2xl font-bold text-teal-600">{masterReport.filter(r => r.shipment_status === 'delivered').length}</p></div>
+            <div className="bg-white border border-amber-200 rounded-lg p-4 shadow-sm"><p className="text-xs text-neutral-500 mb-1">In Transit</p><p className="text-2xl font-bold text-amber-600">{masterReport.filter(r => r.shipment_status === 'in_transit').length}</p></div>
+            <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-sm"><p className="text-xs text-neutral-500 mb-1">Pending</p><p className="text-2xl font-bold text-neutral-600">{masterReport.filter(r => r.shipment_status === 'pending').length}</p></div>
+          </div>
+          <div className="mb-4 flex flex-wrap gap-3">
+            <div className="flex-1 relative min-w-[240px] max-w-xl"><Search className="absolute left-3 top-2.5 w-4 h-4 text-neutral-400 pointer-events-none z-10" /><Input placeholder="Search PO, Vendor, Courier, Location..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" /></div>
+            <Select value={poFilter} onValueChange={setPOFilter}><SelectTrigger className="w-56 bg-white"><SelectValue placeholder="Filter by PO" /></SelectTrigger><SelectContent className="bg-white max-h-60"><SelectItem value="all">All Purchase Orders</SelectItem>{uniquePOs.map((po) => (<SelectItem key={po} value={po}>{po}</SelectItem>))}</SelectContent></Select>
+          </div>
+          <div className="bg-white border border-neutral-200 rounded-lg shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr>
+                    <th colSpan="8" className="px-3 py-2 text-left text-sm font-bold text-neutral-900 border-r border-neutral-400" style={{ backgroundColor: '#BFC9D1' }}><span className="flex items-center gap-2"><ShoppingCart className="w-4 h-4" /> PURCHASE ORDERS</span></th>
+                    <th colSpan="4" className="px-3 py-2 text-left text-sm font-bold text-white" style={{ backgroundColor: '#0d9488' }}><span className="flex items-center gap-2"><Truck className="w-4 h-4" /> LOGISTICS</span></th>
+                  </tr>
+                  <tr className="bg-white">
+                    {['SL NO','PO ID','PO DATE','VENDOR','LOCATION','BRAND / MODEL','QTY','PO VALUE','COURIER','DISPATCH DATE','POD NO','STATUS'].map(h => (<th key={h} className="px-2 py-2 text-left font-semibold text-neutral-800 border-b-2 border-neutral-400 whitespace-nowrap">{h}</th>))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? <tr><td colSpan={12} className="px-4 py-8 text-center text-neutral-500">Loading...</td></tr>
+                  : filteredReport.length === 0 ? <tr><td colSpan={12} className="px-4 py-8 text-center text-neutral-500">No data found</td></tr>
+                  : filteredReport.map((row, i) => (
+                    <tr key={i} className={`border-b border-neutral-100 hover:bg-neutral-50 ${i % 2 === 0 ? 'bg-white' : 'bg-neutral-50/50'}`}>
+                      <td className="px-2 py-2 text-neutral-500">{row.sl_no}</td>
+                      <td className="px-2 py-2 font-mono font-semibold text-neutral-900">{row.po_id}</td>
+                      <td className="px-2 py-2 text-neutral-700 whitespace-nowrap">{formatDate(row.po_date)}</td>
+                      <td className="px-2 py-2 text-neutral-900 font-medium">{row.vendor || '-'}</td>
+                      <td className="px-2 py-2 text-neutral-700">{row.location || '-'}</td>
+                      <td className="px-2 py-2 text-neutral-900"><div className="font-medium">{row.brand} {row.model}</div>{row.storage && <div className="text-neutral-400 text-[10px]">{row.storage}</div>}</td>
+                      <td className="px-2 py-2 text-right font-semibold text-neutral-900">{row.qty}</td>
+                      <td className="px-2 py-2 text-right font-bold text-neutral-900 border-r border-neutral-200">{formatCurrency(row.po_value)}</td>
+                      <td className="px-2 py-2 text-neutral-700">{row.courier_name}</td>
+                      <td className="px-2 py-2 text-neutral-700 whitespace-nowrap">{formatDate(row.dispatch_date)}</td>
+                      <td className="px-2 py-2 font-mono text-neutral-700">{row.pod_number}</td>
+                      <td className="px-2 py-2"><span className={`px-1.5 py-0.5 rounded text-xs font-medium ${row.shipment_status === 'delivered' ? 'bg-teal-100 text-teal-700' : row.shipment_status === 'in_transit' ? 'bg-blue-100 text-blue-700' : 'bg-neutral-100 text-neutral-600'}`}>{row.shipment_status}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────
+  // INVENTORY VIEW
+  // ────────────────────────────────────────────────────────────
+  if (isInventory) {
+    return (
+      <Layout pageTitle="Inventory Report" pageDescription="Stock and inventory records for your team">
+        <div data-testid="reports-page">
+          <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-neutral-100 rounded-lg"><Boxes className="w-5 h-5 text-neutral-700" /></div>
+              <div>
+                <h2 className="text-base font-bold text-neutral-900">Inventory Report</h2>
+                <p className="text-xs text-neutral-500">{filteredReport.length} record(s)</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={fetchMasterReport} variant="outline" className="border-neutral-300 text-neutral-700"><RefreshCw className="w-4 h-4 mr-2" />Refresh</Button>
+              <Button onClick={handleExportInventoryCSV} className="bg-gray-900 hover:bg-gray-800 text-white"><Download className="w-4 h-4 mr-2" />Export CSV</Button>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+            <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-sm"><p className="text-xs text-neutral-500 mb-1">Total Inventory</p><p className="text-2xl font-bold text-neutral-900">{stats?.total_inventory || 0}</p></div>
+            <div className="bg-white border border-teal-200 rounded-lg p-4 shadow-sm"><p className="text-xs text-neutral-500 mb-1">Available</p><p className="text-2xl font-bold text-teal-600">{stats?.available_inventory || 0}</p></div>
+            <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-sm"><p className="text-xs text-neutral-500 mb-1">Received</p><p className="text-2xl font-bold text-neutral-900">{masterReport.filter(r => r.received_qty > 0).length}</p></div>
+            <div className="bg-white border border-amber-200 rounded-lg p-4 shadow-sm"><p className="text-xs text-neutral-500 mb-1">Pending Inward</p><p className="text-2xl font-bold text-amber-600">{masterReport.filter(r => r.received_qty === 0).length}</p></div>
+          </div>
+          <div className="mb-4 flex flex-wrap gap-3">
+            <div className="flex-1 relative min-w-[240px] max-w-xl"><Search className="absolute left-3 top-2.5 w-4 h-4 text-neutral-400 pointer-events-none z-10" /><Input placeholder="Search PO, Vendor, Brand, IMEI, Warehouse..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" /></div>
+            <Select value={poFilter} onValueChange={setPOFilter}><SelectTrigger className="w-56 bg-white"><SelectValue placeholder="Filter by PO" /></SelectTrigger><SelectContent className="bg-white max-h-60"><SelectItem value="all">All Purchase Orders</SelectItem>{uniquePOs.map((po) => (<SelectItem key={po} value={po}>{po}</SelectItem>))}</SelectContent></Select>
+          </div>
+          <div className="bg-white border border-neutral-200 rounded-lg shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr>
+                    <th colSpan="8" className="px-3 py-2 text-left text-sm font-bold text-neutral-900 border-r border-neutral-400" style={{ backgroundColor: '#BFC9D1' }}><span className="flex items-center gap-2"><ShoppingCart className="w-4 h-4" /> PURCHASE ORDERS</span></th>
+                    <th colSpan="4" className="px-3 py-2 text-left text-sm font-bold text-white" style={{ backgroundColor: '#4b5563' }}><span className="flex items-center gap-2"><Boxes className="w-4 h-4" /> INVENTORY / STORES</span></th>
+                  </tr>
+                  <tr className="bg-white">
+                    {['SL NO','PO ID','PO DATE','VENDOR','BRAND / MODEL','IMEI','QTY','PO VALUE','RECEIVED DATE','RECEIVED QTY','WAREHOUSE','STOCK STATUS'].map(h => (<th key={h} className="px-2 py-2 text-left font-semibold text-neutral-800 border-b-2 border-neutral-400 whitespace-nowrap">{h}</th>))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? <tr><td colSpan={12} className="px-4 py-8 text-center text-neutral-500">Loading...</td></tr>
+                  : filteredReport.length === 0 ? <tr><td colSpan={12} className="px-4 py-8 text-center text-neutral-500">No data found</td></tr>
+                  : filteredReport.map((row, i) => (
+                    <tr key={i} className={`border-b border-neutral-100 hover:bg-neutral-50 ${i % 2 === 0 ? 'bg-white' : 'bg-neutral-50/50'}`}>
+                      <td className="px-2 py-2 text-neutral-500">{row.sl_no}</td>
+                      <td className="px-2 py-2 font-mono font-semibold text-neutral-900">{row.po_id}</td>
+                      <td className="px-2 py-2 text-neutral-700 whitespace-nowrap">{formatDate(row.po_date)}</td>
+                      <td className="px-2 py-2 text-neutral-900 font-medium">{row.vendor || '-'}</td>
+                      <td className="px-2 py-2 text-neutral-900"><div className="font-medium">{row.brand} {row.model}</div>{row.storage && <div className="text-neutral-400 text-[10px]">{row.storage}{row.colour && ` · ${row.colour}`}</div>}</td>
+                      <td className="px-2 py-2 font-mono text-neutral-600 text-[10px]">{row.imei || '-'}</td>
+                      <td className="px-2 py-2 text-right font-semibold text-neutral-900">{row.qty}</td>
+                      <td className="px-2 py-2 text-right font-bold text-neutral-900 border-r border-neutral-200">{formatCurrency(row.po_value)}</td>
+                      <td className="px-2 py-2 text-neutral-700 whitespace-nowrap">{formatDate(row.stock_received_date)}</td>
+                      <td className="px-2 py-2 text-center font-semibold text-neutral-900">{row.received_qty || '-'}</td>
+                      <td className="px-2 py-2 text-neutral-700">{row.warehouse}</td>
+                      <td className="px-2 py-2"><span className={`px-1.5 py-0.5 rounded text-xs font-medium ${row.stock_status === 'at_magnova' ? 'bg-teal-100 text-teal-700' : row.stock_status === 'in_transit_to_magnova' ? 'bg-blue-100 text-blue-700' : row.stock_status === 'dispatched' ? 'bg-cyan-100 text-cyan-700' : row.stock_status === 'sold' ? 'bg-purple-100 text-purple-700' : 'bg-neutral-100 text-neutral-600'}`}>{row.stock_status}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </Layout>
     );

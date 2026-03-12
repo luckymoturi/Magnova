@@ -62,32 +62,10 @@ export const DataRefreshProvider = ({ children }) => {
   const [pendingInventory, setPendingInventory] = useState([]);
   const [pendingInvoices, setPendingInvoices] = useState([]);
 
-  // ========== STAGE 1: PO Approved → Procurement (Purchase Team) ==========
-  const derivedProcurements = useMemo(() => {
-    return pos
-      .filter(po => po.approval_status === 'Approved' || po.status === 'Approved')
-      .filter(po => !procurements.some(p => p.po_number === po.po_number))
-      .map(po => ({
-        po_number: po.po_number,
-        brand: po.items?.[0]?.brand || '',
-        model: po.items?.[0]?.model || '',
-        vendor: po.items?.[0]?.vendor || '',
-        location: po.items?.[0]?.location || '',
-        isDerived: true,
-        type: 'procurement'
-      }));
-  }, [pos, procurements]);
-
-  const allProcurements = useMemo(() => {
-    const ephemeral = pendingProcurements.filter(p => !derivedProcurements.some(d => d.po_number === p.po_number));
-    return [...derivedProcurements, ...ephemeral];
-  }, [derivedProcurements, pendingProcurements]);
-
-  // ========== STAGE 2: Procurement Done → Internal Payment (Internal Payments Team) ==========
+  // ========== STAGE 1: PO Approved → Internal Payment (Internal Payments Team) ==========
   const derivedInternalPayments = useMemo(() => {
     return pos
       .filter(po => po.approval_status === 'Approved' || po.status === 'Approved')
-      .filter(po => procurements.some(p => p.po_number === po.po_number))
       .filter(po => !payments.some(pay => pay.po_number === po.po_number && pay.payment_type === 'internal'))
       .map(po => ({
         po_number: po.po_number,
@@ -98,14 +76,14 @@ export const DataRefreshProvider = ({ children }) => {
         isDerived: true,
         type: 'internal_payment'
       }));
-  }, [pos, procurements, payments]);
+  }, [pos, payments]);
 
   const allInternalPayments = useMemo(() => {
     const ephemeral = pendingInternalPayments.filter(p => !derivedInternalPayments.some(d => d.po_number === p.po_number));
     return [...derivedInternalPayments, ...ephemeral];
   }, [derivedInternalPayments, pendingInternalPayments]);
 
-  // ========== STAGE 3: Internal Payment Done → External Payment (External Payments Team) ==========
+  // ========== STAGE 2: Internal Payment Done → External Payment (External Payments Team) ==========
   const derivedExternalPayments = useMemo(() => {
     return pos
       .filter(po => payments.some(pay => pay.po_number === po.po_number && pay.payment_type === 'internal'))
@@ -125,11 +103,32 @@ export const DataRefreshProvider = ({ children }) => {
     return [...derivedExternalPayments, ...ephemeral];
   }, [derivedExternalPayments, pendingExternalPayments]);
 
-  // ========== STAGE 4: External Payment Done → Logistics (Logistics Team) ==========
+  // ========== STAGE 3: External Payment Done → Procurement (Purchase Team) ==========
+  const derivedProcurements = useMemo(() => {
+    return pos
+      .filter(po => payments.some(pay => pay.po_number === po.po_number && pay.payment_type === 'external'))
+      .filter(po => !procurements.some(p => p.po_number === po.po_number))
+      .map(po => ({
+        po_number: po.po_number,
+        brand: po.items?.[0]?.brand || '',
+        model: po.items?.[0]?.model || '',
+        vendor: po.items?.[0]?.vendor || '',
+        location: po.items?.[0]?.location || '',
+        isDerived: true,
+        type: 'procurement'
+      }));
+  }, [pos, payments, procurements]);
+
+  const allProcurements = useMemo(() => {
+    const ephemeral = pendingProcurements.filter(p => !derivedProcurements.some(d => d.po_number === p.po_number));
+    return [...derivedProcurements, ...ephemeral];
+  }, [derivedProcurements, pendingProcurements]);
+
+  // ========== STAGE 4: Procurement Done → Logistics (Logistics Team) ==========
   const derivedLogisticsNotifications = useMemo(() => {
     return pos
       .filter(po => (po.approval_status === 'Approved' || po.status === 'Approved'))
-      .filter(po => payments.some(pay => pay.po_number === po.po_number && pay.payment_type === 'external'))
+      .filter(po => procurements.some(p => p.po_number === po.po_number))
       .filter(po => !shipments.some(ship => ship.po_number === po.po_number))
       .map(po => ({
         po_number: po.po_number,
@@ -140,7 +139,7 @@ export const DataRefreshProvider = ({ children }) => {
         isDerived: true,
         type: 'logistics'
       }));
-  }, [pos, payments, shipments]);
+  }, [pos, procurements, shipments]);
 
   const allLogisticsNotifications = useMemo(() => {
     const ephemeral = pendingLogistics.filter(p => !derivedLogisticsNotifications.some(d => d.po_number === p.po_number));
