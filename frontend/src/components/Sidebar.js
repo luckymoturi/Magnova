@@ -61,10 +61,10 @@ export const Sidebar = () => {
   const menuItems = [
     { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['Admin', 'Purchase', 'Manager', 'InternalPayments', 'ExternalPayments', 'Logistics', 'Inventory', 'Approver', 'Accounts', 'Stores', 'Sales'] },
     { path: '/purchase-orders', icon: ShoppingCart, label: 'Purchase Orders', roles: ['Admin', 'Purchase', 'Manager'] },
-    { path: '/procurement', icon: Package, label: 'Procurement', roles: ['Admin', 'Purchase'] },
     { path: '/manager', icon: Users, label: 'Approvals', roles: ['Admin', 'Manager'] },
     { path: '/payments', icon: CreditCard, label: 'Internal Payments', roles: ['Admin', 'InternalPayments'] },
     { path: '/external-payments', icon: CreditCard, label: 'External Payments', roles: ['Admin', 'ExternalPayments'] },
+    { path: '/procurement', icon: Package, label: 'Procurement', roles: ['Admin', 'Purchase'] },
     { path: '/logistics', icon: Truck, label: 'Logistics', roles: ['Admin', 'Logistics'] },
     { path: '/inventory', icon: Boxes, label: 'Inventory', roles: ['Admin', 'Inventory'] },
     { path: '/reports', icon: BarChart3, label: 'Reports', roles: ['Admin', 'Purchase', 'Manager', 'InternalPayments', 'ExternalPayments', 'Logistics', 'Inventory'] },
