@@ -120,9 +120,11 @@ export const Header = ({ pageTitle, pageDescription }) => {
       case 'logistics':
         navigate('/logistics');
         break;
-      case 'inventory':
-        navigate('/inventory');
+      case 'inventory': {
+        const org = user?.organization?.toLowerCase();
+        navigate(org === 'magnova' ? '/inventory-magnova' : '/inventory-nova');
         break;
+      }
       default:
         break;
     }

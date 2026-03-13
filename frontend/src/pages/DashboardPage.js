@@ -24,6 +24,7 @@ export const DashboardPage = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { user } = useAuth();
   const { refreshTimestamps } = useDataRefresh();
+  const inventoryPath = user?.organization?.toLowerCase() === 'magnova' ? '/inventory-magnova' : '/inventory-nova';
 
   useEffect(() => {
     fetchStats();
@@ -189,7 +190,7 @@ export const DashboardPage = () => {
                   </Link>
                 )}
                 <Link
-                  to="/inventory"
+                  to={inventoryPath}
                   data-testid="quick-action-inventory"
                   className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-lg border border-neutral-200 hover:border-neutral-300 transition-all duration-150 group"
                 >

@@ -66,7 +66,8 @@ export const Sidebar = () => {
     { path: '/external-payments', icon: CreditCard, label: 'External Payments', roles: ['Admin', 'ExternalPayments'] },
     { path: '/procurement', icon: Package, label: 'Procurement', roles: ['Admin', 'Purchase'] },
     { path: '/logistics', icon: Truck, label: 'Logistics', roles: ['Admin', 'Logistics'] },
-    { path: '/inventory', icon: Boxes, label: 'Inventory', roles: ['Admin', 'Inventory'] },
+    { path: '/inventory-nova', icon: Boxes, label: 'Inventory - Nova', roles: ['Admin', 'Inventory'] },
+    { path: '/inventory-magnova', icon: Boxes, label: 'Inventory - Magnova', roles: ['Admin', 'Inventory'] },
     { path: '/reports', icon: BarChart3, label: 'Reports', roles: ['Admin', 'Purchase', 'Manager', 'InternalPayments', 'ExternalPayments', 'Logistics', 'Inventory'] },
     { path: '/users', icon: Users, label: 'Users', roles: ['Admin'] },
   ];

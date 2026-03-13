@@ -12,7 +12,17 @@ import { useAuth } from '../context/AuthContext';
 import { useDataRefresh } from '../context/DataRefreshContext';
 import { Navigate } from 'react-router-dom';
 
-export const InventoryPage = () => {
+export const InventoryPage = ({
+  organization = 'Nova',
+  inventoryLabel,
+  showInward = true,
+  showOutward = true,
+  inwardScope = 'status',
+  outwardScope = 'status',
+  preferredLocations = [],
+  warehouseLabel,
+}) => {
+  const pageLabel = inventoryLabel || `Inventory - ${organization}`;
   const [inventory, setInventory] = useState([]);
   const [filteredInventory, setFilteredInventory] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -47,7 +57,7 @@ export const InventoryPage = () => {
   useEffect(() => {
     fetchInventory();
     fetchPOData();
-  }, [refreshTimestamps.inventory, refreshTimestamps.purchaseOrders]);
+  }, [refreshTimestamps.inventory, refreshTimestamps.purchaseOrders, organization]);
 
   useEffect(() => {
     let filtered = inventory;
@@ -67,7 +77,7 @@ export const InventoryPage = () => {
 
   const fetchInventory = async () => {
     try {
-      const response = await api.get('/inventory');
+      const response = await api.get('/inventory', { params: { organization } });
       setInventory(response.data);
     } catch (error) {
       toast.error('Failed to fetch inventory');
@@ -179,7 +189,7 @@ export const InventoryPage = () => {
         imei: scanData.imei,
         action: scanData.action,
         location: scanData.location,
-        organization: 'Nova',
+        organization,
         vendor: scanData.vendor,
         brand: scanData.brand,
         model: scanData.model,
@@ -450,9 +460,47 @@ export const InventoryPage = () => {
 
   const chartData = useMemo(() => buildChartData(filteredInventory), [filteredInventory]);
 
+  const getOrgStatusLabels = () => {
+    if (organization === 'Magnova') {
+      return { inward: 'Inward Magnova', outward: 'Outward Magnova' };
+    }
+    return { inward: 'Inward Nova', outward: 'Outward Nova' };
+  };
+
+  const groupByLocation = (items) => {
+    const groups = new Map();
+    items.forEach((item) => {
+      const location = item.current_location || item.location || 'Unknown';
+      if (!groups.has(location)) {
+        groups.set(location, []);
+      }
+      groups.get(location).push(item);
+    });
+    if (preferredLocations.length > 0) {
+      preferredLocations.forEach((loc) => {
+        if (!groups.has(loc)) {
+          groups.set(loc, []);
+        }
+      });
+    }
+    return Array.from(groups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  };
+
   if (!hasAccess) {
     return <Navigate to="/dashboard" replace />;
   }
+
+  const orgStatuses = getOrgStatusLabels();
+  const inwardItems =
+    inwardScope === 'all'
+      ? filteredInventory
+      : filteredInventory.filter((item) => item.status === orgStatuses.inward);
+  const outwardItems =
+    outwardScope === 'all'
+      ? filteredInventory
+      : filteredInventory.filter((item) => item.status === orgStatuses.outward);
+  const groupedInward = groupByLocation(inwardItems);
+  const groupedOutward = groupByLocation(outwardItems);
 
   return (
     <Layout pageTitle="IMEI Inventory" pageDescription="Track device inventory with IMEI-level visibility">
@@ -511,6 +559,11 @@ export const InventoryPage = () => {
             </div>
           </div>
         )}
+
+        <div className="mb-5">
+          <h2 className="text-2xl font-bold text-neutral-900">{pageLabel}</h2>
+          <p className="text-sm text-neutral-500 mt-1">Organization-specific inventory overview</p>
+        </div>
 
         <div className="flex items-center justify-end gap-3 mb-6">
           <Button
@@ -1213,59 +1266,86 @@ export const InventoryPage = () => {
           </Select>
         </div>
 
-        <div className="bg-white border border-neutral-200 rounded-lg shadow-sm overflow-hidden">
-          <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
-            <table className="w-full text-xs" data-testid="inventory-table">
-              <thead className="sticky top-0 z-10">
-                <tr className="text-gray-900" style={{ backgroundColor: '#BFC9D1' }}>
-                  <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">IMEI</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Brand</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Model</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Colour</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Status</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Location</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Updated</th>
-                  {isAdmin && <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Actions</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {filteredInventory.length === 0 ? (
-                  <tr>
-                    <td colSpan={isAdmin ? 8 : 7} className="px-3 py-6 text-center text-neutral-500 text-xs">
-                      No inventory items found
-                    </td>
-                  </tr>
-                ) : (
-                  filteredInventory.map((item) => (
-                    <tr key={item.imei} className="table-row border-b border-neutral-100 hover:bg-neutral-50" data-testid="inventory-row">
-                      <td className="px-3 py-2 text-xs font-mono font-medium text-neutral-900">{item.imei}</td>
-                      <td className="px-3 py-2 text-xs text-neutral-900">{item.brand || '-'}</td>
-                      <td className="px-3 py-2 text-xs text-neutral-900">{item.model || item.device_model || '-'}</td>
-                      <td className="px-3 py-2 text-xs text-neutral-600">{item.colour || '-'}</td>
-                      <td className="px-3 py-2 text-xs">
-                        <span className={`status-badge ${getStatusColor(item.status)}`}>{item.status}</span>
-                      </td>
-                      <td className="px-3 py-2 text-xs text-neutral-600">{item.current_location}</td>
-                      <td className="px-3 py-2 text-xs text-neutral-600">{new Date(item.updated_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' })}</td>
-                      {isAdmin && (
-                        <td className="px-3 py-2 text-xs">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleDelete(item.imei)}
-                            className="text-neutral-800 hover:text-neutral-900 hover:bg-neutral-100 h-6 w-6 p-0"
-                            data-testid="delete-inventory-button"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </td>
-                      )}
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+        <div className="space-y-6">
+          {[
+            ...(showInward ? [{ label: 'Inward', groups: groupedInward }] : []),
+            ...(showOutward ? [{ label: 'Outward', groups: groupedOutward }] : []),
+          ].map((section) => (
+            <div key={section.label} className="bg-white border border-neutral-200 rounded-lg shadow-sm overflow-hidden">
+              <div className="px-4 py-3 bg-neutral-100 border-b border-neutral-200 flex items-center justify-between">
+                <h3 className="font-semibold text-neutral-900">{section.label}</h3>
+                <span className="text-xs text-neutral-500">Total: {section.groups.reduce((sum, [, items]) => sum + items.length, 0)}</span>
+              </div>
+
+              {section.groups.length === 0 ? (
+                <div className="px-4 py-6 text-center text-neutral-500 text-xs">No {section.label.toLowerCase()} items found</div>
+              ) : (
+                <div className="space-y-3 p-3">
+                  {section.groups.map(([location, items]) => (
+                    <div key={`${section.label}-${location}`} className="border border-neutral-200 rounded-lg overflow-hidden">
+                      <div className="px-3 py-2 bg-neutral-50 border-b border-neutral-200 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          {warehouseLabel && section.label === 'Outward' && (
+                            <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500">{warehouseLabel}</span>
+                          )}
+                          <span className="text-sm font-semibold text-neutral-800">{location}</span>
+                        </div>
+                        <span className="text-xs text-neutral-500">Total: {items.length} items</span>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr className="text-gray-900" style={{ backgroundColor: '#EEF2F2' }}>
+                              <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Brand</th>
+                              <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Model</th>
+                              <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Storage</th>
+                              <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Colour</th>
+                              <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">QTY</th>
+                              <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">IMEI</th>
+                              {isAdmin && <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Actions</th>}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {items.length === 0 ? (
+                              <tr>
+                                <td colSpan={isAdmin ? 7 : 6} className="px-3 py-4 text-center text-neutral-400 text-xs">
+                                  No items in this location
+                                </td>
+                              </tr>
+                            ) : (
+                              items.map((item) => (
+                                <tr key={item.imei} className="table-row border-b border-neutral-100 hover:bg-neutral-50">
+                                  <td className="px-3 py-2 text-xs text-neutral-900">{item.brand || '-'}</td>
+                                  <td className="px-3 py-2 text-xs text-neutral-900">{item.model || item.device_model || '-'}</td>
+                                  <td className="px-3 py-2 text-xs text-neutral-600">{extractStorage(item.storage || item.capacity || item.device_model)}</td>
+                                  <td className="px-3 py-2 text-xs text-neutral-600">{item.colour || '-'}</td>
+                                  <td className="px-3 py-2 text-xs text-neutral-900">1</td>
+                                  <td className="px-3 py-2 text-xs font-mono font-medium text-neutral-900">{item.imei}</td>
+                                  {isAdmin && (
+                                    <td className="px-3 py-2 text-xs">
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => handleDelete(item.imei)}
+                                        className="text-neutral-800 hover:text-neutral-900 hover:bg-neutral-100 h-6 w-6 p-0"
+                                        data-testid="delete-inventory-button"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </Button>
+                                    </td>
+                                  )}
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
     </Layout>

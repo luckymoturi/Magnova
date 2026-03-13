@@ -9,7 +9,8 @@ import { DashboardPage } from './pages/DashboardPage';
 import { PurchaseOrdersPage } from './pages/PurchaseOrdersPage';
 import { ProcurementPage } from './pages/ProcurementPage';
 import { PaymentsPage } from './pages/PaymentsPage';
-import { InventoryPage } from './pages/InventoryPage';
+import { InventoryNovaPage } from './pages/InventoryNovaPage';
+import { InventoryMagnovaPage } from './pages/InventoryMagnovaPage';
 import { LogisticsPage } from './pages/LogisticsPage';
 import { InvoicesPage } from './pages/InvoicesPage';
 import { SalesOrdersPage } from './pages/SalesOrdersPage';
@@ -94,13 +95,22 @@ function App() {
             }
           />
           <Route
-            path="/inventory"
+            path="/inventory-nova"
             element={
               <ProtectedRoute>
-                <InventoryPage />
+                <InventoryNovaPage />
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/inventory-magnova"
+            element={
+              <ProtectedRoute>
+                <InventoryMagnovaPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/inventory" element={<Navigate to="/inventory-nova" />} />
           <Route
             path="/reports"
             element={
