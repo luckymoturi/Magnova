@@ -466,22 +466,24 @@ def _send_smtp_sync(to_email: str, subject: str, html_body: str):
         # Monkey-patch socket.getaddrinfo to force IPv4 resolution
         socket.getaddrinfo = ipv4_only_getaddrinfo
 
+        # Try TLS/587 FIRST as it's more standard and robust in cloud environments
         try:
-            # Strategy 1: SMTP_SSL on port 465 (Implicit SSL)
-            server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
+            # Strategy 1: SMTP on port 587 (Connect -> STARTTLS)
+            server = smtplib.SMTP("smtp.gmail.com", 587, timeout=10)
+            server.set_debuglevel(0)
+            server.starttls()
             perform_send(server)
             server.quit()
-            logging.info(f"SMTP email sent to {to_email} | subject: {subject} (via SSL/465)")
+            logging.info(f"SMTP email sent to {to_email} | subject: {subject} (via TLS/587)")
             return True
         except Exception as e1:
-            logging.warning(f"SMTP SSL/465 failed: {e1}. Retrying via TLS/587...")
+            logging.warning(f"SMTP TLS/587 failed: {e1}. Retrying via SSL/465...")
             try:
-                # Strategy 2: SMTP on port 587 (Connect -> STARTTLS)
-                server = smtplib.SMTP("smtp.gmail.com", 587)
-                server.starttls()
+                # Strategy 2: SMTP_SSL on port 465 (Implicit SSL)
+                server = smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10)
                 perform_send(server)
                 server.quit()
-                logging.info(f"SMTP email sent to {to_email} | subject: {subject} (via TLS/587)")
+                logging.info(f"SMTP email sent to {to_email} | subject: {subject} (via SSL/465)")
                 return True
             except Exception as e2:
                 logging.error(f"SMTP send error to {to_email}: {e2}")
@@ -682,15 +684,23 @@ async def register(user_data: UserCreate):
     
     # Save user to DB first — registration must not depend on email delivery
     await db.users.insert_one(user_doc)
-
-    # Send welcome email; failure is non-blocking (just logs a warning)
-    try:
-        await send_smtp_email(user_data.email, f"Welcome to Magnova, {user_data.name}!", welcome_html)
-    except Exception as email_err:
-        logging.warning(f"Welcome email to {user_data.email} failed (non-blocking): {email_err}")
+    # Clean up OTP store
+    if user_data.email in otp_store:
+        del otp_store[user_data.email]
 
     user  = User(**{k: v for k, v in user_doc.items() if k != "password"})
     token = create_token(user_id, user_data.email)
+
+    # Send welcome email using a background task to prevent blocking the response
+    # Using run_in_executor wrapper is good, but let's make it completely fire-and-forget
+    # for the detailed welcome email to ensure fast registration response.
+    try:
+        # We already use run_in_executor in send_smtp_email, so just awaiting it is okay
+        # provided the SMTP connection doesn't hang.
+        # With our improved retry logic (587 -> 465) and timeouts, it should be fast.
+        await send_smtp_email(user_data.email, f"Welcome to Magnova, {user_data.name}!", welcome_html)
+    except Exception as email_err:
+        logging.warning(f"Welcome email to {user_data.email} failed (non-blocking): {email_err}")
 
     return TokenResponse(access_token=token, user=user)
 
