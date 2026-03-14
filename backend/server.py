@@ -429,12 +429,13 @@ import functools
 def _send_smtp_sync(to_email: str, subject: str, html_body: str):
     """Blocking SMTP send – called via run_in_executor so it won't block FastAPI."""
     import socket
+    import ssl as ssl_module
     gmail_sender = os.environ.get("GMAIL_SENDER", "")
     gmail_pass   = os.environ.get("GMAILPASS", "")
     if not gmail_sender or not gmail_pass:
         logging.error("SMTP: GMAIL_SENDER or GMAILPASS env var is not set.")
         return False
-    
+
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"]    = gmail_sender
@@ -446,19 +447,59 @@ def _send_smtp_sync(to_email: str, subject: str, html_body: str):
         server.login(gmail_sender, gmail_pass)
         server.sendmail(gmail_sender, to_email, msg.as_string())
 
+    # Helper to resolve hostname to IPv4 address (fixes "Address family for hostname not supported")
+    def resolve_ipv4(host):
+        """Resolve hostname to IPv4 address to avoid address family errors."""
+        try:
+            # Force IPv4 resolution only
+            addr_info = socket.getaddrinfo(host, None, socket.AF_INET, socket.SOCK_STREAM)
+            if addr_info:
+                return addr_info[0][4][0]  # Return first IPv4 address
+        except socket.gaierror:
+            pass
+        return None  # Return None if resolution fails
+
+    # Helper to create IPv4 socket and connect
+    def connect_ipv4_socket(host, port, timeout=30):
+        """Create IPv4 socket and connect, avoiding address family errors."""
+        ip_addr = resolve_ipv4(host)
+        if not ip_addr:
+            raise socket.gaierror(f"Cannot resolve {host} to IPv4 address")
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(timeout)
+        sock.connect((ip_addr, port))
+        return sock
+
     try:
         # Strategy 1: SMTP_SSL on port 465 (Implicit SSL)
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            perform_send(server)
+        # Create IPv4 socket and wrap with SSL, using hostname for SNI
+        raw_sock = connect_ipv4_socket("smtp.gmail.com", 465)
+        context = ssl_module.create_default_context()
+        ssl_sock = context.wrap_socket(raw_sock, server_hostname="smtp.gmail.com")
+
+        # Create SMTP instance and use our pre-connected socket
+        server = smtplib.SMTP()
+        server.sock = ssl_sock
+        server.file = ssl_sock.makefile('rb')
+        server.ehlo_or_helo_if_needed()
+        perform_send(server)
+        server.quit()
         logging.info(f"SMTP email sent to {to_email} | subject: {subject} (via SSL/465)")
         return True
     except Exception as e1:
         logging.warning(f"SMTP SSL/465 failed: {e1}. Retrying via TLS/587...")
         try:
             # Strategy 2: SMTP on port 587 (Connect -> STARTTLS)
-            with smtplib.SMTP("smtp.gmail.com", 587) as server:
-                server.starttls()
-                perform_send(server)
+            raw_sock = connect_ipv4_socket("smtp.gmail.com", 587)
+
+            # Create SMTP instance and use our pre-connected socket
+            server = smtplib.SMTP()
+            server.sock = raw_sock
+            server.file = raw_sock.makefile('rb')
+            server.ehlo_or_helo_if_needed()
+            server.starttls()
+            perform_send(server)
+            server.quit()
             logging.info(f"SMTP email sent to {to_email} | subject: {subject} (via TLS/587)")
             return True
         except Exception as e2:
@@ -2103,18 +2144,9 @@ async def handle_chat(request: ChatRequest, current_user: User = Depends(get_cur
 @api_router.post("/contact/maintenance")
 async def maintenance_contact(req: MaintenanceContact):
     """Send user's email to Magnova team via Gmail SMTP when they submit from maintenance page"""
-    gmail_pass = os.environ.get('GMAILPASS', '')
-    # Gmail address used to authenticate SMTP - must match Google account
-    sender_gmail = os.environ.get('GMAIL_SENDER', 'ramakrishna.mtr@magnova.in')
     recipient_email = "ramakrishna.mtr@magnova.in"
-    
+
     try:
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = "Magnova ERP - Maintenance Page: User Wants Notification"
-        msg['From'] = sender_gmail
-        msg['To'] = recipient_email
-        msg['Reply-To'] = req.email
-        
         html_body = f"""
         <html>
         <body style="font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9;">
@@ -2136,13 +2168,10 @@ async def maintenance_contact(req: MaintenanceContact):
         </body>
         </html>
         """
-        
-        msg.attach(MIMEText(html_body, 'html'))
-        
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
-            server.login(sender_gmail, gmail_pass)
-            server.sendmail(sender_gmail, recipient_email, msg.as_string())
-        
+
+        # Use the async SMTP helper which handles IPv4 address family issues
+        await send_smtp_email(recipient_email, "Magnova ERP - Maintenance Page: User Wants Notification", html_body)
+
         return {"message": "Thank you! We'll notify you when we're back."}
     except Exception as e:
         logging.error(f"Maintenance contact email error: {e}")
