@@ -429,7 +429,6 @@ import functools
 def _send_smtp_sync(to_email: str, subject: str, html_body: str):
     """Blocking SMTP send – called via run_in_executor so it won't block FastAPI."""
     import socket
-    import ssl as ssl_module
     gmail_sender = os.environ.get("GMAIL_SENDER", "")
     gmail_pass   = os.environ.get("GMAILPASS", "")
     if not gmail_sender or not gmail_pass:
@@ -447,64 +446,39 @@ def _send_smtp_sync(to_email: str, subject: str, html_body: str):
         server.login(gmail_sender, gmail_pass)
         server.sendmail(gmail_sender, to_email, msg.as_string())
 
-    # Helper to resolve hostname to IPv4 address (fixes "Address family for hostname not supported")
-    def resolve_ipv4(host):
-        """Resolve hostname to IPv4 address to avoid address family errors."""
-        try:
-            # Force IPv4 resolution only
-            addr_info = socket.getaddrinfo(host, None, socket.AF_INET, socket.SOCK_STREAM)
-            if addr_info:
-                return addr_info[0][4][0]  # Return first IPv4 address
-        except socket.gaierror:
-            pass
-        return None  # Return None if resolution fails
-
-    # Helper to create IPv4 socket and connect
-    def connect_ipv4_socket(host, port, timeout=30):
-        """Create IPv4 socket and connect, avoiding address family errors."""
-        ip_addr = resolve_ipv4(host)
-        if not ip_addr:
-            raise socket.gaierror(f"Cannot resolve {host} to IPv4 address")
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(timeout)
-        sock.connect((ip_addr, port))
-        return sock
+    # Save original getaddrinfo and temporarily replace with IPv4-only version
+    # This fixes "Address family for hostname not supported" error on Windows
+    original_getaddrinfo = socket.getaddrinfo
+    def ipv4_only_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+        return original_getaddrinfo(host, port, socket.AF_INET, type, proto, flags)
 
     try:
-        # Strategy 1: SMTP_SSL on port 465 (Implicit SSL)
-        # Create IPv4 socket and wrap with SSL, using hostname for SNI
-        raw_sock = connect_ipv4_socket("smtp.gmail.com", 465)
-        context = ssl_module.create_default_context()
-        ssl_sock = context.wrap_socket(raw_sock, server_hostname="smtp.gmail.com")
+        # Monkey-patch socket.getaddrinfo to force IPv4 resolution
+        socket.getaddrinfo = ipv4_only_getaddrinfo
 
-        # Create SMTP instance and use our pre-connected socket
-        server = smtplib.SMTP()
-        server.sock = ssl_sock
-        server.file = ssl_sock.makefile('rb')
-        server.ehlo_or_helo_if_needed()
-        perform_send(server)
-        server.quit()
-        logging.info(f"SMTP email sent to {to_email} | subject: {subject} (via SSL/465)")
-        return True
-    except Exception as e1:
-        logging.warning(f"SMTP SSL/465 failed: {e1}. Retrying via TLS/587...")
         try:
-            # Strategy 2: SMTP on port 587 (Connect -> STARTTLS)
-            raw_sock = connect_ipv4_socket("smtp.gmail.com", 587)
-
-            # Create SMTP instance and use our pre-connected socket
-            server = smtplib.SMTP()
-            server.sock = raw_sock
-            server.file = raw_sock.makefile('rb')
-            server.ehlo_or_helo_if_needed()
-            server.starttls()
+            # Strategy 1: SMTP_SSL on port 465 (Implicit SSL)
+            server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
             perform_send(server)
             server.quit()
-            logging.info(f"SMTP email sent to {to_email} | subject: {subject} (via TLS/587)")
+            logging.info(f"SMTP email sent to {to_email} | subject: {subject} (via SSL/465)")
             return True
-        except Exception as e2:
-            logging.error(f"SMTP send error to {to_email}: {e2}")
-            return False
+        except Exception as e1:
+            logging.warning(f"SMTP SSL/465 failed: {e1}. Retrying via TLS/587...")
+            try:
+                # Strategy 2: SMTP on port 587 (Connect -> STARTTLS)
+                server = smtplib.SMTP("smtp.gmail.com", 587)
+                server.starttls()
+                perform_send(server)
+                server.quit()
+                logging.info(f"SMTP email sent to {to_email} | subject: {subject} (via TLS/587)")
+                return True
+            except Exception as e2:
+                logging.error(f"SMTP send error to {to_email}: {e2}")
+                return False
+    finally:
+        # Restore original getaddrinfo
+        socket.getaddrinfo = original_getaddrinfo
 
 async def send_smtp_email(to_email: str, subject: str, html_body: str) -> bool:
     """Async wrapper – runs blocking SMTP send in a thread pool executor."""
