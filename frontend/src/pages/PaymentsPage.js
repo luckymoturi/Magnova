@@ -129,6 +129,25 @@ export const PaymentsPage = () => {
     }
   };
 
+  const buildLocalPaymentSummary = (poNumber) => {
+    const po = pos.find(p => p.po_number === poNumber);
+    if (!po) return null;
+    const poTotal = po.total_value || 0;
+    const internalPaid = payments
+      .filter(p => p.po_number === poNumber && (p.payment_type === 'internal' || !p.payment_type))
+      .reduce((sum, p) => sum + (p.amount || 0), 0);
+    const externalPaid = payments
+      .filter(p => p.po_number === poNumber && p.payment_type === 'external')
+      .reduce((sum, p) => sum + (p.amount || 0), 0);
+    return {
+      po_number: poNumber,
+      po_total_value: poTotal,
+      internal_paid: internalPaid,
+      external_paid: externalPaid,
+      external_remaining: internalPaid - externalPaid,
+    };
+  };
+
   const handleInternalPOSelect = async (poNumber) => {
     const po = pos.find(p => p.po_number === poNumber);
     if (po) {
@@ -147,9 +166,13 @@ export const PaymentsPage = () => {
     setExternalForm(prev => ({ ...prev, po_number: poNumber }));
     try {
       const response = await api.get(`/payments/summary/${poNumber}`);
-      setPaymentSummary(response.data);
+      if (response?.data?.po_number) {
+        setPaymentSummary(response.data);
+      } else {
+        setPaymentSummary(buildLocalPaymentSummary(poNumber));
+      }
     } catch (error) {
-      setPaymentSummary(null);
+      setPaymentSummary(buildLocalPaymentSummary(poNumber));
     }
   };
 
@@ -265,6 +288,14 @@ export const PaymentsPage = () => {
 
   const internalPaymentsTable = filteredPayments.filter(p => p.payment_type === 'internal' || !p.payment_type);
   const externalPaymentsTable = filteredPayments.filter(p => p.payment_type === 'external');
+  const externalSummary = externalForm.po_number
+    ? (paymentSummary || buildLocalPaymentSummary(externalForm.po_number) || {
+      po_total_value: 0,
+      external_paid: 0,
+      external_remaining: 0,
+    })
+    : { po_total_value: 0, external_paid: 0, external_remaining: 0 };
+  const hasExternalPO = Boolean(externalForm.po_number);
 
   if (!hasAccess) {
     return <Navigate to="/dashboard" replace />;
@@ -437,40 +468,69 @@ export const PaymentsPage = () => {
                 )}
                 {paymentType === 'external' && (
                   <form onSubmit={handleCreateExternal} className="space-y-4">
-                    <div className="flex items-center justify-between"><h3 className="font-bold">External Payment</h3>{!(isInternalRoute || isExternalRoute) && <Button type="button" variant="ghost" size="sm" onClick={() => setPaymentType('')}>← Back</Button>}</div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div><Label>PO Number *</Label><Select value={externalForm.po_number} onValueChange={handleExternalPOSelect} required><SelectTrigger className="bg-white border-neutral-400"><SelectValue placeholder="Select PO" /></SelectTrigger><SelectContent className="bg-white">{pos.map(po => <SelectItem key={po.po_number} value={po.po_number}>{po.po_number}</SelectItem>)}</SelectContent></Select></div>
-                      <div>
-                        <Label>Payee Type *</Label>
-                        <Select value={externalForm.payee_type} onValueChange={v => setExternalForm({...externalForm, payee_type: v})} required>
-                          <SelectTrigger className="bg-white border-neutral-400"><SelectValue placeholder="Select Type" /></SelectTrigger>
-                          <SelectContent className="bg-white">
-                            <SelectItem value="Vendor">Vendor</SelectItem>
-                            <SelectItem value="CC">CC</SelectItem>
-                          </SelectContent>
-                        </Select>
+                    <div className="flex items-center justify-between"><h3 className="font-bold">External Payment</h3>{!(isInternalRoute || isExternalRoute) && <Button type="button" variant="ghost" size="sm" onClick={() => setPaymentType('')}>Back</Button>}</div>
+                    <div className="p-4 bg-neutral-50 rounded-lg border border-neutral-200">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="col-span-2"><Label>PO Number *</Label><Select value={externalForm.po_number} onValueChange={handleExternalPOSelect} required><SelectTrigger className="bg-white border-neutral-400"><SelectValue placeholder="Select PO" /></SelectTrigger><SelectContent className="bg-white">{pos.map(po => <SelectItem key={po.po_number} value={po.po_number}>{po.po_number}</SelectItem>)}</SelectContent></Select></div>
                       </div>
 
-                      {externalForm.payee_type === 'Vendor' && (
-                        <>
-                          <div><Label>Bank Name *</Label><Input value={externalForm.bank_name} onChange={e => setExternalForm({...externalForm, bank_name: e.target.value})} required className="bg-white border-neutral-400" /></div>
-                          <div><Label>IFSC Code *</Label><Input value={externalForm.ifsc_code} onChange={e => setExternalForm({...externalForm, ifsc_code: e.target.value})} required className="bg-white border-neutral-400" /></div>
-                          <div><Label>UTR Number *</Label><Input value={externalForm.utr_number} onChange={e => setExternalForm({...externalForm, utr_number: e.target.value})} required className="bg-white border-neutral-400" /></div>
-                          <div><Label>Amount *</Label><Input type="number" value={externalForm.amount} onChange={e => setExternalForm({...externalForm, amount: e.target.value})} required className="bg-white border-neutral-400" /></div>
-                          <div><Label>Vendor Name *</Label><Input value={externalForm.vendor_name} onChange={e => setExternalForm({...externalForm, vendor_name: e.target.value})} required className="bg-white border-neutral-400" /></div>
-                        </>
-                      )}
-
-                      {externalForm.payee_type === 'CC' && (
-                        <>
-                          <div><Label>Amount *</Label><Input type="number" value={externalForm.amount} onChange={e => setExternalForm({...externalForm, amount: e.target.value})} required className="bg-white border-neutral-400" /></div>
-                          <div><Label>Bank Name *</Label><Input value={externalForm.bank_name} onChange={e => setExternalForm({...externalForm, bank_name: e.target.value})} required className="bg-white border-neutral-400" /></div>
-                          <div><Label>UTR Number *</Label><Input value={externalForm.utr_number} onChange={e => setExternalForm({...externalForm, utr_number: e.target.value})} required className="bg-white border-neutral-400" /></div>
-                          <div><Label>Credit Card Number *</Label><Input value={externalForm.credit_card_number} onChange={e => setExternalForm({...externalForm, credit_card_number: e.target.value})} required className="bg-white border-neutral-400" /></div>
-                          <div><Label>CC Name *</Label><Input value={externalForm.cc_name} onChange={e => setExternalForm({...externalForm, cc_name: e.target.value})} required className="bg-white border-neutral-400" /></div>
-                        </>
-                      )}
+                      <div className="mt-4 p-3 bg-white rounded-lg border border-neutral-200">
+                        <div className="grid grid-cols-3 gap-2 text-sm">
+                          <div>
+                            <span className="text-neutral-500">Current Amount:</span>
+                            <span className="ml-2 font-bold text-neutral-900">{hasExternalPO ? `\u20B9${(externalSummary.po_total_value || 0).toLocaleString()}` : '-'}</span>
+                          </div>
+                          <div>
+                            <span className="text-neutral-500">Amount Paid:</span>
+                            <span className="ml-2 font-bold text-neutral-700">{hasExternalPO ? `\u20B9${(externalSummary.external_paid || 0).toLocaleString()}` : '-'}</span>
+                          </div>
+                          <div>
+                            <span className="text-neutral-500">Available Amount:</span>
+                            <span className="ml-2 font-bold text-neutral-600">{hasExternalPO ? `\u20B9${(externalSummary.external_remaining || 0).toLocaleString()}` : '-'}</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
+
+                    {externalForm.po_number && (
+                      <>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label>Payee Type *</Label>
+                            <Select value={externalForm.payee_type} onValueChange={v => setExternalForm({...externalForm, payee_type: v})} required>
+                              <SelectTrigger className="bg-white border-neutral-400"><SelectValue placeholder="Select Type" /></SelectTrigger>
+                              <SelectContent className="bg-white">
+                                <SelectItem value="Vendor">Vendor</SelectItem>
+                                <SelectItem value="CC">CC</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          {externalForm.payee_type === 'Vendor' && (
+                            <>
+                              <div><Label>Bank Name *</Label><Input value={externalForm.bank_name} onChange={e => setExternalForm({...externalForm, bank_name: e.target.value})} required className="bg-white border-neutral-400" /></div>
+                              <div><Label>IFSC Code *</Label><Input value={externalForm.ifsc_code} onChange={e => setExternalForm({...externalForm, ifsc_code: e.target.value})} required className="bg-white border-neutral-400" /></div>
+                              <div><Label>UTR Number *</Label><Input value={externalForm.utr_number} onChange={e => setExternalForm({...externalForm, utr_number: e.target.value})} required className="bg-white border-neutral-400" /></div>
+                              <div><Label>Amount *</Label><Input type="number" value={externalForm.amount} onChange={e => setExternalForm({...externalForm, amount: e.target.value})} required className="bg-white border-neutral-400" /></div>
+                              <div><Label>Vendor Name *</Label><Input value={externalForm.vendor_name} onChange={e => setExternalForm({...externalForm, vendor_name: e.target.value})} required className="bg-white border-neutral-400" /></div>
+                            </>
+                          )}
+
+                          {externalForm.payee_type === 'CC' && (
+                            <>
+                              <div><Label>Amount *</Label><Input type="number" value={externalForm.amount} onChange={e => setExternalForm({...externalForm, amount: e.target.value})} required className="bg-white border-neutral-400" /></div>
+                              <div><Label>Bank Name *</Label><Input value={externalForm.bank_name} onChange={e => setExternalForm({...externalForm, bank_name: e.target.value})} required className="bg-white border-neutral-400" /></div>
+                              <div><Label>UTR Number *</Label><Input value={externalForm.utr_number} onChange={e => setExternalForm({...externalForm, utr_number: e.target.value})} required className="bg-white border-neutral-400" /></div>
+                              <div><Label>Credit Card Number *</Label><Input value={externalForm.credit_card_number} onChange={e => setExternalForm({...externalForm, credit_card_number: e.target.value})} required className="bg-white border-neutral-400" /></div>
+                              <div><Label>CC Name *</Label><Input value={externalForm.cc_name} onChange={e => setExternalForm({...externalForm, cc_name: e.target.value})} required className="bg-white border-neutral-400" /></div>
+                            </>
+                          )}
+                        </div>
+                      </>
+                    )}
                     <Button type="submit" disabled={submitting} className="w-full bg-neutral-800 text-white">
                       {submitting ? 'Recording...' : 'Record External Payment'}
                     </Button>

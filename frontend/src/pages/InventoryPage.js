@@ -51,6 +51,7 @@ export const InventoryPage = ({
   const [inwardDate, setInwardDate] = useState(new Date().toISOString().split('T')[0]);
   const [quantity, setQuantity] = useState('1');
   const [bulkSubmitting, setBulkSubmitting] = useState(false);
+  const [transferSubmitting, setTransferSubmitting] = useState(false);
   const isAdmin = user?.role === 'Admin';
   const hasAccess = user?.role === 'Admin' || user?.role === 'Inventory';
   const [scanData, setScanData] = useState({
@@ -290,6 +291,60 @@ export const InventoryPage = ({
       }
     } else {
       handleScan(e);
+    }
+  };
+
+  const handleTransferToMagnova = async () => {
+    if (!scanData.po_number || !scanData.location) {
+      toast.error('Please fill required fields (PO, Location)');
+      return;
+    }
+
+    const payload = inwardRows
+      .filter(row => row.imei1.trim() !== '')
+      .map(row => ({
+        imei: row.imei1,
+        imei2: row.imei2 || null,
+        action: 'inward_magnova',
+        location: scanData.location,
+        organization: 'Magnova',
+        po_number: scanData.po_number,
+        vendor: scanData.vendor,
+        brand: scanData.brand,
+        model: scanData.model,
+        storage: scanData.storage,
+        colour: scanData.colour,
+        inward_date: inwardDate ? new Date(inwardDate).toISOString() : null
+      }));
+
+    if (payload.length === 0) {
+      toast.error('At least one IMEI is required');
+      return;
+    }
+
+    try {
+      setTransferSubmitting(true);
+      const response = await api.post('/inventory/bulk-scan', payload);
+      const successes = response.data.filter(r => r.success);
+      const failures = response.data.filter(r => !r.success);
+
+      if (successes.length > 0) {
+        toast.success(`Transferred ${successes.length} IMEIs to Magnova`);
+      }
+      if (failures.length > 0) {
+        toast.error(`Failed to transfer ${failures.length} IMEIs. Check console for details.`);
+        console.error('Transfer failures:', failures);
+      }
+
+      if (failures.length === 0) {
+        setDialogOpen(false);
+        resetForm();
+        refreshAfterInventoryChange();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Transfer failed');
+    } finally {
+      setTransferSubmitting(false);
     }
   };
 
@@ -671,12 +726,13 @@ export const InventoryPage = ({
     inwardScope === 'all'
       ? filteredInventory
       : filteredInventory.filter((item) => item.status === orgStatuses.inward);
-  const outwardItems =
-    outwardScope === 'all'
+  const outwardItems = showOutward
+    ? (outwardScope === 'all'
       ? filteredInventory
-      : filteredInventory.filter((item) => item.status === orgStatuses.outward);
+      : filteredInventory.filter((item) => item.status === orgStatuses.outward))
+    : [];
   const groupedInward = groupByLocation(inwardItems);
-  const groupedOutward = groupByLocation(outwardItems);
+  const groupedOutward = showOutward ? groupByLocation(outwardItems) : [];
 
   return (
     <Layout pageTitle="IMEI Inventory" pageDescription="Track device inventory with IMEI-level visibility">
@@ -803,7 +859,7 @@ export const InventoryPage = ({
                         </SelectTrigger>
                         <SelectContent className="bg-white border-neutral-300">
                           <SelectItem value="inward_nova" className="text-neutral-900">Inward Nova</SelectItem>
-                          <SelectItem value="outward_nova" className="text-neutral-900">Outward Nova</SelectItem>
+                          {showOutward && <SelectItem value="outward_nova" className="text-neutral-900">Outward Nova</SelectItem>}
                         </SelectContent>
                       </Select>
                     </div>
@@ -849,7 +905,7 @@ export const InventoryPage = ({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label className="text-neutral-700 font-medium">Inward Date *</Label>
                       <Input 
@@ -857,15 +913,6 @@ export const InventoryPage = ({
                         value={inwardDate} 
                         onChange={e => setInwardDate(e.target.value)} 
                         className="bg-white border-neutral-400 h-9 text-neutral-900" 
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-neutral-700 font-medium">Colour</Label>
-                      <Input 
-                        value={scanData.colour} 
-                        onChange={e => setScanData({...scanData, colour: e.target.value})} 
-                        className="bg-white border-neutral-400 h-9 text-neutral-900" 
-                        placeholder="Enter machine color"
                       />
                     </div>
                     <div>
@@ -920,6 +967,14 @@ export const InventoryPage = ({
                     <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                       {inwardRows.map((row, idx) => (
                         <div key={idx} className="flex gap-2 items-center bg-neutral-50 p-2 rounded border border-neutral-100">
+                          <div className="w-40">
+                            <Input
+                              placeholder="Colour"
+                              value={scanData.colour}
+                              onChange={e => setScanData({ ...scanData, colour: e.target.value })}
+                              className="text-sm bg-white border-neutral-400 h-8 text-neutral-900"
+                            />
+                          </div>
                           <div className="flex-1">
                             <Input 
                               placeholder={`IMEI 1`} 
@@ -945,6 +1000,16 @@ export const InventoryPage = ({
                             className="h-8 w-8 p-0 text-neutral-400 hover:text-red-600"
                           >
                             <Trash2 className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleTransferToMagnova}
+                            disabled={transferSubmitting}
+                            className="h-8 px-2 border-neutral-300 text-neutral-700 hover:bg-neutral-100"
+                          >
+                            Transfer to Magnova
                           </Button>
                         </div>
                       ))}
@@ -1052,8 +1117,8 @@ export const InventoryPage = ({
                       <SelectContent className="bg-white border-neutral-300 z-[100]">
                         <SelectItem value="inward_nova" className="text-neutral-900">Inward Nova</SelectItem>
                         <SelectItem value="inward_magnova" className="text-neutral-900">Inward Magnova</SelectItem>
-                        <SelectItem value="outward_nova" className="text-neutral-900">Outward Nova</SelectItem>
-                        <SelectItem value="outward_magnova" className="text-neutral-900">Outward Magnova</SelectItem>
+                        {showOutward && <SelectItem value="outward_nova" className="text-neutral-900">Outward Nova</SelectItem>}
+                        {showOutward && <SelectItem value="outward_magnova" className="text-neutral-900">Outward Magnova</SelectItem>}
                         <SelectItem value="dispatch" className="text-neutral-900">Dispatch</SelectItem>
                         <SelectItem value="available" className="text-neutral-900">Mark Available</SelectItem>
                       </SelectContent>
@@ -1549,12 +1614,12 @@ export const InventoryPage = ({
             </SelectTrigger>
             <SelectContent className="bg-white">
               <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="Procured">Procured</SelectItem>
-              <SelectItem value="Inward Nova">Inward Nova</SelectItem>
-              <SelectItem value="Inward Magnova">Inward Magnova</SelectItem>
-              <SelectItem value="Outward Nova">Outward Nova</SelectItem>
-              <SelectItem value="Outward Magnova">Outward Magnova</SelectItem>
-              <SelectItem value="Available">Available</SelectItem>
+            <SelectItem value="Procured">Procured</SelectItem>
+            <SelectItem value="Inward Nova">Inward Nova</SelectItem>
+            <SelectItem value="Inward Magnova">Inward Magnova</SelectItem>
+            {showOutward && <SelectItem value="Outward Nova">Outward Nova</SelectItem>}
+            {showOutward && <SelectItem value="Outward Magnova">Outward Magnova</SelectItem>}
+            <SelectItem value="Available">Available</SelectItem>
               <SelectItem value="Reserved">Reserved</SelectItem>
               <SelectItem value="Dispatched">Dispatched</SelectItem>
             </SelectContent>

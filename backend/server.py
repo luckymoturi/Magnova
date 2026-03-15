@@ -318,7 +318,7 @@ class ShipmentCreate(BaseModel):
     from_location: str
     to_location: str
     pickup_date: datetime
-    expected_delivery: datetime
+    expected_delivery: Optional[datetime] = None
     imei_list: List[str] = []
     pickup_quantity: Optional[int] = 0
     brand: Optional[str] = None
@@ -934,7 +934,15 @@ async def create_procurement(proc_data: ProcurementCreate, current_user: User = 
         raise HTTPException(status_code=400, detail="IMEI already exists")
     
     proc_id = str(uuid4())
-    gap_qty = (proc_data.po_quantity or 1) - proc_data.purchase_quantity
+    po_qty = proc_data.po_quantity or 1
+    existing_records = await db.procurement.find(
+        {"po_number": proc_data.po_number},
+        {"purchase_quantity": 1}
+    ).to_list(1000)
+    total_purchased = sum(r.get("purchase_quantity", 0) for r in existing_records) + proc_data.purchase_quantity
+    gap_qty = po_qty - total_purchased
+    if gap_qty < 0:
+        gap_qty = 0
     gap_amt = gap_qty * proc_data.purchase_price
 
     proc_doc = {
@@ -960,6 +968,11 @@ async def create_procurement(proc_data: ProcurementCreate, current_user: User = 
     }
     
     await db.procurement.insert_one(proc_doc)
+    # Keep gap in sync across all records for this PO
+    await db.procurement.update_many(
+        {"po_number": proc_data.po_number},
+        {"$set": {"gap_qty": gap_qty, "gap_amt": gap_amt}}
+    )
     
     imei_doc = {
         "imei": imei,
@@ -1596,6 +1609,7 @@ async def get_imei_details(imei: str, current_user: User = Depends(get_current_u
 @api_router.post("/logistics/shipments", response_model=LogisticsShipment)
 async def create_shipment(shipment_data: ShipmentCreate, current_user: User = Depends(get_current_user)):
     from uuid import uuid4
+    expected_delivery = shipment_data.expected_delivery or (shipment_data.pickup_date + timedelta(days=3))
     
     shipment_doc = {
         "shipment_id": str(uuid4()),
@@ -1606,7 +1620,7 @@ async def create_shipment(shipment_data: ShipmentCreate, current_user: User = De
         "from_location": shipment_data.from_location,
         "to_location": shipment_data.to_location,
         "pickup_date": shipment_data.pickup_date.isoformat(),
-        "expected_delivery": shipment_data.expected_delivery.isoformat(),
+        "expected_delivery": expected_delivery.isoformat(),
         "actual_delivery": None,
         "status": "In Transit",
         "imei_list": shipment_data.imei_list,
