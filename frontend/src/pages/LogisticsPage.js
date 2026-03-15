@@ -43,7 +43,6 @@ export const LogisticsPage = () => {
     from_location: '',
     to_location: '',
     pickup_date: new Date().toISOString().split('T')[0],
-    expected_delivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     pickup_quantity: '',
     brand: '',
     model: '',
@@ -212,7 +211,6 @@ export const LogisticsPage = () => {
         from_location: formData.from_location,
         to_location: formData.to_location,
         pickup_date: new Date(formData.pickup_date).toISOString(),
-        expected_delivery: new Date(formData.expected_delivery).toISOString(),
         imei_list: [],
         pickup_quantity: pickupQty,
         brand: formData.brand,
@@ -241,7 +239,11 @@ export const LogisticsPage = () => {
       resetForm();
       refreshAfterLogisticsChange();
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to create shipment');
+      const detail = error.response?.data?.detail;
+      const message = Array.isArray(detail)
+        ? (detail[0]?.msg || 'Validation error')
+        : (typeof detail === 'string' ? detail : (detail ? JSON.stringify(detail) : 'Failed to create shipment'));
+      toast.error(message);
     }
   };
 
@@ -253,7 +255,6 @@ export const LogisticsPage = () => {
       from_location: '',
       to_location: '',
       pickup_date: new Date().toISOString().split('T')[0],
-      expected_delivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       pickup_quantity: '',
       brand: '',
       model: '',
@@ -579,17 +580,6 @@ export const LogisticsPage = () => {
                           required
                           className="bg-white text-neutral-900 border-neutral-400 h-9"
                           data-testid="pickup-date-input"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-neutral-700">Expected Delivery *</Label>
-                        <Input
-                          type="date"
-                          value={formData.expected_delivery}
-                          onChange={(e) => setFormData({ ...formData, expected_delivery: e.target.value })}
-                          required
-                          className="bg-white text-neutral-900 border-neutral-400 h-9"
-                          data-testid="delivery-date-input"
                         />
                       </div>
                     </div>
